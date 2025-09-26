@@ -1,16 +1,78 @@
-import { UserRepository } from "../repositories/user.repository";
+import { UserRepository, CreateUserData } from "../repositories/user.repository";
 import { ApiError } from "../utils/ApiError";
+import { UserDoc } from "../models/user.model";
+
+export interface SignupData {
+  accountType: "individual" | "business";
+  email?: string;
+  phone?: string;
+  displayName: string;
+  legalName?: string;
+}
 
 export const UserService = {
-  async register(name: string, email: string, role: "customer" | "business" | "admin" = "customer") {
-    const existing = await UserRepository.findByEmail(email);
-    if (existing) throw new ApiError(409, "Email already registered");
-    return UserRepository.create({ name, email, role });
+  async signup(data: SignupData): Promise<UserDoc> {
+    // Validate that at least email or phone is provided
+    if (!data.email && !data.phone) {
+      throw new ApiError(400, "Either email or phone is required");
+    }
+
+    // Check for existing users
+    if (data.email) {
+      const existingByEmail = await UserRepository.findByEmail(data.email);
+      if (existingByEmail) {
+        throw new ApiError(409, "Email already registered");
+      }
+    }
+
+    if (data.phone) {
+      const existingByPhone = await UserRepository.findByPhone(data.phone);
+      if (existingByPhone) {
+        throw new ApiError(409, "Phone number already registered");
+      }
+    }
+
+    // Set roles based on account type
+    const roles: ("business" | "customer" | "driver" | "dispatcher" | "admin")[] = data.accountType === "business" ? ["business"] : ["customer"];
+
+    // Create user
+    const userData: CreateUserData = {
+      accountType: data.accountType,
+      email: data.email,
+      phone: data.phone,
+      displayName: data.displayName,
+      legalName: data.legalName,
+      roles,
+    };
+
+    return UserRepository.create(userData);
   },
-  get(id: string) {
+
+  async get(id: string): Promise<UserDoc | null> {
     return UserRepository.findById(id);
   },
-  list(limit?: number, skip?: number) {
+
+  async getByUuid(uuid: string): Promise<UserDoc | null> {
+    return UserRepository.findByUuid(uuid);
+  },
+
+  async list(limit?: number, skip?: number): Promise<UserDoc[]> {
     return UserRepository.list(limit, skip);
+  },
+
+  async verifyEmail(userId: string): Promise<UserDoc | null> {
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    return UserRepository.updateVerification(user._id as any, "email");
+  },
+
+  async verifyPhone(userId: string): Promise<UserDoc | null> {
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    return UserRepository.updateVerification(user._id as any, "phone");
   }
 };

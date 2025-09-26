@@ -1,4 +1,5 @@
 import { Schema, model, Document, Types } from "mongoose";
+import { DeliveryAreaValidator } from "../utils/deliveryAreaValidator";
 
 export interface AddressDoc extends Document<Types.ObjectId> {
   ownerUserId: Types.ObjectId;
@@ -14,6 +15,14 @@ export interface AddressDoc extends Document<Types.ObjectId> {
   lng?: number;
   verifiedAt?: Date | null; // present if geocode/places verified
   isDefault?: boolean;
+  serviceAreaId?: Types.ObjectId; // Link to ServiceArea for delivery validation
+  deliveryRestrictions?: {
+    canDeliver: boolean;
+    canPickup: boolean;
+    availableServices: string[];
+    lastChecked: Date;
+    checkNotes?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +42,14 @@ const AddressSchema = new Schema<AddressDoc>(
     lng: Number,
     verifiedAt: { type: Date, default: null },
     isDefault: { type: Boolean, default: false },
+    serviceAreaId: { type: Schema.Types.ObjectId, ref: "ServiceArea" },
+    deliveryRestrictions: {
+      canDeliver: { type: Boolean, default: true },
+      canPickup: { type: Boolean, default: true },
+      availableServices: [{ type: String }],
+      lastChecked: { type: Date, default: Date.now },
+      checkNotes: { type: String }
+    },
   },
   { timestamps: true }
 );
@@ -45,6 +62,55 @@ AddressSchema.pre("validate", function (next: any) {
       return next(new Error("Verified addresses must include placeId and lat/lng"));
     }
   }
+  next();
+});
+
+// Validate delivery area when address is saved
+AddressSchema.pre("save", async function (next: any) {
+  const doc = this as any;
+  
+  // Only validate if coordinates or postal code changed
+  if (doc.isModified('lat') || doc.isModified('lng') || doc.isModified('pincode') || doc.isNew) {
+    try {
+      const validation = await DeliveryAreaValidator.validateAddress(doc.lat, doc.lng, doc.pincode);
+      
+      // Update delivery restrictions based on validation
+      if (!doc.deliveryRestrictions) {
+        doc.deliveryRestrictions = {};
+      }
+      
+      doc.deliveryRestrictions.canDeliver = validation.isValid;
+      doc.deliveryRestrictions.canPickup = validation.availableServices?.pickup || false;
+      doc.deliveryRestrictions.availableServices = [];
+      doc.deliveryRestrictions.lastChecked = new Date();
+      
+      if (validation.isValid && validation.availableServices) {
+        if (validation.availableServices.delivery) doc.deliveryRestrictions.availableServices.push('delivery');
+        if (validation.availableServices.pickup) doc.deliveryRestrictions.availableServices.push('pickup');
+        if (validation.availableServices.sameDay) doc.deliveryRestrictions.availableServices.push('same-day');
+        if (validation.availableServices.nextDay) doc.deliveryRestrictions.availableServices.push('next-day');
+        if (validation.availableServices.express) doc.deliveryRestrictions.availableServices.push('express');
+        
+        // Link to service area
+        if (validation.serviceArea) {
+          doc.serviceAreaId = (validation.serviceArea as any)._id;
+        }
+      } else {
+        doc.deliveryRestrictions.checkNotes = validation.reasons.join('; ');
+      }
+      
+    } catch (error) {
+      // Log error but don't fail the save
+      console.error('Delivery area validation error:', error);
+      if (!doc.deliveryRestrictions) {
+        doc.deliveryRestrictions = {};
+      }
+      doc.deliveryRestrictions.canDeliver = false;
+      doc.deliveryRestrictions.checkNotes = `Validation failed: ${error}`;
+      doc.deliveryRestrictions.lastChecked = new Date();
+    }
+  }
+  
   next();
 });
 
