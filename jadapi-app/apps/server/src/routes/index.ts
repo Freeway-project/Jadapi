@@ -8,6 +8,7 @@ import {
   validateOtpRequest,
   validateOtpVerification
 } from "../middlewares/validation";
+import deliveryRoutes from "./delivery.routes";
 
 const router = Router();
 
@@ -30,5 +31,8 @@ router.get("/users/uuid/:uuid", UserController.getByUuid);
 // Verification routes
 router.post("/users/:id/verify-email", validateEmailVerification, UserController.verifyEmail);
 router.post("/users/:id/verify-phone", validatePhoneVerification, UserController.verifyPhone);
+
+// Delivery routes
+router.use("/delivery", deliveryRoutes);
 
 export default router;

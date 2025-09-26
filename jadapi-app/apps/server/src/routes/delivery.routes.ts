@@ -1,0 +1,246 @@
+import { Router, Request, Response } from "express";
+import { DeliveryAreaValidator } from "../utils/cityDeliveryValidator";
+import { CityServiceAreaService } from "../services/cityServiceArea.service";
+import { ApiError } from "../utils/ApiError";
+
+const router = Router();
+
+/**
+ * POST /api/delivery/check-address
+ * Check if delivery is available for a specific address
+ */
+router.post("/check-address", async (req: Request, res: Response) => {
+  try {
+    const { city, postalCode } = req.body;
+
+    if (!city) {
+      throw new ApiError(400, "City is required");
+    }
+
+    const result = await DeliveryAreaValidator.isDeliveryAvailable(
+      city,
+      postalCode
+    );
+
+    res.json({
+      success: true,
+      data: {
+        deliveryAvailable: result.available,
+        message: result.message,
+        serviceArea: result.serviceArea ? {
+          name: result.serviceArea.name,
+          deliveryFee: result.serviceArea.deliveryFee,
+          estimatedDeliveryHours: result.serviceArea.estimatedDeliveryHours
+        } : null
+      }
+    });
+  } catch (error) {
+    console.error("Check address error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to check delivery availability"
+    });
+  }
+});
+
+/**
+ * POST /api/delivery/validate-order-address
+ * Validate address for order creation (returns detailed validation)
+ */
+router.post("/validate-order-address", async (req: Request, res: Response) => {
+  try {
+    const { city, pincode } = req.body;
+
+    if (!city || !pincode) {
+      throw new ApiError(400, "City and postal code are required");
+    }
+
+    const validation = await DeliveryAreaValidator.validateAddressForDelivery({
+      city,
+      pincode
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.error
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        valid: true,
+        deliveryFee: validation.deliveryFee,
+        estimatedDeliveryHours: validation.estimatedHours,
+        message: "Address is valid for delivery"
+      }
+    });
+  } catch (error) {
+    console.error("Validate order address error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to validate address"
+    });
+  }
+});
+
+/**
+ * GET /api/delivery/service-areas
+ * Get all active delivery areas
+ */
+router.get("/service-areas", async (req: Request, res: Response) => {
+  try {
+    const areas = await DeliveryAreaValidator.getActiveDeliveryAreas();
+
+    res.json({
+      success: true,
+      data: {
+        serviceAreas: areas,
+        count: areas.length
+      }
+    });
+  } catch (error) {
+    console.error("Get service areas error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch service areas"
+    });
+  }
+});
+
+// ADMIN ROUTES (require authentication/authorization in real app)
+
+/**
+ * POST /api/delivery/admin/service-areas
+ * Create new service area (Admin only)
+ */
+router.post("/admin/service-areas", async (req: Request, res: Response) => {
+  try {
+    const { name, type, postalCodePatterns, deliveryFee, estimatedDeliveryHours } = req.body;
+
+    if (!name || !postalCodePatterns || !Array.isArray(postalCodePatterns)) {
+      throw new ApiError(400, "Name and postal code patterns are required");
+    }
+
+    const serviceArea = await CityServiceAreaService.createServiceArea({
+      name,
+      type,
+      postalCodePatterns,
+      deliveryFee,
+      estimatedDeliveryHours
+    });
+
+    res.status(201).json({
+      success: true,
+      data: { serviceArea },
+      message: `Service area '${name}' created successfully`
+    });
+  } catch (error: any) {
+    console.error("Create service area error:", error);
+    if (error.code === 11000) {
+      res.status(409).json({
+        success: false,
+        message: "Service area already exists for this city in the province"
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to create service area"
+      });
+    }
+  }
+});
+
+/**
+ * GET /api/delivery/admin/service-areas
+ * Get all service areas with admin details
+ */
+router.get("/admin/service-areas", async (req: Request, res: Response) => {
+  try {
+    const { isActive, province, type } = req.query;
+    
+    const filters: any = {};
+    if (isActive !== undefined) filters.isActive = isActive === 'true';
+    if (province) filters.province = province as string;
+    if (type) filters.type = type as string;
+
+    const serviceAreas = await CityServiceAreaService.getAllServiceAreas(filters);
+    const stats = await CityServiceAreaService.getServiceAreaStats();
+
+    res.json({
+      success: true,
+      data: {
+        serviceAreas,
+        stats,
+        filters: filters
+      }
+    });
+  } catch (error) {
+    console.error("Get admin service areas error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch service areas"
+    });
+  }
+});
+
+/**
+ * PUT /api/delivery/admin/service-areas/:id
+ * Update service area
+ */
+router.put("/admin/service-areas/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const serviceArea = await CityServiceAreaService.updateServiceArea(id, updates);
+    
+    if (!serviceArea) {
+      throw new ApiError(404, "Service area not found");
+    }
+
+    res.json({
+      success: true,
+      data: { serviceArea },
+      message: "Service area updated successfully"
+    });
+  } catch (error) {
+    console.error("Update service area error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update service area"
+    });
+  }
+});
+
+/**
+ * PUT /api/delivery/admin/service-areas/:id/toggle
+ * Toggle service area active status
+ */
+router.put("/admin/service-areas/:id/toggle", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    const serviceArea = await CityServiceAreaService.toggleServiceArea(id, isActive);
+    
+    if (!serviceArea) {
+      throw new ApiError(404, "Service area not found");
+    }
+
+    res.json({
+      success: true,
+      data: { serviceArea },
+      message: `Service area ${isActive ? 'activated' : 'deactivated'} successfully`
+    });
+  } catch (error) {
+    console.error("Toggle service area error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to toggle service area"
+    });
+  }
+});
+
+export default router;

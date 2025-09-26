@@ -41,7 +41,7 @@ export const EmailService = {
 
       logger.info(`✅ OTP email sent successfully to ${email}`);
     } catch (error) {
-      logger.error(`❌ Failed to send OTP email to ${email}:`, error);
+
       throw new Error(`Failed to send OTP email: ${error}`);
     }
   },
@@ -67,7 +67,7 @@ export const EmailService = {
         text,
       });
     } catch (error) {
-      logger.error(`Failed to send templated email:`, error);
+
       throw error;
     }
   },
@@ -100,7 +100,7 @@ export const EmailService = {
 
       logger.info(`✅ Email sent successfully to ${to}. Message ID: ${result.messageId}`);
     } catch (error) {
-      logger.error(`❌ Failed to send email to ${to}:`, error);
+
       throw new Error(`Failed to send email: ${error}`);
     }
   },
@@ -130,7 +130,7 @@ export const EmailService = {
       logger.info("✅ Email configuration is valid");
       return true;
     } catch (error) {
-      logger.error("❌ Email configuration test failed:", error);
+
       return false;
     }
   },

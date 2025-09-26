@@ -44,7 +44,7 @@ export const createEmailTransporter = () => {
   });
 
   // Verify connection configuration
-  transporter.verify((error, success) => {
+  transporter.verify((error,) => {
     if (error) {
       logger.error("❌ Email configuration error:", error);
     } else {
