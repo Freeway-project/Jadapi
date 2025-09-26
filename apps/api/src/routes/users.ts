@@ -1,5 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
+import mongoose from 'mongoose';
 import { User } from '../models/User';
 import { UserSchema, ApiResponse } from '@jadapi/types';
 
@@ -9,9 +10,19 @@ const router = express.Router();
 const CreateUserSchema = UserSchema.omit({ id: true, createdAt: true, updatedAt: true });
 const UpdateUserSchema = CreateUserSchema.partial();
 
+// Helper function to check if MongoDB is connected
+const isMongoConnected = () => mongoose.connection.readyState === 1;
+
 // GET /api/users - Get all users
 router.get('/', async (req, res) => {
   try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected. Please set up MongoDB to use this feature.'
+      });
+    }
+
     const users = await User.find();
     const response: ApiResponse = {
       success: true,
@@ -30,6 +41,13 @@ router.get('/', async (req, res) => {
 // GET /api/users/:id - Get user by ID
 router.get('/:id', async (req, res) => {
   try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected. Please set up MongoDB to use this feature.'
+      });
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({
@@ -55,6 +73,13 @@ router.get('/:id', async (req, res) => {
 // POST /api/users - Create new user
 router.post('/', async (req, res) => {
   try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected. Please set up MongoDB to use this feature.'
+      });
+    }
+
     // Validate request body
     const validatedData = CreateUserSchema.parse(req.body);
     
@@ -87,6 +112,13 @@ router.post('/', async (req, res) => {
 // PUT /api/users/:id - Update user
 router.put('/:id', async (req, res) => {
   try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected. Please set up MongoDB to use this feature.'
+      });
+    }
+
     // Validate request body
     const validatedData = UpdateUserSchema.parse(req.body);
     
@@ -129,6 +161,13 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/users/:id - Delete user
 router.delete('/:id', async (req, res) => {
   try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected. Please set up MongoDB to use this feature.'
+      });
+    }
+
     const user = await User.findByIdAndDelete(req.params.id);
     
     if (!user) {

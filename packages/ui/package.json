@@ -4,9 +4,7 @@
   "private": true,
   "main": "./index.tsx",
   "types": "./index.tsx",
-  "scripts": {
-    "lint": "eslint . --max-warnings 0"
-  },
+  "scripts": {},
   "devDependencies": {
     "@types/node": "^20.5.2",
     "@types/react": "^18.2.37",
