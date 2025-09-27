@@ -36,7 +36,7 @@ export const createEmailTransporter = () => {
     return null;
   }
 
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     host: emailConfig.host,
     port: emailConfig.port,
     secure: emailConfig.secure,
@@ -44,7 +44,7 @@ export const createEmailTransporter = () => {
   });
 
   // Verify connection configuration
-  transporter.verify((error,) => {
+  transporter.verify((error:any) => {
     if (error) {
       logger.error("❌ Email configuration error:", error);
     } else {

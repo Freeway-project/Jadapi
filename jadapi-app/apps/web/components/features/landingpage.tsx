@@ -48,9 +48,9 @@ export default function JadapiLanding() {
           <p className="text-gray-700 mb-4">
             Currently available <strong className="text-blue-700">only in Vancouver, BC</strong>. Join the waitlist for nearby cities.
           </p>
-          <a href="/waitlist" className="inline-block px-6 py-2 border-2 border-blue-300 text-blue-700 rounded-lg font-medium hover:bg-white transition">
+          {/* <a href="/waitlist" className="inline-block px-6 py-2 border-2 border-blue-300 text-blue-700 rounded-lg font-medium hover:bg-white transition">
             Notify me when you expand
-          </a>
+          </a> */}
         </div>
       </section>
 

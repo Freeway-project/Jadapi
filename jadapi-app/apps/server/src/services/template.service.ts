@@ -42,7 +42,7 @@ export class TemplateService {
       // Replace variables in template
       return this.replaceVariables(templateContent, variables);
     } catch (error) {
-      logger.error(`Failed to render template ${templateName}:`, error);
+      logger.error(`Failed to render template ${templateName}:`);
       throw new Error(`Template rendering failed: ${error}`);
     }
   }
@@ -96,7 +96,7 @@ export class TemplateService {
 
       return Array.from(templates);
     } catch (error) {
-      logger.error("Failed to get available templates:", error);
+      logger.error("Failed to get available templates:");
       return [];
     }
   }

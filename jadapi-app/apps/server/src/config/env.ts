@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const ENV = {
-  PORT: Number(process.env.PORT ?? 3000),
+  PORT: Number(process.env.PORT ??4000),
   MONGO_URI: process.env.MONGO_URI ?? "",
   NODE_ENV: process.env.NODE_ENV ?? "development",
 
@@ -14,4 +14,9 @@ export const ENV = {
   SMTP_PASS: process.env.SMTP_PASS ?? "",
   SMTP_FROM_NAME: process.env.SMTP_FROM_NAME ?? "Jadapi App",
   SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL ?? process.env.SMTP_USER ?? "",
+
+  // Cloudinary configuration
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ?? "",
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ?? "",
 };
