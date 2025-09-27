@@ -127,8 +127,8 @@ export default function AddressAutocomplete({
   };
 
   return (
-    <div className="space-y-2 relative">
-      <Label htmlFor="address">{label}</Label>
+    <div className="space-y-3 relative">
+      <Label htmlFor="address" className="text-base font-medium text-black">{label}</Label>
       <div className="relative">
         <Input
           id="address"
@@ -139,37 +139,44 @@ export default function AddressAutocomplete({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           disabled={disabled}
-          className="pr-10"
+          className="w-full px-4 py-3 pr-12 border-2 border-gray-300 rounded-xl bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
         />
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
           {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
           ) : (
-            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <MapPin className="w-5 h-5 text-gray-400" />
           )}
         </div>
       </div>
 
       {error && (
-        <p className="text-sm text-destructive">{error}</p>
+        <div className="flex items-center space-x-2 text-red-600">
+          <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-xs font-bold">!</span>
+          </div>
+          <p className="text-sm">{error}</p>
+        </div>
       )}
 
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
           {suggestions.map((suggestion) => (
             <Button
               key={suggestion.place_id}
               variant="ghost"
-              className="w-full justify-start h-auto p-3 text-left rounded-none first:rounded-t-md last:rounded-b-md hover:bg-muted"
+              className="w-full justify-start h-auto p-4 text-left rounded-none first:rounded-t-xl last:rounded-b-xl hover:bg-blue-50 transition-colors duration-200"
               onClick={() => handleSuggestionClick(suggestion)}
             >
-              <div className="flex items-start space-x-2 w-full">
-                <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div className="flex items-start space-x-3 w-full">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm text-foreground">
+                  <div className="font-semibold text-sm text-black">
                     {suggestion.main_text}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
+                  <div className="text-xs text-gray-600 truncate mt-0.5">
                     {suggestion.secondary_text}
                   </div>
                 </div>

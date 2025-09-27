@@ -12,6 +12,12 @@ export default function JadapiLanding() {
             <a href="#pricing" className="hover:text-gray-900 transition">Pricing</a>
             <a href="#business" className="hover:text-gray-900 transition">For Business</a>
           </nav>
+          <a
+            href="/auth/signup"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow"
+          >
+            Sign up
+          </a>
         </div>
       </header>
 

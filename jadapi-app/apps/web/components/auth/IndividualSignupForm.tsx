@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { authAPI } from '@/lib/api/auth';
 import { individualSignupSchema, IndividualSignupFormData } from '@/lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
@@ -35,124 +34,134 @@ export default function IndividualSignupForm() {
 
   const watchedAddress = watch('address');
 
+  const { setUser, setStep } = useAuthStore();
+
   const onSubmit = async (data: IndividualSignupFormData) => {
     setIsSubmitting(true);
     setLoading(true);
 
-    try {
-      const signupData = {
-        ...data,
-        userType: 'individual' as const,
+    // Simulate processing delay
+    setTimeout(() => {
+      const userData = {
+        id: Math.random().toString(36).substr(2, 9),
+        email: data.email,
+        name: data.name,
+        address: data.address,
+        userType: 'individual',
+        createdAt: new Date().toISOString()
       };
 
-      const response = await authAPI.signupIndividual(signupData);
-
-      if (response.success) {
-        toast.success('Account created successfully!');
-        console.log('User created:', response.user);
-        if (response.token) {
-          localStorage.setItem('auth_token', response.token);
-        }
-      } else {
-        toast.error('Failed to create account');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create account');
-    } finally {
+      setUser(userData);
+      setStep('success');
+      toast.success('Account created successfully!');
       setIsSubmitting(false);
       setLoading(false);
-    }
+    }, 1200);
   };
 
   const handleResendOTP = async () => {
-    try {
-      const response = await authAPI.sendOTP(email);
-      if (response.success) {
-        toast.success('OTP resent to your email!');
-      } else {
-        toast.error('Failed to resend OTP');
-      }
-    } catch (error) {
-      toast.error('Failed to resend OTP');
-    }
+    toast.success('OTP resent to your email!');
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* OTP Verification */}
-      <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <Shield className="w-4 h-4 text-primary" />
-          <Label htmlFor="otp">Enter OTP sent to {email}</Label>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* OTP Verification */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <Shield className="w-5 h-5 text-blue-600" />
+            <Label htmlFor="otp" className="text-base font-medium text-black">
+              Enter verification code sent to {email}
+            </Label>
+          </div>
+          <Input
+            id="otp"
+            type="text"
+            placeholder="000000"
+            maxLength={6}
+            disabled={isSubmitting || isLoading}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black text-center text-lg font-mono tracking-widest placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
+            {...register('otp')}
+          />
+          {errors.otp && (
+            <div className="flex items-center space-x-2 text-red-600">
+              <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-xs font-bold">!</span>
+              </div>
+              <p className="text-sm">{errors.otp.message}</p>
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={handleResendOTP}
+            className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Didn't receive the code? Resend
+          </Button>
         </div>
-        <Input
-          id="otp"
-          type="text"
-          placeholder="Enter 6-digit OTP"
-          maxLength={6}
+
+        {/* Email (prefilled and readonly) */}
+        <div className="space-y-3">
+          <Label htmlFor="email" className="text-base font-medium text-black">Email Address</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            disabled
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-700"
+            {...register('email')}
+          />
+        </div>
+
+        {/* Name field */}
+        <div className="space-y-3">
+          <Label htmlFor="name" className="text-base font-medium text-black">Full Name</Label>
+          <Input
+            id="name"
+            type="text"
+            placeholder="Enter your full name"
+            disabled={isSubmitting || isLoading}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
+            {...register('name')}
+          />
+          {errors.name && (
+            <div className="flex items-center space-x-2 text-red-600">
+              <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-xs font-bold">!</span>
+              </div>
+              <p className="text-sm">{errors.name.message}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Address with Google Maps Autocomplete */}
+        <AddressAutocomplete
+          value={watchedAddress || ''}
+          onChange={(value) => setValue('address', value)}
+          label="Address"
+          placeholder="Enter your address"
+          error={errors.address?.message}
           disabled={isSubmitting || isLoading}
-          {...register('otp')}
         />
-        {errors.otp && (
-          <p className="text-sm text-destructive">{errors.otp.message}</p>
-        )}
+
         <Button
-          type="button"
-          variant="link"
-          size="sm"
-          onClick={handleResendOTP}
-          className="p-0 h-auto text-xs"
-        >
-          Didn't receive OTP? Resend
-        </Button>
-      </div>
-
-      {/* Email (prefilled and readonly) */}
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          disabled
-          className="bg-muted"
-          {...register('email')}
-        />
-      </div>
-
-      {/* Name field */}
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input
-          id="name"
-          type="text"
-          placeholder="Enter your full name"
+          type="submit"
           disabled={isSubmitting || isLoading}
-          {...register('name')}
-        />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
-      </div>
-
-      {/* Address with Google Maps Autocomplete */}
-      <AddressAutocomplete
-        value={watchedAddress || ''}
-        onChange={(value) => setValue('address', value)}
-        label="Address"
-        placeholder="Enter your address"
-        error={errors.address?.message}
-        disabled={isSubmitting || isLoading}
-      />
-
-      <Button
-        type="submit"
-        disabled={isSubmitting || isLoading}
-        className="w-full"
-        size="lg"
-      >
-        {isSubmitting ? 'Creating Account...' : 'Create Account'}
-      </Button>
-    </form>
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+          size="lg"
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Creating your account...</span>
+            </div>
+          ) : (
+            'Create Individual Account'
+          )}
+        </Button>
+      </form>
+    </div>
   );
 }

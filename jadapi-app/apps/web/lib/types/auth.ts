@@ -1,11 +1,12 @@
 export type UserType = 'individual' | 'business';
 
 export interface AuthState {
-  step: 'userType' | 'email' | 'verification';
+  step: 'userType' | 'email' | 'verification' | 'success';
   userType: UserType | null;
   email: string;
   isLoading: boolean;
   error: string | null;
+  user?: any;
 }
 
 export interface UserSignupData {

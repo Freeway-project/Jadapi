@@ -7,6 +7,7 @@ interface AuthStore extends AuthState {
   setEmail: (email: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setUser: (user: any) => void;
   reset: () => void;
 }
 
@@ -16,6 +17,7 @@ const initialState: AuthState = {
   email: '',
   isLoading: false,
   error: null,
+  user: null,
 };
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -30,6 +32,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
+
+  setUser: (user) => set({ user }),
 
   reset: () => set(initialState),
 }));

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { authAPI } from '@/lib/api/auth';
 import { businessSignupSchema, BusinessSignupFormData } from '@/lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
@@ -35,124 +34,122 @@ export default function BusinessSignupForm() {
 
   const watchedAddress = watch('address');
 
+  const { setUser, setStep } = useAuthStore();
+
   const onSubmit = async (data: BusinessSignupFormData) => {
     setIsSubmitting(true);
     setLoading(true);
 
-    try {
-      const signupData = {
-        ...data,
-        userType: 'business' as const,
+    // Simulate processing delay
+    setTimeout(() => {
+      const userData = {
+        id: Math.random().toString(36).substr(2, 9),
+        email: data.email,
+        businessName: data.businessName,
+        address: data.address,
+        userType: 'business',
+        createdAt: new Date().toISOString()
       };
 
-      const response = await authAPI.signupBusiness(signupData);
-
-      if (response.success) {
-        toast.success('Business account created successfully!');
-        console.log('Business created:', response.user);
-        if (response.token) {
-          localStorage.setItem('auth_token', response.token);
-        }
-      } else {
-        toast.error('Failed to create business account');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create business account');
-    } finally {
+      setUser(userData);
+      setStep('success');
+      toast.success('Business account created successfully!');
       setIsSubmitting(false);
       setLoading(false);
-    }
+    }, 1200);
   };
 
   const handleResendOTP = async () => {
-    try {
-      const response = await authAPI.sendOTP(email);
-      if (response.success) {
-        toast.success('OTP resent to your email!');
-      } else {
-        toast.error('Failed to resend OTP');
-      }
-    } catch (error) {
-      toast.error('Failed to resend OTP');
-    }
+    toast.success('OTP resent to your email!');
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* OTP Verification */}
-      <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <Shield className="w-4 h-4 text-primary" />
-          <Label htmlFor="otp">Enter OTP sent to {email}</Label>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* OTP Verification */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Shield className="w-4 h-4 text-blue-600" />
+            <Label htmlFor="otp" className="text-sm font-medium text-black">Enter OTP sent to {email}</Label>
+          </div>
+          <Input
+            id="otp"
+            type="text"
+            placeholder="Enter 6-digit OTP"
+            maxLength={6}
+            disabled={isSubmitting || isLoading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-500"
+            {...register('otp')}
+          />
+          {errors.otp && (
+            <p className="text-sm text-red-600">{errors.otp.message}</p>
+          )}
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={handleResendOTP}
+            className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
+          >
+            Didn't receive OTP? Resend
+          </Button>
         </div>
-        <Input
-          id="otp"
-          type="text"
-          placeholder="Enter 6-digit OTP"
-          maxLength={6}
+
+        {/* Email (prefilled and readonly) */}
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium text-black">Business Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+            {...register('email')}
+          />
+        </div>
+
+        {/* Business Name field */}
+        <div className="space-y-2">
+          <Label htmlFor="businessName" className="text-sm font-medium text-black">Business Name</Label>
+          <Input
+            id="businessName"
+            type="text"
+            placeholder="Enter your business name"
+            disabled={isSubmitting || isLoading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-500"
+            {...register('businessName')}
+          />
+          {errors.businessName && (
+            <p className="text-sm text-red-600">{errors.businessName.message}</p>
+          )}
+        </div>
+
+        {/* Address with Google Maps Autocomplete */}
+        <AddressAutocomplete
+          value={watchedAddress || ''}
+          onChange={(value) => setValue('address', value)}
+          label="Business Address"
+          placeholder="Enter your business address"
+          error={errors.address?.message}
           disabled={isSubmitting || isLoading}
-          {...register('otp')}
         />
-        {errors.otp && (
-          <p className="text-sm text-destructive">{errors.otp.message}</p>
-        )}
+
         <Button
-          type="button"
-          variant="link"
-          size="sm"
-          onClick={handleResendOTP}
-          className="p-0 h-auto text-xs"
-        >
-          Didn't receive OTP? Resend
-        </Button>
-      </div>
-
-      {/* Email (prefilled and readonly) */}
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          disabled
-          className="bg-muted"
-          {...register('email')}
-        />
-      </div>
-
-      {/* Business Name field */}
-      <div className="space-y-2">
-        <Label htmlFor="businessName">Business Name</Label>
-        <Input
-          id="businessName"
-          type="text"
-          placeholder="Enter your business name"
+          type="submit"
           disabled={isSubmitting || isLoading}
-          {...register('businessName')}
-        />
-        {errors.businessName && (
-          <p className="text-sm text-destructive">{errors.businessName.message}</p>
-        )}
-      </div>
-
-      {/* Address with Google Maps Autocomplete */}
-      <AddressAutocomplete
-        value={watchedAddress || ''}
-        onChange={(value) => setValue('address', value)}
-        label="Business Address"
-        placeholder="Enter your business address"
-        error={errors.address?.message}
-        disabled={isSubmitting || isLoading}
-      />
-
-      <Button
-        type="submit"
-        disabled={isSubmitting || isLoading}
-        className="w-full"
-        size="lg"
-      >
-        {isSubmitting ? 'Creating Business Account...' : 'Create Business Account'}
-      </Button>
-    </form>
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+          size="lg"
+        >
+          {isSubmitting ? (
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Creating your business account...</span>
+            </div>
+          ) : (
+            'Create Business Account'
+          )}
+        </Button>
+      </form>
+    </div>
   );
 }
