@@ -2,23 +2,37 @@ import { Otp, OtpDoc } from "../models/Otp";
 import { ApiError } from "../utils/ApiError";
 
 export interface GenerateOtpData {
-  email: string;
+  email?: string;
+  phoneNumber?: string;
   type?: "signup" | "login" | "password_reset";
+  deliveryMethod?: "email" | "sms" | "both";
 }
 
 export interface VerifyOtpData {
-  email: string;
+  identifier: string; // can be email, phone, or combined identifier
   code: string;
   type?: "signup" | "login" | "password_reset";
 }
 
 export const OtpService = {
   async generateOtp(data: GenerateOtpData): Promise<OtpDoc> {
-    const { email, type = "signup" } = data;
+    const { email, phoneNumber, type = "signup", deliveryMethod = "both" } = data;
 
-    // Invalidate any existing unverified OTPs for this email and type
+    if (!email && !phoneNumber) {
+      throw new ApiError(400, "Either email or phone number is required");
+    }
+
+    // Create a combined identifier for easier querying
+    let identifier = "";
+    if (email && phoneNumber) {
+      identifier = `${email}|${phoneNumber}`;
+    } else {
+      identifier = email || phoneNumber || "";
+    }
+
+    // Invalidate any existing unverified OTPs for this identifier and type
     await Otp.updateMany(
-      { email, type, verified: false },
+      { identifier, type, verified: false },
       { verified: true } // Mark as verified to effectively invalidate
     );
 
@@ -28,8 +42,11 @@ export const OtpService = {
     // Create new OTP
     const otp = await Otp.create({
       email,
+      phoneNumber,
+      identifier,
       code,
       type,
+      deliveryMethod,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
       verified: false,
       attempts: 0,
@@ -39,14 +56,23 @@ export const OtpService = {
   },
 
   async verifyOtp(data: VerifyOtpData): Promise<{ success: boolean; otpId?: string }> {
-    const { email, code, type = "signup" } = data;
+    const { identifier, code, type = "signup" } = data;
 
-    // Find the latest unverified OTP for this email and type
+    // Find the latest unverified OTP for this identifier and type
+    // Also check if the identifier matches email or phoneNumber fields for backwards compatibility
     const otp = await Otp.findOne({
-      email,
-      type,
-      verified: false,
-      expiresAt: { $gt: new Date() },
+      $and: [
+        {
+          $or: [
+            { identifier },
+            { email: identifier },
+            { phoneNumber: identifier }
+          ]
+        },
+        { type },
+        { verified: false },
+        { expiresAt: { $gt: new Date() } }
+      ]
     }).sort({ createdAt: -1 });
 
     if (!otp) {
@@ -74,15 +100,28 @@ export const OtpService = {
     return { success: true, otpId: otp._id.toString() };
   },
 
-  async isEmailVerified(email: string, type: "signup" | "login" | "password_reset" = "signup"): Promise<boolean> {
+  async isIdentifierVerified(identifier: string, type: "signup" | "login" | "password_reset" = "signup"): Promise<boolean> {
     const verifiedOtp = await Otp.findOne({
-      email,
-      type,
-      verified: true,
-      createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }, // Valid for 30 minutes after verification
+      $and: [
+        {
+          $or: [
+            { identifier },
+            { email: identifier },
+            { phoneNumber: identifier }
+          ]
+        },
+        { type },
+        { verified: true },
+        { createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) } } // Valid for 30 minutes after verification
+      ]
     });
 
     return !!verifiedOtp;
+  },
+
+  // Keep for backwards compatibility
+  async isEmailVerified(email: string, type: "signup" | "login" | "password_reset" = "signup"): Promise<boolean> {
+    return this.isIdentifierVerified(email, type);
   },
 
   async getOtpById(id: string): Promise<OtpDoc | null> {

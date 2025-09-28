@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-sns": "^3.896.0",
     "@types/mongoose": "^5.11.96",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",

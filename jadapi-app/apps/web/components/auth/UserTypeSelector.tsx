@@ -9,13 +9,18 @@ import { User, Building2 } from 'lucide-react';
 
 export default function UserTypeSelector() {
   const [selectedType, setSelectedType] = useState<UserType | null>(null);
-  const { setUserType, setStep } = useAuthStore();
+  const { setUserType, setStep, setAuthMode } = useAuthStore();
 
   const handleContinue = () => {
     if (selectedType) {
       setUserType(selectedType);
       setStep('email');
     }
+  };
+
+  const handleSignin = () => {
+    setAuthMode('signin');
+    setStep('signin');
   };
 
   const userTypes = [
@@ -90,7 +95,7 @@ export default function UserTypeSelector() {
         ))}
       </div>
 
-      <div className="pt-4">
+      <div className="pt-4 space-y-4">
         <Button
           onClick={handleContinue}
           disabled={!selectedType}
@@ -99,6 +104,16 @@ export default function UserTypeSelector() {
         >
           Continue to Email Verification
         </Button>
+
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            onClick={handleSignin}
+            className="text-gray-600 hover:text-gray-800 transition-colors duration-200"
+          >
+            Already have an account? <span className="text-blue-600 hover:text-blue-700 ml-1">Sign in</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

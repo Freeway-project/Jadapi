@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { emailSchema, EmailFormData } from '@/lib/utils/validation';
+import { emailPhoneSchema, EmailPhoneFormData } from '@/lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -12,24 +12,25 @@ import { ArrowLeft, User, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function EmailStep() {
-  const { userType, setEmail, setStep, setLoading, isLoading } = useAuthStore();
+  const { userType, setEmail, setPhoneNumber, setStep, setLoading, isLoading } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<EmailFormData>({
-    resolver: zodResolver(emailSchema),
+  } = useForm<EmailPhoneFormData>({
+    resolver: zodResolver(emailPhoneSchema),
   });
 
-  const onSubmit = async (data: EmailFormData) => {
+  const onSubmit = async (data: EmailPhoneFormData) => {
     setIsSubmitting(true);
     setLoading(true);
 
     // Simulate processing delay
     setTimeout(() => {
-      setEmail(data.email);
+      setEmail(data.email || '');
+      setPhoneNumber(data.phoneNumber);
       setStep('verification');
       toast.success('Proceeding to verification!');
       setIsSubmitting(false);
@@ -72,39 +73,75 @@ export default function EmailStep() {
             </p>
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-black">Enter Your Email</h1>
+        <h1 className="text-3xl font-bold text-black">Enter Your Details</h1>
         <p className="text-gray-600 text-lg leading-relaxed">
-          We'll send you a verification code to confirm your email address
+          {userType === 'individual'
+            ? "We'll send you a verification code via SMS"
+            : "We'll send you a verification code via email and SMS"
+          }
         </p>
       </div>
 
       <div className="space-y-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Email field - only for business users */}
+          {userType === 'business' && (
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-base font-medium text-black">
+                Business Email Address
+              </Label>
+              <div className="relative">
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your business email address"
+                  disabled={isSubmitting || isLoading}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
+                  {...register('email')}
+                />
+                {!errors.email && !isSubmitting && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  </div>
+                )}
+              </div>
+              {errors.email && (
+                <div className="flex items-center space-x-2 text-red-600">
+                  <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-xs font-bold">!</span>
+                  </div>
+                  <p className="text-sm">{errors.email.message}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Phone Number field */}
           <div className="space-y-3">
-            <Label htmlFor="email" className="text-base font-medium text-black">
-              Email Address
+            <Label htmlFor="phoneNumber" className="text-base font-medium text-black">
+              {userType === 'business' ? 'Business Phone Number' : 'Phone Number'}
             </Label>
             <div className="relative">
               <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email address"
+                id="phoneNumber"
+                type="tel"
+                placeholder="(555) 123-4567"
                 disabled={isSubmitting || isLoading}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
-                {...register('email')}
+                {...register('phoneNumber')}
               />
-              {!errors.email && !isSubmitting && (
+              {!errors.phoneNumber && !isSubmitting && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 </div>
               )}
             </div>
-            {errors.email && (
+            {errors.phoneNumber && (
               <div className="flex items-center space-x-2 text-red-600">
                 <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
                   <span className="text-xs font-bold">!</span>
                 </div>
-                <p className="text-sm">{errors.email.message}</p>
+                <p className="text-sm">{errors.phoneNumber.message}</p>
               </div>
             )}
           </div>

@@ -87,41 +87,81 @@ export const validateEmailVerification = (req: Request, _res: Response, next: Ne
 export const validatePhoneVerification = validateEmailVerification;
 
 export const validateOtpRequest = (req: Request, _res: Response, next: NextFunction) => {
-  const { email, type } = req.body;
+  const { email, phoneNumber, type, deliveryMethod, userType } = req.body;
 
-  if (!email || typeof email !== "string") {
-    return next(new ApiError(400, "Email is required"));
+  // Either email or phone number must be provided
+  if (!email && !phoneNumber) {
+    return next(new ApiError(400, "Either email or phone number is required"));
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return next(new ApiError(400, "Invalid email format"));
+  // For business users, both email and phone are required
+  if (userType === 'business' && (!email || !phoneNumber)) {
+    return next(new ApiError(400, "Business accounts require both email and phone number"));
+  }
+
+  // For individual users, phone number is required but email is optional
+  if (userType === 'individual' && !phoneNumber) {
+    return next(new ApiError(400, "Individual accounts require phone number"));
+  }
+
+  // Email validation if provided
+  if (email) {
+    if (typeof email !== "string") {
+      return next(new ApiError(400, "Email must be a string"));
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return next(new ApiError(400, "Invalid email format"));
+    }
+
+    // Sanitize email
+    req.body.email = email.toLowerCase().trim();
+  }
+
+  // Phone number validation if provided
+  if (phoneNumber) {
+    if (typeof phoneNumber !== "string") {
+      return next(new ApiError(400, "Phone number must be a string"));
+    }
+
+    const phoneRegex = /^(\+1|1)?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      return next(new ApiError(400, "Invalid phone number format"));
+    }
+
+    // Sanitize phone number
+    req.body.phoneNumber = phoneNumber.trim();
   }
 
   if (type && !["signup", "login", "password_reset"].includes(type)) {
     return next(new ApiError(400, "Invalid OTP type"));
   }
 
-  // Sanitize email
-  req.body.email = email.toLowerCase().trim();
+  if (deliveryMethod && !["email", "sms", "both"].includes(deliveryMethod)) {
+    return next(new ApiError(400, "Invalid delivery method"));
+  }
 
   next();
 };
 
 export const validateOtpVerification = (req: Request, _res: Response, next: NextFunction) => {
-  const { email, code, type } = req.body;
+  const { identifier, code, type } = req.body;
 
-  if (!email || typeof email !== "string") {
-    return next(new ApiError(400, "Email is required"));
+  if (!identifier || typeof identifier !== "string") {
+    return next(new ApiError(400, "Identifier (email or phone) is required"));
   }
 
   if (!code || typeof code !== "string") {
     return next(new ApiError(400, "OTP code is required"));
   }
 
+  // Validate identifier format (email or phone)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return next(new ApiError(400, "Invalid email format"));
+  const phoneRegex = /^(\+1|1)?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/;
+
+  if (!emailRegex.test(identifier) && !phoneRegex.test(identifier)) {
+    return next(new ApiError(400, "Identifier must be a valid email or phone number"));
   }
 
   // OTP code should be 6 digits
@@ -135,7 +175,11 @@ export const validateOtpVerification = (req: Request, _res: Response, next: Next
   }
 
   // Sanitize
-  req.body.email = email.toLowerCase().trim();
+  if (emailRegex.test(identifier)) {
+    req.body.identifier = identifier.toLowerCase().trim();
+  } else {
+    req.body.identifier = identifier.trim();
+  }
   req.body.code = code.trim();
 
   next();

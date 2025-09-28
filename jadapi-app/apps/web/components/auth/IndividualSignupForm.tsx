@@ -13,7 +13,7 @@ import AddressAutocomplete from './AddressAutocomplete';
 import toast from 'react-hot-toast';
 
 export default function IndividualSignupForm() {
-  const { email, setLoading, isLoading } = useAuthStore();
+  const { email, phoneNumber, setLoading, isLoading } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -25,7 +25,8 @@ export default function IndividualSignupForm() {
   } = useForm<IndividualSignupFormData>({
     resolver: zodResolver(individualSignupSchema),
     defaultValues: {
-      email,
+      email: email || undefined,
+      phoneNumber,
       name: '',
       address: '',
       otp: '',
@@ -43,8 +44,9 @@ export default function IndividualSignupForm() {
     // Simulate processing delay
     setTimeout(() => {
       const userData = {
-        id: Math.random().toString(36).substr(2, 9),
-        email: data.email,
+        id: Math.random().toString(36).substring(2, 11),
+        email: data.email || '',
+        phoneNumber: data.phoneNumber,
         name: data.name,
         address: data.address,
         userType: 'individual',
@@ -71,7 +73,7 @@ export default function IndividualSignupForm() {
           <div className="flex items-center space-x-2">
             <Shield className="w-5 h-5 text-blue-600" />
             <Label htmlFor="otp" className="text-base font-medium text-black">
-              Enter verification code sent to {email}
+              Enter verification code sent to your phone{email ? ' or email' : ''}
             </Label>
           </div>
           <Input
@@ -91,27 +93,55 @@ export default function IndividualSignupForm() {
               <p className="text-sm">{errors.otp.message}</p>
             </div>
           )}
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={handleResendOTP}
-            className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Didn't receive the code? Resend
-          </Button>
+          <div className="flex space-x-4">
+            {email && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={handleResendOTP}
+                className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Resend to email
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={handleResendOTP}
+              className="p-0 h-auto text-sm text-green-600 hover:text-green-700 font-medium"
+            >
+              Resend to phone
+            </Button>
+          </div>
         </div>
 
-        {/* Email (prefilled and readonly) */}
+        {/* Email (prefilled and readonly) - only show if email exists */}
+        {email && (
+          <div className="space-y-3">
+            <Label htmlFor="email" className="text-base font-medium text-black">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              disabled
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-700"
+              {...register('email')}
+            />
+          </div>
+        )}
+
+        {/* Phone Number (prefilled and readonly) */}
         <div className="space-y-3">
-          <Label htmlFor="email" className="text-base font-medium text-black">Email Address</Label>
+          <Label htmlFor="phoneNumber" className="text-base font-medium text-black">Phone Number</Label>
           <Input
-            id="email"
-            type="email"
-            value={email}
+            id="phoneNumber"
+            type="tel"
+            value={phoneNumber}
             disabled
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-700"
-            {...register('email')}
+            {...register('phoneNumber')}
           />
         </div>
 

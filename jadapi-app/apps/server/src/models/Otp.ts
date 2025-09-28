@@ -1,9 +1,12 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export interface OtpDoc extends Document<Types.ObjectId> {
-  email: string;
+  email?: string;
+  phoneNumber?: string;
+  identifier: string; // Combined identifier for easier querying
   code: string;
   type: "signup" | "login" | "password_reset";
+  deliveryMethod: "email" | "sms" | "both";
   expiresAt: Date;
   verified: boolean;
   attempts: number;
@@ -15,8 +18,18 @@ const OtpSchema = new Schema<OtpDoc>(
   {
     email: {
       type: String,
-      required: true,
+      required: false,
       lowercase: true,
+      trim: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    identifier: {
+      type: String,
+      required: true,
       trim: true,
       index: true,
     },
@@ -30,6 +43,12 @@ const OtpSchema = new Schema<OtpDoc>(
       enum: ["signup", "login", "password_reset"],
       required: true,
       default: "signup",
+    },
+    deliveryMethod: {
+      type: String,
+      enum: ["email", "sms", "both"],
+      required: true,
+      default: "email",
     },
     expiresAt: {
       type: Date,
@@ -51,7 +70,7 @@ const OtpSchema = new Schema<OtpDoc>(
 );
 
 // Compound index for efficient queries
-OtpSchema.index({ email: 1, type: 1, verified: 1 });
+OtpSchema.index({ identifier: 1, type: 1, verified: 1 });
 
 // Pre-save middleware to handle code generation
 OtpSchema.pre("save", function (next) {

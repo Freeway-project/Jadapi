@@ -13,7 +13,7 @@ import AddressAutocomplete from './AddressAutocomplete';
 import toast from 'react-hot-toast';
 
 export default function BusinessSignupForm() {
-  const { email, setLoading, isLoading } = useAuthStore();
+  const { email, phoneNumber, setLoading, isLoading } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -26,6 +26,7 @@ export default function BusinessSignupForm() {
     resolver: zodResolver(businessSignupSchema),
     defaultValues: {
       email,
+      phoneNumber,
       businessName: '',
       address: '',
       otp: '',
@@ -43,8 +44,9 @@ export default function BusinessSignupForm() {
     // Simulate processing delay
     setTimeout(() => {
       const userData = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substring(2, 11),
         email: data.email,
+        phoneNumber: data.phoneNumber,
         businessName: data.businessName,
         address: data.address,
         userType: 'business',
@@ -70,7 +72,7 @@ export default function BusinessSignupForm() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Shield className="w-4 h-4 text-blue-600" />
-            <Label htmlFor="otp" className="text-sm font-medium text-black">Enter OTP sent to {email}</Label>
+            <Label htmlFor="otp" className="text-sm font-medium text-black">Enter verification code sent to your email or phone</Label>
           </div>
           <Input
             id="otp"
@@ -84,15 +86,26 @@ export default function BusinessSignupForm() {
           {errors.otp && (
             <p className="text-sm text-red-600">{errors.otp.message}</p>
           )}
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={handleResendOTP}
-            className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
-          >
-            Didn't receive OTP? Resend
-          </Button>
+          <div className="flex space-x-3">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={handleResendOTP}
+              className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
+            >
+              Resend to email
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={handleResendOTP}
+              className="p-0 h-auto text-xs text-green-600 hover:text-green-700"
+            >
+              Resend to phone
+            </Button>
+          </div>
         </div>
 
         {/* Email (prefilled and readonly) */}
@@ -105,6 +118,19 @@ export default function BusinessSignupForm() {
             disabled
             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
             {...register('email')}
+          />
+        </div>
+
+        {/* Phone Number (prefilled and readonly) */}
+        <div className="space-y-2">
+          <Label htmlFor="phoneNumber" className="text-sm font-medium text-black">Business Phone Number</Label>
+          <Input
+            id="phoneNumber"
+            type="tel"
+            value={phoneNumber}
+            disabled
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+            {...register('phoneNumber')}
           />
         </div>
 

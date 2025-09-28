@@ -1,16 +1,19 @@
 export type UserType = 'individual' | 'business';
 
 export interface AuthState {
-  step: 'userType' | 'email' | 'verification' | 'success';
+  step: 'userType' | 'email' | 'verification' | 'success' | 'signin' | 'signinOtp';
   userType: UserType | null;
+  authMode: 'signup' | 'signin';
   email: string;
+  phoneNumber: string;
   isLoading: boolean;
   error: string | null;
   user?: any;
 }
 
 export interface UserSignupData {
-  email: string;
+  email?: string;
+  phoneNumber: string;
   name: string;
   address: string;
   userType: UserType;
@@ -18,14 +21,22 @@ export interface UserSignupData {
 
 export interface BusinessSignupData {
   email: string;
+  phoneNumber: string;
   businessName: string;
   address: string;
   userType: UserType;
 }
 
 export interface OTPVerificationData {
-  email: string;
+  email?: string;
+  phoneNumber?: string;
   otp: string;
+  deliveryMethod: 'email' | 'sms';
+}
+
+export interface SigninData {
+  identifier: string; // can be email or phone
+  identifierType: 'email' | 'phone';
 }
 
 export interface AddressPlace {

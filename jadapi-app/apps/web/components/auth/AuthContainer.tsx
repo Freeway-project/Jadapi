@@ -5,6 +5,8 @@ import UserTypeSelector from './UserTypeSelector';
 import EmailStep from './EmailStep';
 import VerificationStep from './VerificationStep';
 import SuccessStep from './SuccessStep';
+import SigninForm from './SigninForm';
+import SigninOtpForm from './SigninOtpForm';
 
 export default function AuthContainer() {
   const { step } = useAuthStore();
@@ -19,6 +21,10 @@ export default function AuthContainer() {
         return <VerificationStep />;
       case 'success':
         return <SuccessStep />;
+      case 'signin':
+        return <SigninForm />;
+      case 'signinOtp':
+        return <SigninOtpForm />;
       default:
         return <UserTypeSelector />;
     }
