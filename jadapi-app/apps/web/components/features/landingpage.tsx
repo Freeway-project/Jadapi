@@ -1,4 +1,5 @@
 import { MapPin, Package, Shield, Clock, BarChart3, FileText, Camera, CheckCircle } from 'lucide-react';
+import DeliveryAnimation from '../animations/DeliveryAnimation';
 
 export default function JadapiLanding() {
   return (
@@ -28,6 +29,7 @@ export default function JadapiLanding() {
             <MapPin className="w-4 h-4" />
             Now serving: Vancouver
           </div>
+          <DeliveryAnimation width={150} height={150} className="mx-auto mb-6" />
           
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Scheduled parcel delivery in Vancouver.

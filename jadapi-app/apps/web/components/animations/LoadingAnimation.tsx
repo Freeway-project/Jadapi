@@ -32,7 +32,7 @@ export default function LoadingAnimation({
   style = {},
 }: LoadingAnimationProps) {
   // Import your loading animation JSON here
-  const loadingAnimationData = require('/public/lottie/worker-packing-the-goods.json');
+  const loadingAnimationData = require('../../../public/lottie/worker-packing-the-goods.json');
 
   return (
     <LottieAnimation

@@ -24,8 +24,8 @@ interface DeliveryAnimationProps {
 }
 
 export default function DeliveryAnimation({
-  width = 300,
-  height = 300,
+  width,
+  height,
   loop = true,
   autoplay = true,
   speed = 1,
@@ -34,18 +34,32 @@ export default function DeliveryAnimation({
 }: DeliveryAnimationProps) {
   // Import your delivery animation JSON here
   // Replace with your actual animation data
-  const deliveryAnimationData = require('/public/lottie/global-delivery.json');
+  const deliveryAnimationData = require('../../public/global-delivery.json');
+
+  // Responsive width and height based on screen size
+  const responsiveWidth = width || 'clamp(150px, 25vw, 300px)';
+  const responsiveHeight = height || 'clamp(150px, 20vw, 300px)';
 
   return (
-    <LottieAnimation
-      animationData={deliveryAnimationData}
-      width={width}
-      height={height}
-      loop={loop}
-      autoplay={autoplay}
-      speed={speed}
-      className={className}
-      style={style}
-    />
+    <div
+      className={`w-full max-w-md mx-auto ${className}`}
+      style={{
+        ...style
+      }}
+    >
+      <LottieAnimation
+        animationData={deliveryAnimationData}
+        width={responsiveWidth}
+        height={responsiveHeight}
+        loop={loop}
+        autoplay={autoplay}
+        speed={speed}
+        className="w-full h-auto  flex justify-center items-center "
+        style={{
+          maxWidth: '100%',
+          height: 'auto',
+        }}
+      />
+    </div>
   );
 }

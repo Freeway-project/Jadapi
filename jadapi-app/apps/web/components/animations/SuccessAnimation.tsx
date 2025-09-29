@@ -34,7 +34,7 @@ export default function SuccessAnimation({
   onComplete,
 }: SuccessAnimationProps) {
   // Import your success animation JSON here
-  const successAnimationData = require('/public/lottie/online-delivery-service.json');
+  const successAnimationData = require('../../../public/lottie/online-delivery-service.json');
 
   return (
     <LottieAnimation

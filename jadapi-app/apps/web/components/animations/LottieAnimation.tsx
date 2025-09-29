@@ -20,8 +20,8 @@ export default function LottieAnimation({
   animationData,
   loop = true,
   autoplay = true,
-  width = 300,
-  height = 300,
+  width = 1200,
+  height = 1200,
   style = {},
   className = '',
   speed = 1,
@@ -44,7 +44,7 @@ export default function LottieAnimation({
   const { View, play, pause, stop, setSpeed } = useLottie(options, {
     width,
     height,
-    style: {
+    style : {
       ...style,
     },
   });
@@ -76,9 +76,12 @@ export default function LottieAnimation({
       style={{
         width,
         height,
+        backgroundColor: 'bg-red-500',
+
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        color:'red',
         ...style
       }}
     >

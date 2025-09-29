@@ -8,7 +8,7 @@ import { businessSignupSchema, BusinessSignupFormData } from '@/lib/utils/valida
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { Shield, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import AddressAutocomplete from './AddressAutocomplete';
 import toast from 'react-hot-toast';
 

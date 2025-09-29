@@ -34,7 +34,7 @@ export default function ErrorAnimation({
   onComplete,
 }: ErrorAnimationProps) {
   // Import your error animation JSON here
-  const errorAnimationData = require('/public/lottie/truck-delivery-service.json');
+  const errorAnimationData = require('../../../public/lottie/truck-delivery-service.json');
 
   return (
     <LottieAnimation
