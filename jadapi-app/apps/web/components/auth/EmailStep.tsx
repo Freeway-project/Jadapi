@@ -31,19 +31,37 @@ export default function EmailStep() {
       // Import authAPI dynamically to avoid SSR issues
       const { authAPI } = await import('@/lib/api/auth');
 
-      // Determine delivery method based on user type
-      const deliveryMethod: 'email' | 'sms' | 'both' = userType === 'business' ? 'both' : 'sms';
+      // For business users, send separate OTPs to email and phone
+      if (userType === 'business') {
+        // Send OTP to email
+        if (data.email) {
+          await authAPI.requestOTP({
+            email: data.email,
+            type: 'signup' as const,
+            deliveryMethod: 'email',
+            userType: 'business',
+          });
+        }
 
-      // Request OTP
-      const otpData = {
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        type: 'signup' as const,
-        deliveryMethod,
-        userType: userType as 'individual' | 'business',
-      };
-
-      await authAPI.requestOTP(otpData);
+        // Send OTP to phone
+        if (data.phoneNumber) {
+          await authAPI.requestOTP({
+            phoneNumber: data.phoneNumber,
+            type: 'signup' as const,
+            deliveryMethod: 'sms',
+            userType: 'business',
+          });
+        }
+      } else {
+        // Individual users - phone only
+        await authAPI.requestOTP({
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+          type: 'signup' as const,
+          deliveryMethod: 'sms',
+          userType: 'individual',
+        });
+      }
 
       // Store email and phone in state
       setEmail(data.email || '');
@@ -51,9 +69,9 @@ export default function EmailStep() {
       setStep('verification');
 
       const deliveryText = userType === 'business'
-        ? 'email and SMS'
-        : 'SMS';
-      toast.success(`Verification code sent via ${deliveryText}!`);
+        ? 'Separate verification codes sent to your email and phone!'
+        : 'Verification code sent via SMS!';
+      toast.success(deliveryText);
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
       toast.error(error.message || 'Failed to send verification code. Please try again.');

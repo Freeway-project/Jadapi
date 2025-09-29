@@ -59,6 +59,7 @@ export default function IndividualSignupForm() {
         email: data.email,
         phone: data.phoneNumber,
         displayName: data.name,
+        address: data.address,
       };
 
       const user = await authAPI.signup(signupData);

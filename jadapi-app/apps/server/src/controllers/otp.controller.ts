@@ -9,7 +9,9 @@ export const OtpController = {
   async requestOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, phoneNumber, type = "signup", deliveryMethod = "both" } = req.body;
-      console.log("Received OTP request:", { email, phoneNumber, type, deliveryMethod });
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Received OTP request:", { email, phoneNumber, type, deliveryMethod });
+      }
       if (!email && !phoneNumber) {
         throw new ApiError(400, "Either email or phone number is required");
       }
@@ -24,9 +26,9 @@ export const OtpController = {
 
       // Validate phone number format if provided
       if (phoneNumber) {
-        const phoneRegex = /^(\+1|1)?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/;
-        if (!phoneRegex.test(phoneNumber)) {
-          throw new ApiError(400, "Invalid phone number format");
+        const digitsOnly = phoneNumber.replace(/\D/g, '');
+        if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+          throw new ApiError(400, "Phone number must have 10-15 digits");
         }
       }
 
@@ -52,7 +54,9 @@ export const OtpController = {
       const otpData: GenerateOtpData = { email, phoneNumber, type, deliveryMethod };
       const otp = await OtpService.generateOtp(otpData);
 
-      console.log('🚀 ~ :55 ~ requestOtp ~ otp::==', otp)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 ~ requestOtp ~ otp generated:', { id: otp._id, expiresAt: otp.expiresAt });
+      }
 
 
       // Send OTP via email and/or SMS based on deliveryMethod

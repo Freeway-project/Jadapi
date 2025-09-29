@@ -8,7 +8,7 @@ import { businessSignupSchema, BusinessSignupFormData } from '@/lib/utils/valida
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { Shield } from 'lucide-react';
+import { Shield, Mail, Phone } from 'lucide-react';
 import AddressAutocomplete from './AddressAutocomplete';
 import toast from 'react-hot-toast';
 
@@ -29,7 +29,8 @@ export default function BusinessSignupForm() {
       phoneNumber,
       businessName: '',
       address: '',
-      otp: '',
+      emailOtp: '',
+      phoneOtp: '',
     },
   });
 
@@ -45,11 +46,16 @@ export default function BusinessSignupForm() {
       // Import authAPI dynamically to avoid SSR issues
       const { authAPI } = await import('@/lib/api/auth');
 
-      // Step 1: Verify OTP
-      const identifier = data.email || data.phoneNumber;
+      // Step 1: Verify both email and phone OTPs
       await authAPI.verifyOTP({
-        identifier,
-        code: data.otp,
+        identifier: data.email,
+        code: data.emailOtp,
+        type: 'signup'
+      });
+
+      await authAPI.verifyOTP({
+        identifier: data.phoneNumber,
+        code: data.phoneOtp,
         type: 'signup'
       });
 
@@ -60,6 +66,7 @@ export default function BusinessSignupForm() {
         phone: data.phoneNumber,
         displayName: data.businessName,
         legalName: data.businessName, // Use business name as legal name
+        address: data.address,
       };
 
       const user = await authAPI.signup(signupData);
@@ -70,8 +77,8 @@ export default function BusinessSignupForm() {
     } catch (error: any) {
       console.error('Business signup failed:', error);
 
-      if (error.message?.includes('OTP')) {
-        toast.error('Invalid verification code. Please check and try again.');
+      if (error.message?.includes('OTP') || error.message?.includes('verification')) {
+        toast.error('Invalid verification code. Please check both email and phone codes and try again.');
       } else if (error.message?.includes('already registered')) {
         toast.error('A business with this email or phone already exists.');
       } else {
@@ -106,44 +113,68 @@ export default function BusinessSignupForm() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* OTP Verification */}
+        {/* Email OTP Verification */}
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <Shield className="w-4 h-4 text-blue-600" />
-            <Label htmlFor="otp" className="text-sm font-medium text-black">Enter verification code sent to your email or phone</Label>
+            <Mail className="w-4 h-4 text-blue-600" />
+            <Label htmlFor="emailOtp" className="text-sm font-medium text-black">Email verification code</Label>
           </div>
           <Input
-            id="otp"
+            id="emailOtp"
             type="text"
-            placeholder="Enter 6-digit OTP"
+            placeholder="Enter email OTP"
             maxLength={6}
             disabled={isSubmitting || isLoading}
             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-500"
-            {...register('otp')}
+            {...register('emailOtp')}
           />
-          {errors.otp && (
-            <p className="text-sm text-red-600">{errors.otp.message}</p>
+          {errors.emailOtp && (
+            <p className="text-sm text-red-600">{errors.emailOtp.message}</p>
           )}
-          <div className="flex space-x-3">
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => handleResendOTP('email')}
-              className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
-            >
-              Resend to email
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => handleResendOTP('sms')}
-              className="p-0 h-auto text-xs text-green-600 hover:text-green-700"
-            >
-              Resend to phone
-            </Button>
+          <div className="text-xs text-gray-600">
+            Code sent to: <span className="font-medium">{email}</span>
           </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => handleResendOTP('email')}
+            className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
+          >
+            Resend email code
+          </Button>
+        </div>
+
+        {/* Phone OTP Verification */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Phone className="w-4 h-4 text-green-600" />
+            <Label htmlFor="phoneOtp" className="text-sm font-medium text-black">Phone verification code</Label>
+          </div>
+          <Input
+            id="phoneOtp"
+            type="text"
+            placeholder="Enter phone OTP"
+            maxLength={6}
+            disabled={isSubmitting || isLoading}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-green-600 focus:ring-1 focus:ring-green-600 disabled:bg-gray-50 disabled:text-gray-500"
+            {...register('phoneOtp')}
+          />
+          {errors.phoneOtp && (
+            <p className="text-sm text-red-600">{errors.phoneOtp.message}</p>
+          )}
+          <div className="text-xs text-gray-600">
+            Code sent to: <span className="font-medium">{phoneNumber}</span>
+          </div>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => handleResendOTP('sms')}
+            className="p-0 h-auto text-xs text-green-600 hover:text-green-700"
+          >
+            Resend SMS code
+          </Button>
         </div>
 
         {/* Email (prefilled and readonly) */}

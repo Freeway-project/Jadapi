@@ -5,6 +5,23 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Button } from '@workspace/ui/components/button';
 import { MapPin, Loader2 } from 'lucide-react';
+import { loadGoogleMaps, isGoogleMapsLoaded } from '@/lib/utils/googleMaps';
+
+// Extend Window interface for Google Maps API
+declare global {
+  interface Window {
+    google?: {
+      maps?: {
+        places?: {
+          AutocompleteService: new() => google.maps.places.AutocompleteService;
+          PlacesServiceStatus: typeof google.maps.places.PlacesServiceStatus;
+        };
+        LatLng: new(lat: number, lng: number) => google.maps.LatLng;
+        LatLngBounds: new(sw?: google.maps.LatLng, ne?: google.maps.LatLng) => google.maps.LatLngBounds;
+      };
+    };
+  }
+}
 
 interface AddressSuggestion {
   description: string;
@@ -42,17 +59,30 @@ function useDebounce(value: string, delay: number) {
 export default function AddressAutocomplete({
   value,
   onChange,
-  placeholder = "Enter your address",
-  label = "Address",
+  placeholder = "Enter your Vancouver address",
+  label = "Address (Vancouver only)",
   error,
   disabled = false,
 }: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAPIReady, setIsAPIReady] = useState(false);
   const debouncedValue = useDebounce(value, 300);
 
-  // Mock Google Places API call - replace with actual API
+  // Load Google Maps API on component mount
+  useEffect(() => {
+    loadGoogleMaps()
+      .then(() => {
+        setIsAPIReady(true);
+      })
+      .catch((error) => {
+        console.error('Failed to load Google Maps API:', error);
+        setIsAPIReady(false);
+      });
+  }, []);
+
+  // Google Places API call - restricted to Vancouver
   const fetchSuggestions = useCallback(async (input: string) => {
     if (input.length < 3) {
       setSuggestions([]);
@@ -62,36 +92,77 @@ export default function AddressAutocomplete({
     setIsLoading(true);
 
     try {
-      // Mock API call - replace with actual Google Places API
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      // Check if Google Maps API is available
+      if (isGoogleMapsLoaded()) {
+        const service = new window.google.maps.places.AutocompleteService();
 
-      // Mock suggestions
-      const mockSuggestions: AddressSuggestion[] = [
-        {
-          description: `${input} Street, New York, NY, USA`,
-          place_id: `place_${Math.random()}`,
-          main_text: `${input} Street`,
-          secondary_text: 'New York, NY, USA'
-        },
-        {
-          description: `${input} Avenue, Los Angeles, CA, USA`,
-          place_id: `place_${Math.random()}`,
-          main_text: `${input} Avenue`,
-          secondary_text: 'Los Angeles, CA, USA'
-        },
-        {
-          description: `${input} Road, Chicago, IL, USA`,
-          place_id: `place_${Math.random()}`,
-          main_text: `${input} Road`,
-          secondary_text: 'Chicago, IL, USA'
-        }
-      ];
+        // Vancouver city bounds for address restriction
+        const vancouverBounds = new window.google.maps.LatLngBounds(
+          new window.google.maps.LatLng(49.1951, -123.2766), // SW corner
+          new window.google.maps.LatLng(49.3157, -123.0236)  // NE corner
+        );
 
-      setSuggestions(mockSuggestions);
+        const request = {
+          input: input,
+          bounds: vancouverBounds,
+          strictBounds: true, // Restrict results to bounds
+          componentRestrictions: { country: 'ca' }, // Canada only
+          types: ['address'], // Only addresses, not businesses
+          region: 'ca'
+        };
+
+        service.getPlacePredictions(request, (predictions, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+            const vancouverSuggestions = predictions
+              .filter(prediction =>
+                prediction.description.toLowerCase().includes('vancouver') ||
+                prediction.description.toLowerCase().includes('bc') ||
+                prediction.description.toLowerCase().includes('british columbia')
+              )
+              .map(prediction => ({
+                description: prediction.description,
+                place_id: prediction.place_id,
+                main_text: prediction.structured_formatting.main_text,
+                secondary_text: prediction.structured_formatting.secondary_text || ''
+              }));
+
+            setSuggestions(vancouverSuggestions);
+          } else {
+            setSuggestions([]);
+          }
+          setIsLoading(false);
+        });
+      } else {
+        // Fallback to mock Vancouver addresses if Google Maps API is not loaded
+        const mockVancouverSuggestions: AddressSuggestion[] = [
+          {
+            description: `${input} Street, Vancouver, BC, Canada`,
+            place_id: `place_${Math.random()}`,
+            main_text: `${input} Street`,
+            secondary_text: 'Vancouver, BC, Canada'
+          },
+          {
+            description: `${input} Avenue, Vancouver, BC, Canada`,
+            place_id: `place_${Math.random()}`,
+            main_text: `${input} Avenue`,
+            secondary_text: 'Vancouver, BC, Canada'
+          },
+          {
+            description: `${input} Drive, Vancouver, BC, Canada`,
+            place_id: `place_${Math.random()}`,
+            main_text: `${input} Drive`,
+            secondary_text: 'Vancouver, BC, Canada'
+          }
+        ];
+
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setSuggestions(mockVancouverSuggestions);
+        setIsLoading(false);
+      }
     } catch (error) {
-      console.error('Error fetching suggestions:', error);
+      console.error('Error fetching address suggestions:', error);
       setSuggestions([]);
-    } finally {
       setIsLoading(false);
     }
   }, []);

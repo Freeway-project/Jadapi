@@ -7,6 +7,7 @@ export interface CreateUserData {
   phone?: string;
   displayName: string;
   legalName?: string;
+  address?: string;
   roles?: ("customer" | "business" | "driver" | "dispatcher" | "admin")[];
 }
 
@@ -22,6 +23,7 @@ export const UserRepository = {
       profile: {
         displayName: data.displayName,
         legalName: data.legalName,
+        address: data.address,
       },
       addressBook: [],
     };
