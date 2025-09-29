@@ -9,7 +9,7 @@ export const OtpController = {
   async requestOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, phoneNumber, type = "signup", deliveryMethod = "both" } = req.body;
-
+      console.log("Received OTP request:", { email, phoneNumber, type, deliveryMethod });
       if (!email && !phoneNumber) {
         throw new ApiError(400, "Either email or phone number is required");
       }
@@ -38,12 +38,22 @@ export const OtpController = {
             throw new ApiError(409, "Email already registered");
           }
         }
-        // TODO: Add phone number check when UserRepository supports it
+        if (phoneNumber) {
+          const existingUser = await UserRepository.findByPhoneNumber(phoneNumber);
+          if (existingUser) {
+            throw new ApiError(409, "Phone number already registered");
+          }
+        }
+        
+
       }
 
       // Generate OTP
       const otpData: GenerateOtpData = { email, phoneNumber, type, deliveryMethod };
       const otp = await OtpService.generateOtp(otpData);
+
+      console.log('🚀 ~ :55 ~ requestOtp ~ otp::==', otp)
+
 
       // Send OTP via email and/or SMS based on deliveryMethod
       const sendPromises = [];

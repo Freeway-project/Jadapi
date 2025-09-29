@@ -41,28 +41,66 @@ export default function BusinessSignupForm() {
     setIsSubmitting(true);
     setLoading(true);
 
-    // Simulate processing delay
-    setTimeout(() => {
-      const userData = {
-        id: Math.random().toString(36).substring(2, 11),
+    try {
+      // Import authAPI dynamically to avoid SSR issues
+      const { authAPI } = await import('@/lib/api/auth');
+
+      // Step 1: Verify OTP
+      const identifier = data.email || data.phoneNumber;
+      await authAPI.verifyOTP({
+        identifier,
+        code: data.otp,
+        type: 'signup'
+      });
+
+      // Step 2: Create business account
+      const signupData = {
+        accountType: 'business' as const,
         email: data.email,
-        phoneNumber: data.phoneNumber,
-        businessName: data.businessName,
-        address: data.address,
-        userType: 'business',
-        createdAt: new Date().toISOString()
+        phone: data.phoneNumber,
+        displayName: data.businessName,
+        legalName: data.businessName, // Use business name as legal name
       };
 
-      setUser(userData);
+      const user = await authAPI.signup(signupData);
+
+      setUser(user);
       setStep('success');
       toast.success('Business account created successfully!');
+    } catch (error: any) {
+      console.error('Business signup failed:', error);
+
+      if (error.message?.includes('OTP')) {
+        toast.error('Invalid verification code. Please check and try again.');
+      } else if (error.message?.includes('already registered')) {
+        toast.error('A business with this email or phone already exists.');
+      } else {
+        toast.error(error.message || 'Failed to create business account. Please try again.');
+      }
+    } finally {
       setIsSubmitting(false);
       setLoading(false);
-    }, 1200);
+    }
   };
 
-  const handleResendOTP = async () => {
-    toast.success('OTP resent to your email!');
+  const handleResendOTP = async (method: 'email' | 'sms' = 'email') => {
+    try {
+      const { authAPI } = await import('@/lib/api/auth');
+
+      const otpData = {
+        email: method === 'email' ? email : undefined,
+        phoneNumber: method === 'sms' ? phoneNumber : undefined,
+        type: 'signup' as const,
+        deliveryMethod: method,
+        userType: 'business' as const,
+      };
+
+      await authAPI.requestOTP(otpData);
+      toast.success(`Verification code resent via ${method === 'email' ? 'email' : 'SMS'}!`);
+    } catch (error: any) {
+      console.error('Failed to resend OTP:', error);
+      toast.error('Failed to resend code. Please try again.');
+    }
   };
 
   return (
@@ -91,7 +129,7 @@ export default function BusinessSignupForm() {
               type="button"
               variant="link"
               size="sm"
-              onClick={handleResendOTP}
+              onClick={() => handleResendOTP('email')}
               className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
             >
               Resend to email
@@ -100,7 +138,7 @@ export default function BusinessSignupForm() {
               type="button"
               variant="link"
               size="sm"
-              onClick={handleResendOTP}
+              onClick={() => handleResendOTP('sms')}
               className="p-0 h-auto text-xs text-green-600 hover:text-green-700"
             >
               Resend to phone

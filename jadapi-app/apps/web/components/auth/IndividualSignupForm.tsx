@@ -41,28 +41,64 @@ export default function IndividualSignupForm() {
     setIsSubmitting(true);
     setLoading(true);
 
-    // Simulate processing delay
-    setTimeout(() => {
-      const userData = {
-        id: Math.random().toString(36).substring(2, 11),
-        email: data.email || '',
-        phoneNumber: data.phoneNumber,
-        name: data.name,
-        address: data.address,
-        userType: 'individual',
-        createdAt: new Date().toISOString()
+    try {
+      // Import authAPI dynamically to avoid SSR issues
+      const { authAPI } = await import('@/lib/api/auth');
+
+      // Step 1: Verify OTP
+      const identifier = data.email || data.phoneNumber;
+      await authAPI.verifyOTP({
+        identifier,
+        code: data.otp,
+        type: 'signup'
+      });
+
+      // Step 2: Create account
+      const signupData = {
+        accountType: 'individual' as const,
+        email: data.email,
+        phone: data.phoneNumber,
+        displayName: data.name,
       };
 
-      setUser(userData);
+      const user = await authAPI.signup(signupData);
+
+      setUser(user);
       setStep('success');
       toast.success('Account created successfully!');
+    } catch (error: any) {
+      console.error('Signup failed:', error);
+
+      if (error.message?.includes('OTP')) {
+        toast.error('Invalid verification code. Please check and try again.');
+      } else if (error.message?.includes('already registered')) {
+        toast.error('An account with this email or phone already exists.');
+      } else {
+        toast.error(error.message || 'Failed to create account. Please try again.');
+      }
+    } finally {
       setIsSubmitting(false);
       setLoading(false);
-    }, 1200);
+    }
   };
 
-  const handleResendOTP = async () => {
-    toast.success('OTP resent to your email!');
+  const handleResendOTP = async (method: 'email' | 'sms' = 'sms') => {
+    try {
+      const { authAPI } = await import('@/lib/api/auth');
+
+      const otpData = {
+        email: method === 'email' ? email : undefined,
+        phoneNumber: method === 'sms' ? phoneNumber : undefined,
+        type: 'signup' as const,
+        deliveryMethod: method,
+      };
+
+      await authAPI.requestOTP(otpData);
+      toast.success(`Verification code resent via ${method === 'email' ? 'email' : 'SMS'}!`);
+    } catch (error: any) {
+      console.error('Failed to resend OTP:', error);
+      toast.error('Failed to resend code. Please try again.');
+    }
   };
 
   return (
@@ -99,7 +135,7 @@ export default function IndividualSignupForm() {
                 type="button"
                 variant="link"
                 size="sm"
-                onClick={handleResendOTP}
+                onClick={() => handleResendOTP('email')}
                 className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
                 Resend to email
@@ -109,7 +145,7 @@ export default function IndividualSignupForm() {
               type="button"
               variant="link"
               size="sm"
-              onClick={handleResendOTP}
+              onClick={() => handleResendOTP('sms')}
               className="p-0 h-auto text-sm text-green-600 hover:text-green-700 font-medium"
             >
               Resend to phone

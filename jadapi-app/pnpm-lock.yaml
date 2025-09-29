@@ -114,6 +114,9 @@ importers:
       '@workspace/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      axios:
+        specifier: ^1.12.2
+        version: 1.12.2
       lucide-react:
         specifier: ^0.475.0
         version: 0.475.0(react@19.1.1)
@@ -1600,6 +1603,9 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  axios@1.12.2:
+    resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
 
   b4a@1.7.2:
     resolution: {integrity: sha512-DyUOdz+E8R6+sruDpQNOaV0y/dBbV6X/8ZkxrDcR0Ifc3BgKlpgG0VAtfOozA0eMtJO5GGe9FsZhueLs00pTww==}
@@ -6230,6 +6236,14 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
+
+  axios@1.12.2:
+    dependencies:
+      follow-redirects: 1.15.11(debug@4.4.1)
+      form-data: 4.0.4
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
 
   b4a@1.7.2: {}
 

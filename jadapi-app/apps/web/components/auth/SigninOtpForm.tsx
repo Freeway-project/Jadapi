@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { otpSchema, OTPFormData } from '@/lib/utils/validation';
+import { authAPI } from '@/lib/api/auth';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -27,18 +28,24 @@ export default function SigninOtpForm() {
   const identifier = email || phoneNumber;
   const identifierType = isEmailLogin ? 'email' : 'phone';
 
-  const onSubmit = async (_data: OTPFormData) => {
+  const onSubmit = async (data: OTPFormData) => {
     setIsSubmitting(true);
     setLoading(true);
 
-    // Simulate processing delay and user lookup
-    setTimeout(() => {
-      // Mock user data - in real app, this would come from API
+    try {
+      // Verify OTP using real API
+      await authAPI.verifyOTP({
+        identifier: identifier!,
+        code: data.otp,
+        type: 'login'
+      });
+
+      // Mock user data for now - in real implementation, this would come from API after OTP verification
       const userData = {
         id: Math.random().toString(36).substring(2, 11),
-        email: email || `user@example.com`,
-        phoneNumber: phoneNumber || `+1234567890`,
-        name: 'John Doe',
+        email: email || undefined,
+        phoneNumber: phoneNumber || undefined,
+        name: 'User',
         userType: 'individual',
         lastLogin: new Date().toISOString()
       };
@@ -46,13 +53,28 @@ export default function SigninOtpForm() {
       setUser(userData);
       setStep('success');
       toast.success('Successfully signed in!');
+    } catch (error) {
+      console.error('OTP verification failed:', error);
+      toast.error(error instanceof Error ? error.message : 'OTP verification failed. Please try again.');
+    } finally {
       setIsSubmitting(false);
       setLoading(false);
-    }, 1200);
+    }
   };
 
   const handleResendOTP = async () => {
-    toast.success(`OTP resent to your ${identifierType}!`);
+    try {
+      await authAPI.requestOTP({
+        email: email || undefined,
+        phoneNumber: phoneNumber || undefined,
+        type: 'login',
+        deliveryMethod: isEmailLogin ? 'email' : 'sms'
+      });
+      toast.success(`OTP resent to your ${identifierType}!`);
+    } catch (error) {
+      console.error('Failed to resend OTP:', error);
+      toast.error('Failed to resend OTP. Please try again.');
+    }
   };
 
   const handleBack = () => {

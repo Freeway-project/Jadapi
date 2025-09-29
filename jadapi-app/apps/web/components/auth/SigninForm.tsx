@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { signinSchema, SigninFormData } from '@/lib/utils/validation';
+import { authAPI } from '@/lib/api/auth';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -34,11 +35,19 @@ export default function SigninForm() {
     setIsSubmitting(true);
     setLoading(true);
 
-    // Determine if it's email or phone
-    const isEmailInput = data.identifier.includes('@');
+    try {
+      // Determine if it's email or phone
+      const isEmailInput = data.identifier.includes('@');
 
-    // Simulate processing delay
-    setTimeout(() => {
+      // Request OTP using real API
+      await authAPI.requestOTP({
+        email: isEmailInput ? data.identifier : undefined,
+        phoneNumber: isEmailInput ? undefined : data.identifier,
+        type: 'login',
+        deliveryMethod: isEmailInput ? 'email' : 'sms'
+      });
+
+      // Update auth store with the identifier
       if (isEmailInput) {
         setEmail(data.identifier);
         setPhoneNumber('');
@@ -46,11 +55,16 @@ export default function SigninForm() {
         setPhoneNumber(data.identifier);
         setEmail('');
       }
+
       setStep('signinOtp');
       toast.success(`Verification code sent to your ${isEmailInput ? 'email' : 'phone'}!`);
+    } catch (error) {
+      console.error('Failed to send OTP:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to send verification code. Please try again.');
+    } finally {
       setIsSubmitting(false);
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleSignupLink = () => {

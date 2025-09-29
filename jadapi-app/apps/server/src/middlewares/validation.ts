@@ -40,9 +40,9 @@ export const validateSignup = (req: Request, _res: Response, next: NextFunction)
       return next(new ApiError(400, "Phone must be a string"));
     }
 
-    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    const phoneRegex = /^\[1-9]\d{1,14}$/;
     if (!phoneRegex.test(phone)) {
-      return next(new ApiError(400, "Phone must be in E.164 format (e.g., +16045551234)"));
+      return next(new ApiError(400, "Phone must be in E.164 format (e.g., 16045551234)"));
     }
   }
 

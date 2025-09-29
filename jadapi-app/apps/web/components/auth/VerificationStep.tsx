@@ -64,7 +64,7 @@ export default function VerificationStep() {
           className="w-full text-gray-600 hover:text-gray-800 py-3 rounded-xl transition-colors duration-200"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Email
+          Back 
         </Button>
       </div>
 

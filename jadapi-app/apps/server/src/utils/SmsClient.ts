@@ -1,6 +1,7 @@
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
+import { logger } from "./logger";
 
-const sns = new SNSClient({ region: "us-east-1" });
+const sns = new SNSClient({ region: "ca-central-1" });
 
 export type SmsType = "otp" | "delivery" | "booking" | "promotional" | "transactional";
 
@@ -15,7 +16,10 @@ interface SmsOptions {
  * Generic SMS sender for all types of messages
  */
 export async function sendSms(options: SmsOptions): Promise<void> {
-  const { phoneE164, message, type = "transactional", senderId = "Jadapi" } = options;
+  const { phoneE164, message, type = "transactional", senderId = "jadapi" } = options;
+
+  logger.info(`Sending SMS to ${phoneE164} (type: ${type})`);
+
   
   // Determine SMS type for AWS SNS
   const smsType = type === "promotional" ? "Promotional" : "Transactional";

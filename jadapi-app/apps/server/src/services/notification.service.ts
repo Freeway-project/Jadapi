@@ -3,6 +3,7 @@
  * This shows how to send OTP and delivery notifications
  */
 
+import { logger } from "../utils/logger";
 import { 
   sendSms, 
   sendOtpSms, 
@@ -18,9 +19,14 @@ export class NotificationService {
    * Send OTP for user verification
    */
   static async sendVerificationOtp(phoneNumber: string, otpCode: string): Promise<void> {
+
+    
     try {
+      console.log('🚀 ~ :22 ~ NotificationService ~ sendVerificationOtp ~ phoneNumber::==', phoneNumber)
       // Option 1: Using the helper function (recommended)
-      await SmsHelpers.sendOtpCode(phoneNumber, otpCode, 5);
+      logger.info(`Sending OTP ${otpCode} to ${phoneNumber}`);
+      const phoneE164 = phoneNumber.startsWith("+") ? phoneNumber : `+1${phoneNumber}`;
+      await SmsHelpers.sendOtpCode(phoneE164, otpCode, 5);
       
       // Option 2: Using the direct function
       // await sendOtpSms(phoneNumber, SmsTemplates.otp(otpCode, 5));

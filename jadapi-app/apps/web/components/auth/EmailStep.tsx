@@ -27,15 +27,40 @@ export default function EmailStep() {
     setIsSubmitting(true);
     setLoading(true);
 
-    // Simulate processing delay
-    setTimeout(() => {
+    try {
+      // Import authAPI dynamically to avoid SSR issues
+      const { authAPI } = await import('@/lib/api/auth');
+
+      // Determine delivery method based on user type
+      const deliveryMethod: 'email' | 'sms' | 'both' = userType === 'business' ? 'both' : 'sms';
+
+      // Request OTP
+      const otpData = {
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        type: 'signup' as const,
+        deliveryMethod,
+        userType: userType as 'individual' | 'business',
+      };
+
+      await authAPI.requestOTP(otpData);
+
+      // Store email and phone in state
       setEmail(data.email || '');
       setPhoneNumber(data.phoneNumber);
       setStep('verification');
-      toast.success('Proceeding to verification!');
+
+      const deliveryText = userType === 'business'
+        ? 'email and SMS'
+        : 'SMS';
+      toast.success(`Verification code sent via ${deliveryText}!`);
+    } catch (error: any) {
+      console.error('Failed to send OTP:', error);
+      toast.error(error.message || 'Failed to send verification code. Please try again.');
+    } finally {
       setIsSubmitting(false);
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleBack = () => {

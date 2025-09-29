@@ -12,8 +12,10 @@ import deliveryRoutes from "./delivery.routes";
 
 const router = Router();
 
-// Health check
-router.get("/health", (_req, res) => res.json({ ok: true }));
+
+
+
+router.get("/", (req, res) => res.json({status:200, ok: true }));
 
 // OTP routes
 router.post("/auth/otp/request", validateOtpRequest, OtpController.requestOtp);

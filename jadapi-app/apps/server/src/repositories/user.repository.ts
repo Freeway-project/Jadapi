@@ -33,6 +33,10 @@ export const UserRepository = {
     return User.findById(id).lean();
   },
 
+  async findByPhoneNumber(phone: string): Promise<UserDoc | null> {
+    return User.findOne({ "auth.phone": phone }).lean();
+  },
+  
   async findByUuid(uuid: string): Promise<UserDoc | null> {
     return User.findOne({ uuid }).lean();
   },
