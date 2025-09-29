@@ -52,6 +52,7 @@ export interface SignupData {
   phone?: string;
   displayName: string;
   legalName?: string; // required for business
+  address?: string; // required for business
 }
 
 export const authAPI = {

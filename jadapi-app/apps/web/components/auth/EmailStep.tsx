@@ -31,9 +31,9 @@ export default function EmailStep() {
       // Import authAPI dynamically to avoid SSR issues
       const { authAPI } = await import('@/lib/api/auth');
 
-      // For business users, send separate OTPs to email and phone
+      // For business users, send separate different OTPs to email and phone
       if (userType === 'business') {
-        // Send OTP to email
+        // Send separate OTP to email
         if (data.email) {
           await authAPI.requestOTP({
             email: data.email,
@@ -43,7 +43,7 @@ export default function EmailStep() {
           });
         }
 
-        // Send OTP to phone
+        // Send separate different OTP to phone
         if (data.phoneNumber) {
           await authAPI.requestOTP({
             phoneNumber: data.phoneNumber,

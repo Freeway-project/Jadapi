@@ -94,16 +94,23 @@ export default function BusinessSignupForm() {
     try {
       const { authAPI } = await import('@/lib/api/auth');
 
-      const otpData = {
-        email: method === 'email' ? email : undefined,
-        phoneNumber: method === 'sms' ? phoneNumber : undefined,
-        type: 'signup' as const,
-        deliveryMethod: method,
-        userType: 'business' as const,
-      };
-
-      await authAPI.requestOTP(otpData);
-      toast.success(`Verification code resent via ${method === 'email' ? 'email' : 'SMS'}!`);
+      if (method === 'email') {
+        await authAPI.requestOTP({
+          email: email,
+          type: 'signup' as const,
+          deliveryMethod: 'email',
+          userType: 'business' as const,
+        });
+        toast.success('Email verification code resent!');
+      } else {
+        await authAPI.requestOTP({
+          phoneNumber: phoneNumber,
+          type: 'signup' as const,
+          deliveryMethod: 'sms',
+          userType: 'business' as const,
+        });
+        toast.success('SMS verification code resent!');
+      }
     } catch (error: any) {
       console.error('Failed to resend OTP:', error);
       toast.error('Failed to resend code. Please try again.');

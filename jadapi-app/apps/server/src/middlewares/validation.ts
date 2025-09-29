@@ -113,10 +113,8 @@ export const validateOtpRequest = (req: Request, _res: Response, next: NextFunct
     return next(new ApiError(400, "Either email or phone number is required"));
   }
 
-  // For business users, both email and phone are required
-  if (userType === 'business' && (!email || !phoneNumber)) {
-    return next(new ApiError(400, "Business accounts require both email and phone number"));
-  }
+  // For business users, allow separate OTP requests for email and phone
+  // No additional validation needed here as we handle separate requests
 
   // For individual users, phone number is required but email is optional
   if (userType === 'individual' && !phoneNumber) {
