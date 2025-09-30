@@ -25,11 +25,8 @@ export default function JadapiLanding() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24">
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium mb-6">
-            <MapPin className="w-4 h-4" />
-            Now serving: Vancouver
-          </div>
-          <DeliveryAnimation width={150} height={150} className="mx-auto mb-6" />
+      
+          <DeliveryAnimation width={250} height={250} className="mx-auto mb-6" />
           
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Scheduled parcel delivery in Vancouver.

@@ -1,0 +1,1 @@
+- dont try to read assets like .json lottier file
