@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { User, Building2 } from 'lucide-react';
+import DeliveryAnimation from '../animations/DeliveryAnimation';
 
 export default function UserTypeSelector() {
   const [selectedType, setSelectedType] = useState<UserType | null>(null);
@@ -52,6 +53,7 @@ export default function UserTypeSelector() {
       </div>
 
       <div className="text-center space-y-3">
+        <DeliveryAnimation width={180} height={180} className="mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-black">Choose Account Type</h1>
         <p className="text-gray-600 text-lg">
           Select the type of account you want to create

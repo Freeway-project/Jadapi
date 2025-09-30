@@ -59,8 +59,8 @@ function useDebounce(value: string, delay: number) {
 export default function AddressAutocomplete({
   value,
   onChange,
-  placeholder = "Enter your Vancouver address",
-  label = "Address (Vancouver only)",
+  placeholder = "Enter your Canadian address",
+  label = "Address (Canada only)",
   error,
   disabled = false,
 }: AddressAutocompleteProps) {
@@ -68,6 +68,7 @@ export default function AddressAutocomplete({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAPIReady, setIsAPIReady] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const debouncedValue = useDebounce(value, 300);
 
   // Load Google Maps API on component mount
@@ -75,14 +76,16 @@ export default function AddressAutocomplete({
     loadGoogleMaps()
       .then(() => {
         setIsAPIReady(true);
+        setApiError(null);
       })
       .catch((error) => {
         console.error('Failed to load Google Maps API:', error);
         setIsAPIReady(false);
+        setApiError('Address autocomplete is not available. Please type your address manually.');
       });
   }, []);
 
-  // Google Places API call - restricted to Vancouver
+  // Google Places API call - restricted to Canada
   const fetchSuggestions = useCallback(async (input: string) => {
     if (input.length < 3) {
       setSuggestions([]);
@@ -96,16 +99,8 @@ export default function AddressAutocomplete({
       if (isGoogleMapsLoaded()) {
         const service = new window.google.maps.places.AutocompleteService();
 
-        // Vancouver city bounds for address restriction
-        const vancouverBounds = new window.google.maps.LatLngBounds(
-          new window.google.maps.LatLng(49.1951, -123.2766), // SW corner
-          new window.google.maps.LatLng(49.3157, -123.0236)  // NE corner
-        );
-
         const request = {
           input: input,
-          bounds: vancouverBounds,
-          strictBounds: true, // Restrict results to bounds
           componentRestrictions: { country: 'ca' }, // Canada only
           types: ['address'], // Only addresses, not businesses
           region: 'ca'
@@ -113,12 +108,7 @@ export default function AddressAutocomplete({
 
         service.getPlacePredictions(request, (predictions, status) => {
           if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-            const vancouverSuggestions = predictions
-              .filter(prediction =>
-                prediction.description.toLowerCase().includes('vancouver') ||
-                prediction.description.toLowerCase().includes('bc') ||
-                prediction.description.toLowerCase().includes('british columbia')
-              )
+            const canadianSuggestions = predictions
               .map(prediction => ({
                 description: prediction.description,
                 place_id: prediction.place_id,
@@ -126,38 +116,17 @@ export default function AddressAutocomplete({
                 secondary_text: prediction.structured_formatting.secondary_text || ''
               }));
 
-            setSuggestions(vancouverSuggestions);
+            setSuggestions(canadianSuggestions);
           } else {
             setSuggestions([]);
           }
           setIsLoading(false);
         });
       } else {
-        // Fallback to mock Vancouver addresses if Google Maps API is not loaded
-        const mockVancouverSuggestions: AddressSuggestion[] = [
-          {
-            description: `${input} Street, Vancouver, BC, Canada`,
-            place_id: `place_${Math.random()}`,
-            main_text: `${input} Street`,
-            secondary_text: 'Vancouver, BC, Canada'
-          },
-          {
-            description: `${input} Avenue, Vancouver, BC, Canada`,
-            place_id: `place_${Math.random()}`,
-            main_text: `${input} Avenue`,
-            secondary_text: 'Vancouver, BC, Canada'
-          },
-          {
-            description: `${input} Drive, Vancouver, BC, Canada`,
-            place_id: `place_${Math.random()}`,
-            main_text: `${input} Drive`,
-            secondary_text: 'Vancouver, BC, Canada'
-          }
-        ];
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-        setSuggestions(mockVancouverSuggestions);
+        // Show error message if Google Maps API is not available
+        console.error('Google Maps API is not loaded. Please check your API key.');
+        setApiError('Address autocomplete is not available. Please type your address manually.');
+        setSuggestions([]);
         setIsLoading(false);
       }
     } catch (error) {
@@ -227,6 +196,15 @@ export default function AddressAutocomplete({
             <span className="text-xs font-bold">!</span>
           </div>
           <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {apiError && !error && (
+        <div className="flex items-center space-x-2 text-amber-600">
+          <div className="w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center">
+            <span className="text-xs font-bold">!</span>
+          </div>
+          <p className="text-sm">{apiError}</p>
         </div>
       )}
 
