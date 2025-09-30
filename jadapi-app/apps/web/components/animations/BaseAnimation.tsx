@@ -3,7 +3,8 @@
 import { CSSProperties } from 'react';
 import LottiePlayer from './LottiePlayer';
 
-interface DeliveryAnimationProps {
+interface BaseAnimationProps {
+  animationFile: string; 
   width?: number | string;
   height?: number | string;
   loop?: boolean;
@@ -11,9 +12,12 @@ interface DeliveryAnimationProps {
   className?: string;
   style?: CSSProperties;
   fallbackPngSrc?: string;
+  ariaLabel?: string;
+  aspectRatio?: number;
 }
 
-export default function DeliveryAnimation({
+export default function BaseAnimation({
+  animationFile,
   width = 250,
   height = 250,
   loop = true,
@@ -21,9 +25,11 @@ export default function DeliveryAnimation({
   className = '',
   style = {},
   fallbackPngSrc,
-}: DeliveryAnimationProps) {
-  // Import your delivery animation JSON here
-  const deliveryAnimationData = require('../../public/global-delivery.json');
+  ariaLabel = 'Animation',
+  aspectRatio = 1,
+}: BaseAnimationProps) {
+  // Import animation JSON dynamically
+  const animationData = require(`../../public/${animationFile}`);
 
   return (
     <div
@@ -35,11 +41,11 @@ export default function DeliveryAnimation({
       }}
     >
       <LottiePlayer
-        animationData={deliveryAnimationData}
+        animationData={animationData}
         loop={loop}
         playOnVisible={playOnVisible}
-        aspectRatio={1}
-        ariaLabel="Delivery animation"
+        aspectRatio={aspectRatio}
+        ariaLabel={ariaLabel}
         fallbackPngSrc={fallbackPngSrc}
         className="w-full h-full"
       />
