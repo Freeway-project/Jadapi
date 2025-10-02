@@ -90,4 +90,8 @@ export interface FareEstimateResult {
   distance: DistanceResult;
   isOutsideServiceArea: boolean;
   nearestCenter?: ServiceCenter;
+  serviceAreas?: {
+    pickup?: string;
+    dropoff?: string;
+  };
 }

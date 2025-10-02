@@ -21,11 +21,26 @@ export class FareService {
    */
   static async estimateFare(input: FareEstimateInput): Promise<FareEstimateResult> {
     // Validate coordinates
+    if (!input.pickup || !input.dropoff) {
+      throw new Error('Pickup and dropoff coordinates are required');
+    }
+
+    // Validate coordinate format
     if (!DistanceService.validateCoordinates(input.pickup)) {
       throw new Error('Invalid pickup coordinates');
     }
     if (!DistanceService.validateCoordinates(input.dropoff)) {
       throw new Error('Invalid dropoff coordinates');
+    }
+
+    // Validate service area
+    const areaValidation = await DistanceService.validateServiceArea(
+      input.pickup,
+      input.dropoff
+    );
+    
+    if (!areaValidation.isValid) {
+      throw new Error(areaValidation.error || 'Location outside service area');
     }
 
     // Get current pricing configuration
@@ -52,7 +67,11 @@ export class FareService {
       fare,
       distance,
       isOutsideServiceArea: false,
-      nearestCenter: undefined
+      nearestCenter: undefined,
+      serviceAreas: {
+        pickup: areaValidation.pickupArea,
+        dropoff: areaValidation.dropoffArea
+      }
     };
   }
 
