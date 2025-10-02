@@ -8,6 +8,10 @@ export const UserController = {
     try {
       const { accountType, email, phone, displayName, legalName }: SignupData = req.body;
 
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 ~ signup ~ input data:', { accountType, email, phone, displayName, legalName });
+      }
+
       // Validate required fields
       if (!accountType) {
         throw new ApiError(400, "Account type is required");
@@ -21,11 +25,60 @@ export const UserController = {
         throw new ApiError(400, "Legal name is required for business accounts");
       }
 
-      // For email signup, require OTP verification first
-      if (email && !phone) {
+      // Verification requirements based on account type
+      if (accountType === "business") {
+        // Business accounts require BOTH email and phone verification
+        if (!email || !phone) {
+          throw new ApiError(400, "Business accounts require both email and phone number.");
+        }
+
         const isEmailVerified = await OtpService.isEmailVerified(email, "signup");
+        const isPhoneVerified = await OtpService.isIdentifierVerified(phone, "signup");
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🚀 ~ signup ~ business verification status:', {
+            email, emailVerified: isEmailVerified,
+            phone, phoneVerified: isPhoneVerified
+          });
+        }
+
         if (!isEmailVerified) {
-          throw new ApiError(400, "Email must be verified with OTP before signup. Please use /auth/otp/request first.");
+          throw new ApiError(400, "Business email must be verified with OTP before signup.");
+        }
+
+        if (!isPhoneVerified) {
+          throw new ApiError(400, "Business phone number must be verified with OTP before signup.");
+        }
+      } else {
+        // Individual accounts - at least one identifier must be verified
+        let verificationChecked = false;
+
+        if (email) {
+          const isEmailVerified = await OtpService.isEmailVerified(email, "signup");
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🚀 ~ signup ~ individual email verification status:', { email, verified: isEmailVerified });
+          }
+
+          if (!isEmailVerified) {
+            throw new ApiError(400, "Email must be verified with OTP before signup.");
+          }
+          verificationChecked = true;
+        }
+
+        if (phone) {
+          const isPhoneVerified = await OtpService.isIdentifierVerified(phone, "signup");
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🚀 ~ signup ~ individual phone verification status:', { phone, verified: isPhoneVerified });
+          }
+
+          if (!isPhoneVerified) {
+            throw new ApiError(400, "Phone number must be verified with OTP before signup.");
+          }
+          verificationChecked = true;
+        }
+
+        if (!verificationChecked) {
+          throw new ApiError(400, "At least one contact method (email or phone) must be provided and verified.");
         }
       }
 
@@ -37,11 +90,35 @@ export const UserController = {
         legalName,
       };
 
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 ~ signup ~ calling UserService.signup with:', signupData);
+      }
+
       const user = await UserService.signup(signupData);
 
-      // If email was verified via OTP, mark it as verified in the user record
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 ~ signup ~ user created:', {
+          id: user._id,
+          uuid: user.uuid,
+          accountType: user.accountType,
+          email: user.auth?.email,
+          phone: user.auth?.phone
+        });
+      }
+
+      // Mark verified identifiers in the user record
       if (email && await OtpService.isEmailVerified(email, "signup")) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🚀 ~ signup ~ marking email as verified for user');
+        }
         await UserService.verifyEmail(user._id.toString());
+      }
+
+      if (phone && await OtpService.isIdentifierVerified(phone, "signup")) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🚀 ~ signup ~ marking phone as verified for user');
+        }
+        await UserService.verifyPhone(user._id.toString());
       }
 
       // Return user without sensitive data

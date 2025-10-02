@@ -1,4 +1,5 @@
 import { MapPin, Package, Shield, Clock, BarChart3, FileText, Camera, CheckCircle } from 'lucide-react';
+import { BaseAnimation } from '../animations';
 
 export default function JadapiLanding() {
   return (
@@ -12,16 +13,20 @@ export default function JadapiLanding() {
             <a href="#pricing" className="hover:text-gray-900 transition">Pricing</a>
             <a href="#business" className="hover:text-gray-900 transition">For Business</a>
           </nav>
+          <a
+            href="/auth/signup"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow"
+          >
+            Sign up
+          </a>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24">
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium mb-6">
-            <MapPin className="w-4 h-4" />
-            Now serving: Vancouver
-          </div>
+      
+          <BaseAnimation animationFile="global-delivery.json" width={250} height={250} className="mx-auto mb-6" />
           
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Scheduled parcel delivery in Vancouver.
@@ -147,7 +152,7 @@ export default function JadapiLanding() {
 
       {/* Pricing */}
       <section id="pricing" className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Simple, transparent pricing</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
             Transparent base fare plus per-kilometer rate within Vancouver. Optional insurance add-on for extra peace of mind.
@@ -180,6 +185,8 @@ export default function JadapiLanding() {
               Get started
             </a>
           </div>
+
+          <BaseAnimation animationFile="truck-delivery-service.json" width={450} height={250} />
         </div>
       </section>
 

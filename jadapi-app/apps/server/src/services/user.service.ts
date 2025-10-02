@@ -8,6 +8,7 @@ export interface SignupData {
   phone?: string;
   displayName: string;
   legalName?: string;
+  address?: string;
 }
 
 export const UserService = {
@@ -42,6 +43,7 @@ export const UserService = {
       phone: data.phone,
       displayName: data.displayName,
       legalName: data.legalName,
+      address: data.address,
       roles,
     };
 
