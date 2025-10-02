@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@work
 import { ArrowLeft, User, Building2 } from 'lucide-react';
 import IndividualSignupForm from './IndividualSignupForm';
 import BusinessSignupForm from './BusinessSignupForm';
+import { BaseAnimation } from '../animations';
 
 export default function VerificationStep() {
   const { userType, setStep } = useAuthStore();
@@ -30,6 +31,7 @@ export default function VerificationStep() {
       </div>
 
       <div className="text-center space-y-3">
+        <BaseAnimation animationFile="global-delivery.json" width={140} height={140} className="mx-auto mb-3" />
         <div className="flex items-center justify-center space-x-3 mb-4">
           <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
             {isIndividual ? (

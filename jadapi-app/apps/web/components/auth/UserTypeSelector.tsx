@@ -6,7 +6,6 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { User, Building2 } from 'lucide-react';
-import DeliveryAnimation from '../animations/DeliveryAnimation';
 import { BaseAnimation } from '../animations';
 
 export default function UserTypeSelector() {

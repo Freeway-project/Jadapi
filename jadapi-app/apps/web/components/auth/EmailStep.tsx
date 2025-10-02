@@ -9,6 +9,7 @@ import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { ArrowLeft, User, Building2 } from 'lucide-react';
+import { BaseAnimation } from '../animations';
 import toast from 'react-hot-toast';
 
 export default function EmailStep() {
@@ -86,7 +87,7 @@ export default function EmailStep() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-8 bg-white">
+    <div className="w-full max-w-md mx-auto space-y-8 bg-white relative">
       {/* Progress indicator */}
       <div className="flex justify-center">
         <div className="flex items-center space-x-2">
@@ -224,6 +225,19 @@ export default function EmailStep() {
           <span className="text-blue-600 hover:text-blue-700 cursor-pointer underline">Privacy Policy</span>
         </p>
       </div>
+
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">
+          <div className="text-center space-y-4">
+            <BaseAnimation animationFile="global-delivery.json" width={120} height={120} className="mx-auto" />
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900">Sending verification code...</h3>
+              <p className="text-gray-600">Please wait while we process your request</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

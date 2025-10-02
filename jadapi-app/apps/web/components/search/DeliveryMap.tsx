@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Truck, Clock, Route, Zap } from 'lucide-react';
-import DeliveryAnimation from '../animations/DeliveryAnimation';
+import { BaseAnimation } from '../animations';
 
 interface DeliveryMapProps {
   fromAddress?: string;
@@ -111,7 +111,7 @@ export default function DeliveryMap({
 
         {/* Delivery Animation */}
         <div className="relative z-10 w-full max-w-xs mx-auto">
-          <DeliveryAnimation className="w-full" />
+          <BaseAnimation animationFile="global-delivery.json" className="w-full" />
         </div>
 
         {/* Route Path */}

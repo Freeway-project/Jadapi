@@ -3,7 +3,8 @@
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
-import { CheckCircle, User, Building2 } from 'lucide-react';
+import { User, Building2 } from 'lucide-react';
+import { BaseAnimation } from '../animations';
 
 export default function SuccessStep() {
   const { userType, user, reset } = useAuthStore();
@@ -17,9 +18,7 @@ export default function SuccessStep() {
   return (
     <div className="w-full max-w-md mx-auto space-y-6 text-center">
       <div className="space-y-4">
-        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-          <CheckCircle className="w-8 h-8 text-green-600" />
-        </div>
+        <BaseAnimation animationFile="global-delivery.json" width={160} height={160} className="mx-auto" />
         <div>
           <h1 className="text-2xl font-bold text-black">Account Created Successfully!</h1>
           <p className="text-gray-600 mt-2">
