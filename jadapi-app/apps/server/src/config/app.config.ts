@@ -10,9 +10,7 @@
         { "code": "VAN", "label": "Vancouver", "lat": 49.2827, "lng": -123.1207, "soft_radius_km": 35, "active": true },
         { "code": "SUR", "label": "Surrey",    "lat": 49.1913, "lng": -122.8490, "soft_radius_km": 35, "active": true },
         { "code": "LAN", "label": "Langley",   "lat": 49.1044, "lng": -122.6603, "soft_radius_km": 30, "active": true }
-      ],
-      "allow_outside": true,
-      "edge_surcharge_cents": 200
+      ]
     },
     "rateCard": {
       "currency": "CAD",
