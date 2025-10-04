@@ -149,7 +149,12 @@ export default function AddressAutocomplete({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     onChange(inputValue);
-    setShowSuggestions(true);
+    if (inputValue.trim().length > 0) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }
   };
 
   const handleSuggestionClick = (suggestion: AddressSuggestion) => {
@@ -159,11 +164,17 @@ export default function AddressAutocomplete({
   };
 
   const handleInputBlur = () => {
-    setTimeout(() => setShowSuggestions(false), 200);
+    setTimeout(() => {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }, 200);
   };
 
   const handleInputFocus = () => {
-    if (value.trim()) {
+    if (value.trim().length >= 3 && suggestions.length === 0) {
+      fetchSuggestions(value);
+    }
+    if (value.trim().length > 0) {
       setShowSuggestions(true);
     }
   };
@@ -183,7 +194,7 @@ export default function AddressAutocomplete({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full bg-gray-50 border-0 focus:bg-white focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100 transition-all ${className}`}
+          className={`w-full bg-gray-50 border-0 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100 disabled:text-gray-500 transition-all ${className}`}
         />
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
           {isLoading && (

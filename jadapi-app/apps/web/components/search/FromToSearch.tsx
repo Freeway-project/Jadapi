@@ -70,7 +70,13 @@ export default function FromToSearch({
 
     try {
       const pickupCoords = await geocodeAddress(fromAddress);
+
+      console.log('🚀 ~ :74 ~ handleSearch ~ pickupCoords::==', pickupCoords)
+
       const dropoffCoords = await geocodeAddress(toAddress);
+
+      console.log('🚀 ~ :78 ~ handleSearch ~ dropoffCoords::==', dropoffCoords)
+
 
       const packageSize = packageSizeMap[packageDetails.type];
 

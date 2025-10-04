@@ -1,4 +1,4 @@
-{
+export default {
   "id": "00000000-0000-0000-0000-000000000001",
   "version": 1,
   "status": "active",
@@ -18,13 +18,13 @@
       "per_km_cents": 120,
       "per_min_cents": 30,
       "min_fare_cents": 699,
-      "size_multiplier": { "XS": 1.00, "S": 1.10, "M": 1.25, "L": 1.50 }
+      "size_multiplier": { "XS": 1.00, "S": 1.10, "M": 1.15, "L": 1.20 }
     },  
     "bands": [
       { "km_max": 5,  "multiplier": 1.00, "label": "≤5 km"  },
       { "km_max": 10, "multiplier": 1.10, "label": "≤10 km" },
       { "km_max": 15, "multiplier": 1.20, "label": "≤15 km" },
-      { "km_max": 20, "multiplier": 1.35, "label": "≤20 km" },
+      { "km_max": 20, "multiplier": 1.30, "label": "≤20 km" },
       { "km_max": 999,"multiplier": 1.55, "label": ">20 km" }
     ],
     "tax": { "enabled": false, "rate": 0 },
@@ -33,4 +33,4 @@
   },
   "created_at": "2025-09-30T00:00:00-07:00",
   "created_by": "system"
-}
+};
