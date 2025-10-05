@@ -40,8 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedToken = tokenManager.getToken();
     if (storedToken) {
       setToken(storedToken);
-      // You could also decode the JWT here to get user info
-      // For now, we'll assume if token exists, user is authenticated
+      // Decode JWT to get user info
+      try {
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        setUser({
+          uuid: payload.userId,
+          email: payload.email,
+          displayName: payload.email || 'Admin',
+          roles: payload.roles || [],
+          status: 'active',
+          accountType: 'individual',
+        });
+      } catch (error) {
+        console.error('Failed to decode token:', error);
+      }
       setIsLoading(false);
     } else {
       setIsLoading(false);
@@ -52,7 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authAPI.login(email, password);
       setToken(response.token);
-      setUser(response.user);
+      setUser({
+        uuid: response.user.uuid,
+        email: response.user.email,
+        displayName: response.user.displayName,
+        roles: response.user.roles,
+        status: response.user.status,
+        accountType: response.user.accountType,
+      });
     } catch (error: any) {
       throw new Error(error.message || 'Login failed');
     }
