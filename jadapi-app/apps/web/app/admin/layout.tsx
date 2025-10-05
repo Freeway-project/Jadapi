@@ -1,3 +1,5 @@
+import { AuthProvider } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminRootLayout({
@@ -5,5 +7,11 @@ export default function AdminRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AdminLayout>{children}</AdminLayout>;
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <AdminLayout>{children}</AdminLayout>
+      </ProtectedRoute>
+    </AuthProvider>
+  );
 }

@@ -5,10 +5,12 @@ export interface CreateUserData {
   accountType: "individual" | "business";
   email?: string;
   phone?: string;
+  password?: string;
   displayName: string;
   legalName?: string;
   address?: string;
-  roles?: ("customer" | "business" | "driver" | "dispatcher" | "admin")[];
+  roles?: ("customer" | "business" | "driver" | "dispatcher" | "admin" | "super_admin")[];
+  status?: "active" | "inactive" | "suspended" | "deleted";
 }
 
 export const UserRepository = {
@@ -16,9 +18,11 @@ export const UserRepository = {
     const userData = {
       accountType: data.accountType,
       roles: data.roles || ["customer"],
+      status: data.status || "active",
       auth: {
         email: data.email,
         phone: data.phone,
+        password: data.password,
       },
       profile: {
         displayName: data.displayName,
@@ -45,6 +49,10 @@ export const UserRepository = {
 
   async findByEmail(email: string): Promise<UserDoc | null> {
     return User.findOne({ "auth.email": email }).lean();
+  },
+
+  async findByEmailWithPassword(email: string): Promise<UserDoc | null> {
+    return User.findOne({ "auth.email": email }).select('+auth.password').lean();
   },
 
   async findByPhone(phone: string): Promise<UserDoc | null> {

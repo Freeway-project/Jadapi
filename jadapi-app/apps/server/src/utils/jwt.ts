@@ -1,0 +1,41 @@
+import jwt from "jsonwebtoken";
+import { ENV } from "../config/env";
+
+const JWT_SECRET = ENV.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
+const JWT_EXPIRES_IN = "7d"; // Token expires in 7 days
+
+export interface JWTPayload {
+  userId: string;
+  email?: string;
+  roles: string[];
+}
+
+export const jwtUtils = {
+  /**
+   * Generate JWT token
+   */
+  generateToken(payload: JWTPayload): string {
+    return jwt.sign(payload, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+  },
+
+  /**
+   * Verify JWT token
+   */
+  verifyToken(token: string): JWTPayload | null {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+      return decoded;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  /**
+   * Decode JWT token without verification (for debugging)
+   */
+  decodeToken(token: string): any {
+    return jwt.decode(token);
+  },
+};

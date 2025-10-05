@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Car,
@@ -23,6 +24,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const navigation = [
     { href: '/admin/dashboard', name: 'Overview', icon: LayoutDashboard },
@@ -45,7 +47,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white">JadAPI</h1>
-                <p className="text-xs text-gray-400">Super Admin</p>
+                <p className="text-xs text-gray-400">{user?.displayName || 'Admin'}</p>
               </div>
             </div>
           </Link>
@@ -79,10 +81,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Settings className="mr-3 h-5 w-5" />
                 Settings
               </Link>
-              <Link href="/" className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-all mt-2">
+              <button
+                onClick={logout}
+                className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-all mt-2"
+              >
                 <LogOut className="mr-3 h-5 w-5" />
                 Sign Out
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -121,7 +126,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   </div>
                   <div>
                     <h1 className="text-lg font-bold text-white">JadAPI</h1>
-                    <p className="text-xs text-gray-400">Super Admin</p>
+                    <p className="text-xs text-gray-400">{user?.displayName || 'Admin'}</p>
                   </div>
                 </div>
               </Link>

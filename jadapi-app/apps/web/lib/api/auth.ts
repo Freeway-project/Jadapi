@@ -1,5 +1,8 @@
 import { UserSignupData, BusinessSignupData } from '../types/auth';
-import { apiClient } from './client';
+import { apiClient, tokenManager } from './client';
+
+// Re-export tokenManager for external use
+export { tokenManager };
 
 export interface OTPRequestData {
   email?: string;
@@ -99,5 +102,26 @@ export const authAPI = {
   signin: async (email: string, otp: string): Promise<{ success: boolean; user: any; token?: string }> => {
     const verifyResult = await authAPI.verifyOTP({ identifier: email, code: otp, type: 'login' });
     return { success: true, user: verifyResult, token: undefined };
+  },
+
+  // Login with email and password (returns JWT token)
+  login: async (email: string, password: string) => {
+    const response = await apiClient.post('/auth/login', { email, password });
+    const { token, user } = response.data;
+
+    // Store token in localStorage
+    tokenManager.setToken(token);
+
+    return { token, user };
+  },
+
+  // Logout
+  logout: () => {
+    tokenManager.removeToken();
+  },
+
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    return !!tokenManager.getToken();
   },
 };

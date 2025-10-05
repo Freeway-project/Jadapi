@@ -24,7 +24,7 @@ export const activityLogger = async (
   res.on("finish", async () => {
     try {
       const duration = Date.now() - startTime;
-      const userId = req.user?.id || req.user?._id;
+      const userId = req.user?.id 
 
       // Determine action based on method
       let action = "unknown";
