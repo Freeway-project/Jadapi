@@ -59,4 +59,26 @@ router.get(
   AdminController.getUsers
 );
 
+// Driver management routes
+router.post(
+  "/drivers",
+  requireSuperAdmin,
+  activityLogger,
+  AdminController.createDriver
+);
+
+router.get(
+  "/drivers",
+  requireAdmin,
+  activityLogger,
+  AdminController.getDrivers
+);
+
+router.put(
+  "/drivers/:driverId/status",
+  requireSuperAdmin,
+  activityLogger,
+  AdminController.updateDriverStatus
+);
+
 export default router;

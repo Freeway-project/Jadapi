@@ -294,4 +294,112 @@ export class AdminService {
 
     return result[0]?.avgDuration?.toFixed(2) || 0;
   }
+
+  /**
+   * Create a new driver account
+   */
+  static async createDriver(driverData: {
+    email?: string;
+    phone?: string;
+    displayName: string;
+    vehicleType?: string;
+    licenseNumber?: string;
+  }) {
+    // Validate required fields
+    if (!driverData.email && !driverData.phone) {
+      throw new Error('Either email or phone is required');
+    }
+
+    if (!driverData.displayName) {
+      throw new Error('Display name is required');
+    }
+
+    // Check if driver already exists
+    const existingDriver = await User.findOne({
+      $or: [
+        ...(driverData.email ? [{ 'auth.email': driverData.email }] : []),
+        ...(driverData.phone ? [{ 'auth.phone': driverData.phone }] : [])
+      ]
+    });
+
+    if (existingDriver) {
+      throw new Error('User with this email or phone already exists');
+    }
+
+    // Create driver account
+    const driver = await User.create({
+      accountType: 'individual',
+      roles: ['driver'],
+      status: 'active',
+      auth: {
+        email: driverData.email?.toLowerCase(),
+        phone: driverData.phone,
+        emailVerifiedAt: driverData.email ? new Date() : null,
+        phoneVerifiedAt: driverData.phone ? new Date() : null,
+      },
+      profile: {
+        displayName: driverData.displayName,
+      },
+    });
+
+    return driver;
+  }
+
+  /**
+   * Get all drivers with filters
+   */
+  static async getDrivers(filters: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    skip?: number;
+  }) {
+    const { status, search, limit = 50, skip = 0 } = filters;
+
+    const query: any = { roles: 'driver' };
+    if (status) query.status = status;
+    if (search) {
+      query.$or = [
+        { 'profile.displayName': { $regex: search, $options: 'i' } },
+        { 'auth.email': { $regex: search, $options: 'i' } },
+        { 'auth.phone': { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const drivers = await User.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip)
+      .select('-delegation.apiKeys.hash')
+      .lean();
+
+    const total = await User.countDocuments(query);
+
+    return {
+      drivers,
+      pagination: {
+        total,
+        limit,
+        skip,
+        hasMore: skip + limit < total,
+      },
+    };
+  }
+
+  /**
+   * Update driver status
+   */
+  static async updateDriverStatus(driverId: string, status: 'active' | 'suspended' | 'deleted') {
+    const driver = await User.findOneAndUpdate(
+      { _id: new Types.ObjectId(driverId), roles: 'driver' },
+      { status },
+      { new: true }
+    );
+
+    if (!driver) {
+      throw new Error('Driver not found');
+    }
+
+    return driver;
+  }
 }

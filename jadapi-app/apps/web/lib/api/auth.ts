@@ -15,7 +15,7 @@ const apiClient = axios.create({
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => {
+  (error: AxiosError<any>) => {
     const errorMessage = error.response?.data?.error ||
                         error.response?.data?.message ||
                         error.message ||
