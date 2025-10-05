@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { adminAPI, DashboardStats, Activity, Order, SystemMetrics } from '@/lib/api/admin';
 import { Package, Users, DollarSign, Activity as ActivityIcon, TrendingUp, Clock } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
-import DriverManagementDesktop from '@/components/admin/DriverManagementDesktop';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -12,7 +10,6 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'drivers' | 'orders' | 'users' | 'analytics'>('overview');
 
   useEffect(() => {
     loadData();
@@ -52,21 +49,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
-      {/* Driver Management */}
-      {activeTab === 'drivers' && <DriverManagementDesktop />}
+    <div className="p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+        <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
+      </div>
 
-      {/* Overview Dashboard */}
-      {activeTab === 'overview' && (
-        <div className="p-8 max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-            <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
               title="Total Users"
               value={stats?.users.total || 0}
@@ -88,44 +79,44 @@ export default function AdminDashboard() {
               icon={DollarSign}
               color="purple"
             />
-            <StatCard
-              title="Orders (Today)"
-              value={stats?.orders.today || 0}
-              subtitle={`${stats?.orders.week || 0} this week`}
-              icon={TrendingUp}
-              color="orange"
-            />
+        <StatCard
+          title="Orders (Today)"
+          value={stats?.orders.today || 0}
+          subtitle={`${stats?.orders.week || 0} this week`}
+          icon={TrendingUp}
+          color="orange"
+        />
+      </div>
+
+      {/* System Metrics */}
+      {metrics && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-4">System Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <MetricItem label="API Calls (24h)" value={metrics.apiCalls24h.toLocaleString()} />
+            <MetricItem label="Error Rate" value={`${metrics.errorRate24h}%`} />
+            <MetricItem label="Avg Response" value={`${metrics.avgResponseTime}ms`} />
+            <MetricItem label="Uptime" value={formatUptime(metrics.uptime)} />
           </div>
+        </div>
+      )}
 
-          {/* System Metrics */}
-          {metrics && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-              <h2 className="text-lg font-semibold mb-4">System Metrics</h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <MetricItem label="API Calls (24h)" value={metrics.apiCalls24h.toLocaleString()} />
-                <MetricItem label="Error Rate" value={`${metrics.errorRate24h}%`} />
-                <MetricItem label="Avg Response" value={`${metrics.avgResponseTime}ms`} />
-                <MetricItem label="Uptime" value={formatUptime(metrics.uptime)} />
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <ActivityIcon className="w-5 h-5 mr-2 text-blue-600" />
-                  Recent Activity
-                </h2>
-              </div>
-              <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
-                {activities.length === 0 ? (
-                  <p className="p-6 text-gray-500 text-center">No activity yet</p>
-                ) : (
-                  activities.map((activity) => (
-                    <div key={activity._id} className="p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold flex items-center">
+              <ActivityIcon className="w-5 h-5 mr-2 text-blue-600" />
+              Recent Activity
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+            {activities.length === 0 ? (
+              <p className="p-6 text-gray-500 text-center">No activity yet</p>
+            ) : (
+              activities.map((activity) => (
+                <div key={activity._id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">
                             {activity.action} {activity.resource}
@@ -204,33 +195,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Placeholder tabs */}
-      {activeTab === 'orders' && (
-        <div className="p-8 text-center">
-          <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Orders Management</h2>
-          <p className="text-gray-600">Order management interface coming soon</p>
-        </div>
-      )}
-
-      {activeTab === 'users' && (
-        <div className="p-8 text-center">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">User Management</h2>
-          <p className="text-gray-600">User management interface coming soon</p>
-        </div>
-      )}
-
-      {activeTab === 'analytics' && (
-        <div className="p-8 text-center">
-          <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics</h2>
-          <p className="text-gray-600">Analytics dashboard coming soon</p>
-        </div>
-      )}
-    </AdminLayout>
+    </div>
   );
 }
 
