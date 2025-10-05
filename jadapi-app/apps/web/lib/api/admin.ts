@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { apiClient } from './client'; 
 
 export interface DashboardStats {
   users: {
@@ -72,48 +72,86 @@ export interface SystemMetrics {
   };
 }
 
+export interface Driver {
+  _id: string;
+  uuid: string;
+  profile: {
+    displayName: string;
+  };
+  auth: {
+    email?: string;
+    phone?: string;
+    emailVerifiedAt?: string;
+    phoneVerifiedAt?: string;
+  };
+  status: 'active' | 'suspended' | 'deleted';
+  roles: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDriverData {
+  email?: string;
+  phone?: string;
+  password?: string;
+  displayName: string;
+  vehicleType?: string;
+  licenseNumber?: string;
+}
+
 export const adminAPI = {
   async getDashboardStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("Failed to fetch stats");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/dashboard/stats');
+    return res.data.data;
   },
 
   async getRecentActivity(limit = 50, skip = 0): Promise<{
     activities: Activity[];
     pagination: any;
   }> {
-    const res = await fetch(
-      `${API_URL}/api/admin/activity?limit=${limit}&skip=${skip}`,
-      { credentials: "include" }
-    );
-    if (!res.ok) throw new Error("Failed to fetch activity");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/activity', {
+      params: { limit, skip }
+    });
+    return res.data.data;
   },
 
   async getActiveOrders(limit = 50, skip = 0): Promise<{
     orders: Order[];
     pagination: any;
   }> {
-    const res = await fetch(
-      `${API_URL}/api/admin/orders/active?limit=${limit}&skip=${skip}`,
-      { credentials: "include" }
-    );
-    if (!res.ok) throw new Error("Failed to fetch orders");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/orders/active', {
+      params: { limit, skip }
+    });
+    return res.data.data;
   },
 
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const res = await fetch(`${API_URL}/api/admin/metrics`, {
-      credentials: "include",
+    const res = await apiClient.get('/admin/metrics');
+    return res.data.data;
+  },
+
+  async getDrivers(filters: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    skip?: number;
+  } = {}): Promise<{
+    drivers: Driver[];
+    pagination: any;
+  }> {
+    const res = await apiClient.get('/admin/drivers', {
+      params: filters
     });
-    if (!res.ok) throw new Error("Failed to fetch metrics");
-    const data = await res.json();
-    return data.data;
+    return res.data.data;
+  },
+
+  async createDriver(driverData: CreateDriverData): Promise<Driver> {
+    const res = await apiClient.post('/admin/drivers', driverData);
+    return res.data.data;
+  },
+
+  async updateDriverStatus(driverId: string, status: 'active' | 'suspended' | 'deleted'): Promise<Driver> {
+    const res = await apiClient.put(`/admin/drivers/${driverId}/status`, { status });
+    return res.data.data;
   },
 };

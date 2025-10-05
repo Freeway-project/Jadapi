@@ -22,4 +22,5 @@ export const ENV = {
 
   // Google Maps configuration
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY ?? "",
+  JWT_SECRET: process.env.JWT_SECRET
 };

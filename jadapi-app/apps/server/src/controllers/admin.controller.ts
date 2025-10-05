@@ -112,4 +112,69 @@ export class AdminController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/admin/drivers
+   * Create a new driver account
+   */
+  static async createDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      const driverData = {
+        email: req.body.email,
+        phone: req.body.phone,
+        displayName: req.body.displayName,
+        vehicleType: req.body.vehicleType,
+        licenseNumber: req.body.licenseNumber,
+      };
+
+      const driver = await AdminService.createDriver(driverData);
+      res.status(201).json({
+        success: true,
+        data: driver,
+        message: 'Driver account created successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/admin/drivers
+   * Get all drivers
+   */
+  static async getDrivers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const filters = {
+        status: req.query.status as string,
+        search: req.query.search as string,
+        limit: parseInt(req.query.limit as string) || 50,
+        skip: parseInt(req.query.skip as string) || 0,
+      };
+
+      const result = await AdminService.getDrivers(filters);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/admin/drivers/:driverId/status
+   * Update driver status
+   */
+  static async updateDriverStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { driverId } = req.params;
+      const { status } = req.body;
+
+      const driver = await AdminService.updateDriverStatus(driverId, status);
+      res.json({
+        success: true,
+        data: driver,
+        message: `Driver status updated to ${status}`
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

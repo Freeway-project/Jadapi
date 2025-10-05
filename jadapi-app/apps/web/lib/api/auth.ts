@@ -1,36 +1,8 @@
-import axios, { AxiosResponse, AxiosError } from 'axios';
 import { UserSignupData, BusinessSignupData } from '../types/auth';
+import { apiClient, tokenManager } from './client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-
-// Create axios instance
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 20000, // 10 seconds timeout
-});
-
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    const errorMessage = error.response?.data?.error ||
-                        error.response?.data?.message ||
-                        error.message ||
-                        'Unknown error';
-
-    throw new AuthAPIError(errorMessage, error.response?.status);
-  }
-);
-
-class AuthAPIError extends Error {
-  constructor(message: string, public status?: number) {
-    super(message);
-    this.name = 'AuthAPIError';
-  }
-}
+// Re-export tokenManager for external use
+export { tokenManager };
 
 export interface OTPRequestData {
   email?: string;
@@ -130,5 +102,26 @@ export const authAPI = {
   signin: async (email: string, otp: string): Promise<{ success: boolean; user: any; token?: string }> => {
     const verifyResult = await authAPI.verifyOTP({ identifier: email, code: otp, type: 'login' });
     return { success: true, user: verifyResult, token: undefined };
+  },
+
+  // Login with email and password (returns JWT token)
+  login: async (email: string, password: string) => {
+    const response = await apiClient.post('/auth/login', { email, password });
+    const { token, user } = response.data;
+
+    // Store token in localStorage
+    tokenManager.setToken(token);
+
+    return { token, user };
+  },
+
+  // Logout
+  logout: () => {
+    tokenManager.removeToken();
+  },
+
+  // Check if user is authenticated
+  isAuthenticated: () => {
+    return !!tokenManager.getToken();
   },
 };

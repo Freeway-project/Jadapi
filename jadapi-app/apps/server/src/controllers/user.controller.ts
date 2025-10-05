@@ -121,6 +121,9 @@ export const UserController = {
         await UserService.verifyPhone(user._id.toString());
       }
 
+      // Create session for the user
+      // req.session.userId = user._id.toString();
+
       // Return user without sensitive data
       const response = {
         uuid: user.uuid,

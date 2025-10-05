@@ -5,12 +5,21 @@ import { ENV } from "./config/env";
 import { logger } from "./utils/logger";
 import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
+import { authenticate } from "./middlewares/auth";
 
 const app = express();
 
-// Middleware setup
-app.use(cors());
+// Middleware setup - relaxed CORS for development
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
+
+// JWT authentication middleware
+app.use(authenticate);
 
 // Routes setup
 app.use("/api", routes);

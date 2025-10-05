@@ -133,7 +133,6 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
 DeliveryOrderSchema.index({ status: 1, createdAt: -1 });
 DeliveryOrderSchema.index({ userId: 1, createdAt: -1 });
 DeliveryOrderSchema.index({ driverId: 1, status: 1 });
-DeliveryOrderSchema.index({ "pickup.coordinates": "2dsphere" });
-DeliveryOrderSchema.index({ "dropoff.coordinates": "2dsphere" });
+
 
 export const DeliveryOrder = model<DeliveryOrderDoc>("DeliveryOrder", DeliveryOrderSchema);

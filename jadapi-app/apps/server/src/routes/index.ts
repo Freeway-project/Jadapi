@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { UserController } from "../controllers/user.controller";
 import { OtpController } from "../controllers/otp.controller";
+import { AuthController } from "../controllers/auth.controller";
 import {
   validateSignup,
   validateEmailVerification,
@@ -26,6 +27,8 @@ router.get("/auth/otp/status", OtpController.checkVerificationStatus);
 
 // Auth routes
 router.post("/auth/signup", validateSignup, UserController.signup);
+router.post("/auth/login", AuthController.login);
+router.post("/auth/create-super-admin", AuthController.createSuperAdmin);
 
 // User management routes
 router.get("/users", UserController.list);

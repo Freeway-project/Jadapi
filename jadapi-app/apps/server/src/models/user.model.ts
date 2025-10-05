@@ -14,6 +14,7 @@ export interface UserDoc extends Document<Types.ObjectId> {
   auth: {
     email?: string;
     phone?: string;
+    password?: string;
     emailVerifiedAt?: Date | null;
     phoneVerifiedAt?: Date | null;
     lastLoginAt?: Date | null;
@@ -96,6 +97,10 @@ const UserSchema = new Schema<UserDoc>(
           validator: (v: string) => !v || E164_REGEX.test(v),
           message: "phone must be E.164 like +16045551234",
         },
+      },
+      password: {
+        type: String,
+        select: false, // Don't include password in queries by default
       },
       emailVerifiedAt: { type: Date, default: null },
       phoneVerifiedAt: { type: Date, default: null },

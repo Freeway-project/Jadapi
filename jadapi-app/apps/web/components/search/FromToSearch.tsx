@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Clock, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import AddressAutocomplete from '../auth/AddressAutocomplete';
 import { deliveryAPI, FareEstimateResponse } from '@/lib/api/delivery';
+import { useSearchStore } from '@/lib/stores/searchStore';
 
 interface FromToSearchProps {
   onEstimate?: (estimate: FareEstimateResponse) => void;
   showPackageDetails?: boolean;
   className?: string;
+  prefillFromLastSearch?: boolean;
 }
 
 interface PackageDetails {
@@ -30,8 +32,10 @@ const packageSizeMap = {
 export default function FromToSearch({
   onEstimate,
   showPackageDetails = false,
-  className = ''
+  className = '',
+  prefillFromLastSearch = false
 }: FromToSearchProps) {
+  const { addSearch, getLastSearch } = useSearchStore();
   const [fromAddress, setFromAddress] = useState('');
   const [toAddress, setToAddress] = useState('');
   const [packageDetails, setPackageDetails] = useState<PackageDetails>({
@@ -39,6 +43,21 @@ export default function FromToSearch({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Prefill from last search if enabled
+  useEffect(() => {
+    if (prefillFromLastSearch) {
+      const lastSearch = getLastSearch();
+      if (lastSearch) {
+        setFromAddress(lastSearch.fromAddress);
+        setToAddress(lastSearch.toAddress);
+        setPackageDetails({
+          type: lastSearch.packageType,
+          description: lastSearch.packageDescription
+        });
+      }
+    }
+  }, [prefillFromLastSearch, getLastSearch]);
 
   const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number }> => {
     if (!window.google?.maps) {
@@ -70,13 +89,7 @@ export default function FromToSearch({
 
     try {
       const pickupCoords = await geocodeAddress(fromAddress);
-
-      console.log('🚀 ~ :74 ~ handleSearch ~ pickupCoords::==', pickupCoords)
-
       const dropoffCoords = await geocodeAddress(toAddress);
-
-      console.log('🚀 ~ :78 ~ handleSearch ~ dropoffCoords::==', dropoffCoords)
-
 
       const packageSize = packageSizeMap[packageDetails.type];
 
@@ -84,6 +97,17 @@ export default function FromToSearch({
         pickup: pickupCoords,
         dropoff: dropoffCoords,
         packageSize,
+      });
+
+      // Save search to local storage
+      addSearch({
+        fromAddress,
+        toAddress,
+        fromCoords: pickupCoords,
+        toCoords: dropoffCoords,
+        packageType: packageDetails.type,
+        packageDescription: packageDetails.description,
+        estimatedFare: estimate?.data?.fare?.total
       });
 
       onEstimate?.(estimate);
