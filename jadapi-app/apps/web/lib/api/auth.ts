@@ -1,36 +1,5 @@
-import axios, { AxiosResponse, AxiosError } from 'axios';
 import { UserSignupData, BusinessSignupData } from '../types/auth';
-
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-
-// Create axios instance
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 20000, // 10 seconds timeout
-});
-
-// Response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError<any>) => {
-    const errorMessage = error.response?.data?.error ||
-                        error.response?.data?.message ||
-                        error.message ||
-                        'Unknown error';
-
-    throw new AuthAPIError(errorMessage, error.response?.status);
-  }
-);
-
-class AuthAPIError extends Error {
-  constructor(message: string, public status?: number) {
-    super(message);
-    this.name = 'AuthAPIError';
-  }
-}
+import { apiClient } from './client';
 
 export interface OTPRequestData {
   email?: string;

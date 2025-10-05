@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+import { apiClient } from './client'; 
 
 export interface DashboardStats {
   users: {
@@ -101,47 +101,33 @@ export interface CreateDriverData {
 
 export const adminAPI = {
   async getDashboardStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("Failed to fetch stats");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/dashboard/stats');
+    return res.data.data;
   },
 
   async getRecentActivity(limit = 50, skip = 0): Promise<{
     activities: Activity[];
     pagination: any;
   }> {
-    const res = await fetch(
-      `${API_BASE_URL}/api/admin/activity?limit=${limit}&skip=${skip}`,
-      { credentials: "include" }
-    );
-    if (!res.ok) throw new Error("Failed to fetch activity");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/activity', {
+      params: { limit, skip }
+    });
+    return res.data.data;
   },
 
   async getActiveOrders(limit = 50, skip = 0): Promise<{
     orders: Order[];
     pagination: any;
   }> {
-    const res = await fetch(
-      `${API_BASE_URL}/api/admin/orders/active?limit=${limit}&skip=${skip}`,
-      { credentials: "include" }
-    );
-    if (!res.ok) throw new Error("Failed to fetch orders");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/orders/active', {
+      params: { limit, skip }
+    });
+    return res.data.data;
   },
 
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const res = await fetch(`${API_BASE_URL}/api/admin/metrics`, {
-      credentials: "include",
-    });
-    if (!res.ok) throw new Error("Failed to fetch metrics");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/metrics');
+    return res.data.data;
   },
 
   async getDrivers(filters: {
@@ -153,56 +139,19 @@ export const adminAPI = {
     drivers: Driver[];
     pagination: any;
   }> {
-    const params = new URLSearchParams();
-    if (filters.status) params.append('status', filters.status);
-    if (filters.search) params.append('search', filters.search);
-    if (filters.limit) params.append('limit', filters.limit.toString());
-    if (filters.skip) params.append('skip', filters.skip.toString());
-
-    const res = await fetch(
-      `${API_BASE_URL}/api/admin/drivers?${params.toString()}`,
-      { credentials: "include" }
-    );
-    if (!res.ok) throw new Error("Failed to fetch drivers");
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.get('/admin/drivers', {
+      params: filters
+    });
+    return res.data.data;
   },
 
   async createDriver(driverData: CreateDriverData): Promise<Driver> {
-    const res = await fetch(`${API_BASE_URL}/api/admin/drivers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: "include",
-      body: JSON.stringify(driverData),
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "Failed to create driver");
-    }
-
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.post('/admin/drivers', driverData);
+    return res.data.data;
   },
 
   async updateDriverStatus(driverId: string, status: 'active' | 'suspended' | 'deleted'): Promise<Driver> {
-    const res = await fetch(`${API_BASE_URL}/api/admin/drivers/${driverId}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: "include",
-      body: JSON.stringify({ status }),
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "Failed to update driver status");
-    }
-
-    const data = await res.json();
-    return data.data;
+    const res = await apiClient.put(`/admin/drivers/${driverId}/status`, { status });
+    return res.data.data;
   },
 };
