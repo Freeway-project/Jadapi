@@ -32,6 +32,9 @@ importers:
       '@types/mongoose':
         specifier: ^5.11.96
         version: 5.11.97(socks@2.8.6)
+      axios:
+        specifier: ^1.12.2
+        version: 1.12.2
       cloudinary:
         specifier: ^2.7.0
         version: 2.7.0

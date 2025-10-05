@@ -6,38 +6,15 @@ import { Button } from '@workspace/ui/components/button';
 import FromToSearch from '@/components/search/FromToSearch';
 import DeliveryMap from '@/components/search/DeliveryMap';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { FareEstimateResponse } from '@/lib/api/delivery';
 import Link from 'next/link';
-
-interface DeliveryEstimate {
-  fromAddress: string;
-  toAddress: string;
-  distance: number;
-  estimatedTime: number;
-  price: number;
-  packageDetails?: any;
-}
 
 export default function SearchPage() {
   const { user } = useAuthStore();
-  const [estimate, setEstimate] = useState<DeliveryEstimate | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [estimate, setEstimate] = useState<FareEstimateResponse | null>(null);
 
-  const handleSearch = async (fromAddress: string, toAddress: string, packageDetails?: any) => {
-    setIsLoading(true);
-
-    // Simulate API call for estimate calculation
-    setTimeout(() => {
-      const mockEstimate: DeliveryEstimate = {
-        fromAddress,
-        toAddress,
-        distance: Math.round((Math.random() * 20 + 5) * 10) / 10, // 5-25 km
-        estimatedTime: Math.round(Math.random() * 40 + 20), // 20-60 minutes
-        price: Math.round((Math.random() * 30 + 15) * 100) / 100, // $15-45
-        packageDetails
-      };
-      setEstimate(mockEstimate);
-      setIsLoading(false);
-    }, 1500);
+  const handleEstimate = (estimateData: FareEstimateResponse) => {
+    setEstimate(estimateData);
   };
 
   const features = [
@@ -68,7 +45,7 @@ export default function SearchPage() {
               <div className="p-2 bg-blue-600 rounded-xl">
                 <Truck className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">JadAPI Delivery</span>
+              <span className="text-xl font-bold text-gray-900">JadAPI </span>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -126,7 +103,7 @@ export default function SearchPage() {
 
             {/* Search Component */}
             <FromToSearch
-              onSearch={handleSearch}
+              onEstimate={handleEstimate}
               showPackageDetails={!user || user.accountType === 'individual'}
               className="w-full"
             />
@@ -163,22 +140,50 @@ export default function SearchPage() {
 
           {/* Right Column - Map & Results */}
           <div className="space-y-6">
-            {isLoading ? (
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-                <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Calculating Route</h3>
-                <p className="text-gray-600">Finding the best delivery option for you...</p>
-              </div>
-            ) : estimate ? (
+            {estimate ? (
               <div className="space-y-6">
-                {/* Delivery Map */}
-                <DeliveryMap
-                  fromAddress={estimate.fromAddress}
-                  toAddress={estimate.toAddress}
-                  estimatedTime={estimate.estimatedTime}
-                  distance={estimate.distance}
-                  price={estimate.price}
-                />
+                {/* Estimate Summary Card */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-900">Delivery Estimate</h3>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-blue-600">
+                        ${(estimate?.data.fare.total / 100).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-600">{estimate?.data.fare.currency}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">Estimated Time</span>
+                      </div>
+                      <span className="font-semibold text-gray-900">{estimate?.data.distance.durationMinutes} min</span>
+                    </div>
+
+                    <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                      <div className="flex items-center space-x-2">
+                        <Navigation className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">Distance</span>
+                      </div>
+                      <span className="font-semibold text-gray-900">{estimate?.data.distance.distanceKm} km</span>
+                    </div>
+
+                    {estimate?.data.serviceAreas.pickup && (
+                      <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                        <span className="text-gray-700">Service Areas</span>
+                        <span className="font-medium text-gray-900">
+                          {estimate?.data.serviceAreas.pickup}
+                          {estimate?.data.serviceAreas.dropoff && estimate?.data.serviceAreas.dropoff !== estimate?.data.serviceAreas.pickup &&
+                            ` → ${estimate?.data.serviceAreas.dropoff}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -207,23 +212,41 @@ export default function SearchPage() {
 
                 {/* Estimate Details */}
                 <div className="bg-white rounded-xl p-6 border border-gray-100">
-                  <h3 className="font-semibold text-gray-900 mb-4">Estimate Details</h3>
+                  <h3 className="font-semibold text-gray-900 mb-4">Fare Breakdown</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Base delivery fee</span>
-                      <span className="font-medium">${(estimate.price * 0.7).toFixed(2)}</span>
+                      <span className="text-gray-600">Base fare</span>
+                      <span className="font-medium">${(estimate?.data.fare.baseFare / 100).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Distance charge ({estimate.distance} km)</span>
-                      <span className="font-medium">${(estimate.price * 0.2).toFixed(2)}</span>
+                      <span className="text-gray-600">Distance charge ({estimate?.data.fare.distanceKm} km)</span>
+                      <span className="font-medium">${(estimate?.data.fare.distanceFare / 100).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Service fee</span>
-                      <span className="font-medium">${(estimate.price * 0.1).toFixed(2)}</span>
+                      <span className="text-gray-600">Time charge ({estimate?.data.fare.durationMinutes} min)</span>
+                      <span className="font-medium">${(estimate?.data.fare.timeFare / 100).toFixed(2)}</span>
                     </div>
+                    {estimate?.data.fare.bandLabel && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Distance band: {estimate?.data.fare.bandLabel}</span>
+                        <span className="font-medium">{estimate?.data.fare.bandMultiplier}x</span>
+                      </div>
+                    )}
+                    {estimate?.data.fare.sizeMultiplier !== 1 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Package size multiplier</span>
+                        <span className="font-medium">{estimate?.data.fare.sizeMultiplier}x</span>
+                      </div>
+                    )}
+                    {estimate?.data.fare.tax > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tax</span>
+                        <span className="font-medium">${(estimate?.data.fare.tax / 100).toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t border-gray-200 pt-3 flex justify-between text-base font-semibold">
                       <span>Total</span>
-                      <span>${estimate.price}</span>
+                      <span>${(estimate?.data.fare.total / 100).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

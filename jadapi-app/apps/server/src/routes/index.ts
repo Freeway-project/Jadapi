@@ -9,6 +9,8 @@ import {
   validateOtpVerification
 } from "../middlewares/validation";
 import deliveryRoutes from "./delivery.routes";
+import pricingRoutes from "./pricing.routes";
+import adminRoutes from "./admin.routes";
 
 const router = Router();
 
@@ -36,5 +38,11 @@ router.post("/users/:id/verify-phone", validatePhoneVerification, UserController
 
 // Delivery routes
 router.use("/delivery", deliveryRoutes);
+
+// Pricing routes
+router.use("/pricing", pricingRoutes);
+
+// Admin routes
+router.use("/admin", adminRoutes);
 
 export default router;

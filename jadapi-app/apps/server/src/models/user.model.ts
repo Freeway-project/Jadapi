@@ -3,7 +3,7 @@ import { E164_REGEX } from "./common";
 import * as crypto from "crypto"; // for randomUUID()
 
 type AccountType = "individual" | "business";
-type Role = "customer" | "business" | "driver" | "dispatcher" | "admin";
+type Role = "customer" | "business" | "driver" | "dispatcher" | "admin" | "super_admin";
 
 export interface UserDoc extends Document<Types.ObjectId> {
   uuid: string;                       // public stable ID for verification/lookup
@@ -74,7 +74,7 @@ const UserSchema = new Schema<UserDoc>(
     accountType: { type: String, enum: ["individual", "business"], required: true, index: true },
     roles: {
       type: [String],
-      enum: ["customer", "business", "driver", "dispatcher", "admin"],
+      enum: ["customer", "business", "driver", "dispatcher", "admin", "super_admin"],
       default: ["customer"],
       index: true,
     },

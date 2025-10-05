@@ -23,6 +23,7 @@
   "dependencies": {
     "@aws-sdk/client-sns": "^3.896.0",
     "@types/mongoose": "^5.11.96",
+    "axios": "^1.12.2",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
