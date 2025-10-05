@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Truck, Users, Building2, Star, Shield, Clock } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import FromToSearch from '@/components/search/FromToSearch';
@@ -12,10 +12,22 @@ import Link from 'next/link';
 export default function SearchPage() {
   const { user } = useAuthStore();
   const [estimate, setEstimate] = useState<FareEstimateResponse | null>(null);
+  const estimateRef = useRef<HTMLDivElement>(null);
 
   const handleEstimate = (estimateData: FareEstimateResponse) => {
     setEstimate(estimateData);
   };
+
+  useEffect(() => {
+    if (estimate && estimateRef.current) {
+      setTimeout(() => {
+        estimateRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    }
+  }, [estimate]);
 
   const features = [
     {
@@ -38,42 +50,42 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-600 rounded-xl">
-                <Truck className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-1.5 sm:p-2 bg-blue-600 rounded-lg sm:rounded-xl">
+                <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">JadAPI </span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900">JadAPI</span>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {user ? (
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="hidden sm:flex items-center space-x-2">
                     {user.accountType === 'business' ? (
                       <Building2 className="w-4 h-4 text-blue-600" />
                     ) : (
                       <Users className="w-4 h-4 text-green-600" />
                     )}
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 max-w-[150px] truncate">
                       {user.profile?.displayName || user.auth?.email}
                     </span>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">
                     Dashboard
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 sm:space-x-3">
                   <Link href="/auth">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
                       Sign In
                     </Button>
                   </Link>
                   <Link href="/auth">
-                    <Button size="sm">
+                    <Button size="sm" className="text-xs sm:text-sm">
                       Get Started
                     </Button>
                   </Link>
@@ -85,17 +97,17 @@ export default function SearchPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Search */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Hero Section */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <div className="text-center lg:text-left px-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
                 Fast & Reliable Delivery
                 <span className="block text-blue-600">Across Vancouver</span>
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-sm sm:text-base lg:text-xl text-gray-600 mb-4 sm:mb-6 lg:mb-8">
                 Get instant estimates and book your delivery in minutes.
                 Professional drivers, competitive rates, real-time tracking.
               </p>
@@ -109,18 +121,18 @@ export default function SearchPage() {
             />
 
             {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {features.map((feature, index) => (
-                <div key={index} className="bg-white rounded-xl p-4 border border-gray-100">
+                <div key={index} className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100">
                   <div className="text-blue-600 mb-2">{feature.icon}</div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
+                  <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">{feature.title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">{feature.description}</p>
                 </div>
               ))}
             </div>
 
             {/* Business CTA */}
-            {(!user || user.accountType === 'individual') && (
+            {/* {(!user || user.accountType === 'individual') && (
               <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white">
                 <div className="flex items-center space-x-3 mb-4">
                   <Building2 className="w-8 h-8" />
@@ -135,43 +147,42 @@ export default function SearchPage() {
                   </Button>
                 </Link>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Right Column - Map & Results */}
-          <div className="space-y-6">
+          <div ref={estimateRef} className="space-y-4 sm:space-y-6">
             {estimate ? (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Estimate Summary Card */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">Delivery Estimate</h3>
+                <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900">Delivery Estimate</h3>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-blue-600">
+                      <div className="text-2xl sm:text-3xl font-bold text-blue-600">
                         ${(estimate?.data.fare.total / 100).toFixed(2)}
                       </div>
-                      <div className="text-sm text-gray-600">{estimate?.data.fare.currency}</div>
+                      <div className="text-xs sm:text-sm text-gray-600">{estimate?.data.fare.currency}</div>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                  <div className="space-y-2 sm:space-y-4">
+                    <div className="flex items-center justify-between py-2 sm:py-3 border-t border-gray-100">
                       <div className="flex items-center space-x-2">
-                        <Clock className="w-5 h-5 text-gray-500" />
-                        <span className="text-gray-700">Estimated Time</span>
+                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                        <span className="text-sm sm:text-base text-gray-700">Estimated Time</span>
                       </div>
-                      <span className="font-semibold text-gray-900">{estimate?.data.distance.durationMinutes} min</span>
+                      <span className="text-sm sm:text-base font-semibold text-gray-900">{estimate?.data.distance.durationMinutes} min</span>
                     </div>
 
-                    <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between py-2 sm:py-3 border-t border-gray-100">
                       <div className="flex items-center space-x-2">
-                        <Navigation className="w-5 h-5 text-gray-500" />
-                        <span className="text-gray-700">Distance</span>
+                        <span className="text-sm sm:text-base text-gray-700">Distance</span>
                       </div>
-                      <span className="font-semibold text-gray-900">{estimate?.data.distance.distanceKm} km</span>
+                      <span className="text-sm sm:text-base font-semibold text-gray-900">{estimate?.data.distance.distanceKm} km</span>
                     </div>
 
-                    {estimate?.data.serviceAreas.pickup && (
+                    {/* {estimate?.data.serviceAreas.pickup && (
                       <div className="flex items-center justify-between py-3 border-t border-gray-100">
                         <span className="text-gray-700">Service Areas</span>
                         <span className="font-medium text-gray-900">
@@ -181,7 +192,7 @@ export default function SearchPage() {
                           }
                         </span>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
 

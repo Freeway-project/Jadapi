@@ -7,22 +7,6 @@ import { Button } from '@workspace/ui/components/button';
 import { MapPin, Loader2 } from 'lucide-react';
 import { loadGoogleMaps, isGoogleMapsLoaded } from '@/lib/utils/googleMaps';
 
-// Extend Window interface for Google Maps API
-declare global {
-  interface Window {
-    google?: {
-      maps?: {
-        places?: {
-          AutocompleteService: new() => google.maps.places.AutocompleteService;
-          PlacesServiceStatus: typeof google.maps.places.PlacesServiceStatus;
-        };
-        LatLng: new(lat: number, lng: number) => google.maps.LatLng;
-        LatLngBounds: new(sw?: google.maps.LatLng, ne?: google.maps.LatLng) => google.maps.LatLngBounds;
-      };
-    };
-  }
-}
-
 interface AddressSuggestion {
   description: string;
   place_id: string;
