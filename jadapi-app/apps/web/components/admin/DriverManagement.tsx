@@ -127,11 +127,11 @@ export default function DriverManagement() {
       {/* Create Form */}
       {showCreateForm && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Create New Driver</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Create New Driver</h3>
           <form onSubmit={handleCreateDriver} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <Label htmlFor="displayName" className="text-sm">Driver Name *</Label>
+                <Label htmlFor="displayName" className="text-sm font-medium text-gray-700">Driver Name *</Label>
                 <Input
                   id="displayName"
                   type="text"
@@ -143,7 +143,7 @@ export default function DriverManagement() {
                 />
               </div>
               <div>
-                <Label htmlFor="email" className="text-sm">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -154,7 +154,7 @@ export default function DriverManagement() {
                 />
               </div>
               <div>
-                <Label htmlFor="phone" className="text-sm">Phone</Label>
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -165,7 +165,7 @@ export default function DriverManagement() {
                 />
               </div>
               <div>
-                <Label htmlFor="vehicleType" className="text-sm">Vehicle Type</Label>
+                <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">Vehicle Type</Label>
                 <Input
                   id="vehicleType"
                   type="text"
@@ -176,7 +176,7 @@ export default function DriverManagement() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="licenseNumber" className="text-sm">License Number</Label>
+                <Label htmlFor="licenseNumber" className="text-sm font-medium text-gray-700">License Number</Label>
                 <Input
                   id="licenseNumber"
                   type="text"
@@ -227,7 +227,7 @@ export default function DriverManagement() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 px-3 border border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="h-10 px-3 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Statuses</option>
           <option value="active">Active</option>

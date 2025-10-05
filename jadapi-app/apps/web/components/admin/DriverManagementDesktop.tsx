@@ -13,7 +13,6 @@ export default function DriverManagementDesktop() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   const [formData, setFormData] = useState<CreateDriverData>({
     displayName: '',
@@ -21,7 +20,9 @@ export default function DriverManagementDesktop() {
     phone: '',
     vehicleType: '',
     licenseNumber: '',
+    password: '',
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
@@ -65,6 +66,24 @@ export default function DriverManagementDesktop() {
       return;
     }
 
+    if (!formData.password) {
+      setFormError('Password is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setFormError('Password must be at least 6 characters');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.password !== confirmPassword) {
+      setFormError('Passwords do not match');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       await adminAPI.createDriver(formData);
       setFormSuccess('Driver created successfully!');
@@ -74,7 +93,9 @@ export default function DriverManagementDesktop() {
         phone: '',
         vehicleType: '',
         licenseNumber: '',
+        password: '',
       });
+      setConfirmPassword('');
       setTimeout(() => {
         setShowCreateModal(false);
         setFormSuccess(null);
@@ -91,7 +112,6 @@ export default function DriverManagementDesktop() {
     try {
       await adminAPI.updateDriverStatus(driverId, status);
       loadDrivers();
-      setSelectedDriver(null);
     } catch (error: any) {
       alert(error.message || 'Failed to update driver status');
     }
@@ -205,7 +225,7 @@ export default function DriverManagementDesktop() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="h-12 px-4 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">All Statuses</option>
             <option value="active">Active</option>
@@ -393,6 +413,34 @@ export default function DriverManagementDesktop() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Minimum 6 characters"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="mt-2 h-12"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-2 h-12"
+                    required
+                  />
+                </div>
+                <div>
                   <Label htmlFor="vehicleType" className="text-sm font-medium text-gray-700">
                     Vehicle Type
                   </Label>
@@ -422,7 +470,7 @@ export default function DriverManagementDesktop() {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> Either email or phone number is required. The driver will be created with an active status.
+                  <strong>Note:</strong> Email or phone is required for login. Password must be at least 6 characters. The driver will be created with an active status.
                 </p>
               </div>
 

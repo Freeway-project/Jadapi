@@ -1,7 +1,7 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { UserSignupData, BusinessSignupData } from '../types/auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
 
 // Create axios instance
 const apiClient = axios.create({

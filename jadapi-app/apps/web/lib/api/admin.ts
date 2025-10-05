@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
 
 export interface DashboardStats {
   users: {
@@ -93,6 +93,7 @@ export interface Driver {
 export interface CreateDriverData {
   email?: string;
   phone?: string;
+  password?: string;
   displayName: string;
   vehicleType?: string;
   licenseNumber?: string;
@@ -100,7 +101,7 @@ export interface CreateDriverData {
 
 export const adminAPI = {
   async getDashboardStats(): Promise<DashboardStats> {
-    const res = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
       credentials: "include",
     });
     if (!res.ok) throw new Error("Failed to fetch stats");
@@ -113,7 +114,7 @@ export const adminAPI = {
     pagination: any;
   }> {
     const res = await fetch(
-      `${API_URL}/api/admin/activity?limit=${limit}&skip=${skip}`,
+      `${API_BASE_URL}/api/admin/activity?limit=${limit}&skip=${skip}`,
       { credentials: "include" }
     );
     if (!res.ok) throw new Error("Failed to fetch activity");
@@ -126,7 +127,7 @@ export const adminAPI = {
     pagination: any;
   }> {
     const res = await fetch(
-      `${API_URL}/api/admin/orders/active?limit=${limit}&skip=${skip}`,
+      `${API_BASE_URL}/api/admin/orders/active?limit=${limit}&skip=${skip}`,
       { credentials: "include" }
     );
     if (!res.ok) throw new Error("Failed to fetch orders");
@@ -135,7 +136,7 @@ export const adminAPI = {
   },
 
   async getSystemMetrics(): Promise<SystemMetrics> {
-    const res = await fetch(`${API_URL}/api/admin/metrics`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/metrics`, {
       credentials: "include",
     });
     if (!res.ok) throw new Error("Failed to fetch metrics");
@@ -159,7 +160,7 @@ export const adminAPI = {
     if (filters.skip) params.append('skip', filters.skip.toString());
 
     const res = await fetch(
-      `${API_URL}/api/admin/drivers?${params.toString()}`,
+      `${API_BASE_URL}/api/admin/drivers?${params.toString()}`,
       { credentials: "include" }
     );
     if (!res.ok) throw new Error("Failed to fetch drivers");
@@ -168,7 +169,7 @@ export const adminAPI = {
   },
 
   async createDriver(driverData: CreateDriverData): Promise<Driver> {
-    const res = await fetch(`${API_URL}/api/admin/drivers`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/drivers`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -187,7 +188,7 @@ export const adminAPI = {
   },
 
   async updateDriverStatus(driverId: string, status: 'active' | 'suspended' | 'deleted'): Promise<Driver> {
-    const res = await fetch(`${API_URL}/api/admin/drivers/${driverId}/status`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/drivers/${driverId}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

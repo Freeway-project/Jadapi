@@ -117,84 +117,83 @@ export default function AdminDashboard() {
               activities.map((activity) => (
                 <div key={activity._id} className="p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {activity.action} {activity.resource}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {activity.userId?.profile.displayName || 'System'}
-                          </p>
-                        </div>
-                        <div className="text-xs text-gray-400 flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {new Date(activity.timestamp).toLocaleTimeString()}
-                        </div>
-                      </div>
-                      <div className="mt-2 flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">{activity.method}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {activity.action} {activity.resource}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {activity.userId?.profile.displayName || 'System'}
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-400 flex items-center">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {new Date(activity.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">{activity.method}</span>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500">{activity.endpoint}</span>
+                    {activity.statusCode && (
+                      <>
                         <span className="text-xs text-gray-400">•</span>
-                        <span className="text-xs text-gray-500">{activity.endpoint}</span>
-                        {activity.statusCode && (
-                          <>
-                            <span className="text-xs text-gray-400">•</span>
-                            <span className={`text-xs ${activity.statusCode >= 400 ? 'text-red-600' : 'text-green-600'}`}>
-                              {activity.statusCode}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Active Orders */}
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <Package className="w-5 h-5 mr-2 text-blue-600" />
-                  Active Orders
-                </h2>
-              </div>
-              <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
-                {orders.length === 0 ? (
-                  <p className="p-6 text-gray-500 text-center">No active orders</p>
-                ) : (
-                  orders.map((order) => (
-                    <div key={order._id} className="p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">#{order.orderId}</p>
-                          <p className="text-xs text-gray-500">{order.userId?.profile.displayName}</p>
-                        </div>
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          order.status === 'in_transit' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {order.status}
+                        <span className={`text-xs ${activity.statusCode >= 400 ? 'text-red-600' : 'text-green-600'}`}>
+                          {activity.statusCode}
                         </span>
-                      </div>
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <p>From: {order.pickup.address}</p>
-                        <p>To: {order.dropoff.address}</p>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {order.pricing.currency} ${order.pricing.total.toFixed(2)}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(order.createdAt).toLocaleTimeString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
+
+        {/* Active Orders */}
+        <div className="bg-white rounded-xl border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold flex items-center">
+              <Package className="w-5 h-5 mr-2 text-blue-600" />
+              Active Orders
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+            {orders.length === 0 ? (
+              <p className="p-6 text-gray-500 text-center">No active orders</p>
+            ) : (
+              orders.map((order) => (
+                <div key={order._id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">#{order.orderId}</p>
+                      <p className="text-xs text-gray-500">{order.userId?.profile.displayName}</p>
+                    </div>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      order.status === 'in_transit' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>From: {order.pickup.address}</p>
+                    <p>To: {order.dropoff.address}</p>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-900">
+                      {order.pricing.currency} ${order.pricing.total.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(order.createdAt).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
