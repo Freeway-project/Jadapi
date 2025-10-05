@@ -37,10 +37,10 @@ export default function JadapiLanding() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/app/sign-up" className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
+            <a href="/search" className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
               Create an order
             </a>
-            <a href="/t/track" className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-lg font-semibold hover:border-blue-300 hover:text-blue-600 transition">
+            <a href="/track" className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-lg font-semibold hover:border-blue-300 hover:text-blue-600 transition">
               Track a parcel
             </a>
           </div>
