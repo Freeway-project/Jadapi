@@ -59,7 +59,16 @@ export const OtpController = {
       }
 
 
-      // Send OTP via email and/or SMS based on deliveryMethod
+      // Send response immediately, then send OTP asynchronously
+      res.status(200).json({
+        message: "OTP sent successfully",
+        email: email || null,
+        phoneNumber: phoneNumber || null,
+        deliveryMethod,
+        expiresAt: otp.expiresAt,
+      });
+
+      // Send OTP via email and/or SMS based on deliveryMethod (non-blocking)
       const sendPromises = [];
 
       if ((deliveryMethod === "email" || deliveryMethod === "both") && email) {
@@ -68,25 +77,23 @@ export const OtpController = {
             email,
             code: otp.code,
             type,
+          }).catch(err => {
+            console.error('Failed to send OTP email:', err);
           })
         );
       }
 
       if ((deliveryMethod === "sms" || deliveryMethod === "both") && phoneNumber) {
         sendPromises.push(
-          NotificationService.sendVerificationOtp(phoneNumber, otp.code)
+          NotificationService.sendVerificationOtp(phoneNumber, otp.code).catch(err => {
+            console.error('Failed to send OTP SMS:', err);
+          })
         );
       }
 
-      // Wait for all send operations to complete
-      await Promise.all(sendPromises);
-
-      res.status(200).json({
-        message: "OTP sent successfully",
-        email: email || null,
-        phoneNumber: phoneNumber || null,
-        deliveryMethod,
-        expiresAt: otp.expiresAt,
+      // Send in background (fire and forget)
+      Promise.all(sendPromises).catch(err => {
+        console.error('OTP sending failed:', err);
       });
     } catch (err) {
       next(err);
