@@ -64,9 +64,9 @@ export default function BusinessSignupForm() {
         accountType: 'business' as const,
         email: data.email,
         phone: data.phoneNumber,
-        displayName: data.businessName,
-        legalName: data.businessName, // Use business name as legal name
+        name: data.businessName,  // Business name becomes the profile name
         address: data.address,
+        businessName: data.businessName,  // Also store in businessProfile
       };
 
       const user = await authAPI.signup(signupData);

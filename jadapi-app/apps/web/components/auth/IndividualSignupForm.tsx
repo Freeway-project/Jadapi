@@ -58,7 +58,7 @@ export default function IndividualSignupForm() {
         accountType: 'individual' as const,
         email: data.email,
         phone: data.phoneNumber,
-        displayName: data.name,
+        name: data.name,
         address: data.address,
       };
 

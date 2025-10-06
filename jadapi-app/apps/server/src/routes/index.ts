@@ -29,6 +29,7 @@ router.post("/auth/create-admin", AuthController.createAdmin);
 
 // User management routes
 router.get("/users", UserController.list);
+router.get("/users/search", UserController.searchByIdentifier);
 router.get("/users/:id", UserController.get);
 router.get("/users/uuid/:uuid", UserController.getByUuid);
 router.patch("/users/:id/profile", UserController.updateProfile);

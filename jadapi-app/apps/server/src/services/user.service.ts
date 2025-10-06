@@ -86,5 +86,17 @@ export const UserService = {
       throw new ApiError(404, "User not found");
     }
     return UserRepository.updateProfile(user._id as any, profileData);
+  },
+
+  async findByIdentifier(identifier: string): Promise<UserDoc | null> {
+    // Try to find by email first
+    const userByEmail = await UserRepository.findByEmail(identifier);
+    if (userByEmail) {
+      return userByEmail;
+    }
+
+    // Try to find by phone
+    const userByPhone = await UserRepository.findByPhone(identifier);
+    return userByPhone;
   }
 };

@@ -81,7 +81,7 @@ export default function ProfileCompletionModal({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006'}/api/users/${userId}/profile`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api'}/users/${userId}/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

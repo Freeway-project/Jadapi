@@ -5,25 +5,16 @@ import { Truck, Star, Shield, Clock } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import FromToSearch from '@/components/search/FromToSearch';
 import BookingFlow from '@/components/booking/BookingFlow';
-import ProfileCompletionModal from '@/components/profile/ProfileCompletionModal';
 import Header from '@/components/layout/Header';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import Link from 'next/link';
 
 export default function HomePage() {
-  const { user, setUser } = useAuthStore();
+  const { user } = useAuthStore();
   const [estimate, setEstimate] = useState<FareEstimateResponse | null>(null);
   const [showBooking, setShowBooking] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const estimateRef = useRef<HTMLDivElement>(null);
-
-  // Check if user needs to complete profile
-  useEffect(() => {
-    if (user && (!user.profile?.name || !user.profile?.address)) {
-      setShowProfileModal(true);
-    }
-  }, [user]);
 
   const handleEstimate = (estimateData: FareEstimateResponse) => {
     setEstimate(estimateData);
@@ -41,18 +32,6 @@ export default function HomePage() {
     // TODO: Navigate to order tracking or dashboard
     setEstimate(null);
     setShowBooking(false);
-  };
-
-  const handleProfileComplete = (profileData: any) => {
-    // Update user in store
-    if (user) {
-      setUser({
-        ...user,
-        profile: profileData.profile,
-        businessProfile: profileData.businessProfile,
-      });
-    }
-    setShowProfileModal(false);
   };
 
   useEffect(() => {
@@ -85,19 +64,7 @@ export default function HomePage() {
   ];
 
   return (
-    <>
-      {/* Profile Completion Modal */}
-      {user && showProfileModal && (
-        <ProfileCompletionModal
-          isOpen={showProfileModal}
-          onClose={() => setShowProfileModal(false)}
-          accountType={user.accountType || 'individual'}
-          userId={user.uuid || user.id}
-          onSuccess={handleProfileComplete}
-        />
-      )}
-
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <Header />
 
@@ -263,6 +230,5 @@ export default function HomePage() {
         </div>
       </main>
     </div>
-    </>
   );
 }

@@ -1,4 +1,4 @@
-import { User, UserDoc } from "../models/user.model";
+import { User, UserDoc, generateCustomUUID } from "../models/user.model";
 import { Types } from "mongoose";
 
 export interface CreateUserData {
@@ -16,7 +16,27 @@ export interface CreateUserData {
 
 export const UserRepository = {
   async create(data: CreateUserData): Promise<UserDoc> {
+    // Generate unique UUID with retry logic
+    let uuid: string;
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (!isUnique && attempts < maxAttempts) {
+      uuid = generateCustomUUID(data.accountType);
+      const existingUser = await User.findOne({ uuid }).lean();
+      if (!existingUser) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      throw new Error("Failed to generate unique UUID after multiple attempts");
+    }
+
     const userData: any = {
+      uuid: uuid!,
       accountType: data.accountType,
       roles: data.roles || ["customer"],
       status: data.status || "active",
@@ -26,8 +46,8 @@ export const UserRepository = {
         password: data.password,
       },
       profile: {
-        name: data.name || null,
-        address: data.address || null,
+        name: data.name!,  // Required field
+        address: data.address!,  // Required field
       },
     };
 

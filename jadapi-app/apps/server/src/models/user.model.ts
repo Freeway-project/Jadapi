@@ -1,9 +1,15 @@
 import { Schema, model, Document, Types } from "mongoose";
 import { E164_REGEX } from "./common";
-import * as crypto from "crypto"; // for randomUUID()
 
 type AccountType = "individual" | "business";
 type Role = "customer" | "business" | "driver" | "admin";
+
+// Generate custom UUID with JAD prefix and 5-digit unique number
+function generateCustomUUID(_accountType?: AccountType): string {
+  const prefix = 'JAD';
+  const uniqueNumber = Math.floor(10000 + Math.random() * 90000); // 5-digit number
+  return `${prefix}${uniqueNumber}`;
+}
 
 export interface UserDoc extends Document<Types.ObjectId> {
   uuid: string;                       // public stable ID for verification/lookup
@@ -21,8 +27,8 @@ export interface UserDoc extends Document<Types.ObjectId> {
   };
 
   profile: {
-    name?: string | null;             // User's name (individual or business)
-    address?: string | null;          // Primary address
+    name: string;                     // User's name (individual or business) - REQUIRED
+    address: string;                  // Primary address - REQUIRED
   };
 
   businessProfile?: {
@@ -41,7 +47,6 @@ const UserSchema = new Schema<UserDoc>(
       required: true,
       unique: true,
       index: true,
-      default: () => crypto.randomUUID(), // swap with uuidv7() if you install `uuidv7`
     },
     accountType: { type: String, enum: ["individual", "business"], required: true, index: true },
     roles: {
@@ -79,8 +84,8 @@ const UserSchema = new Schema<UserDoc>(
     },
 
     profile: {
-      name: { type: String, default: null, trim: true },
-      address: { type: String, default: null, trim: true },
+      name: { type: String, required: true, trim: true },
+      address: { type: String, required: true, trim: true },
     },
 
     businessProfile: {
@@ -98,3 +103,4 @@ UserSchema.index({ "auth.phone": 1 }, { unique: true, sparse: true });
 // Note: Profile fields are optional and can be completed after signup
 
 export const User = model<UserDoc>("User", UserSchema);
+export { generateCustomUUID };

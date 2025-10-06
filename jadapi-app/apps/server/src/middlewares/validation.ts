@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError";
 import { validateVancouverAddress } from "../utils/addressValidation";
 
 export const validateSignup = (req: Request, _res: Response, next: NextFunction) => {
-  const { accountType, email, phone, displayName, legalName, address } = req.body;
+  const { accountType, email, phone, name, businessName, gstNumber, address } = req.body;
 
   // Required fields validation
   if (!accountType) {
@@ -14,8 +14,12 @@ export const validateSignup = (req: Request, _res: Response, next: NextFunction)
     return next(new ApiError(400, "Account type must be 'individual' or 'business'"));
   }
 
-  if (!displayName || typeof displayName !== "string" || displayName.trim().length === 0) {
-    return next(new ApiError(400, "Display name is required"));
+  if (!name || typeof name !== "string" || name.trim().length < 2) {
+    return next(new ApiError(400, "Name is required and must be at least 2 characters"));
+  }
+
+  if (!address || typeof address !== "string" || address.trim().length < 10) {
+    return next(new ApiError(400, "Address is required and must be at least 10 characters"));
   }
 
   // Either email or phone must be provided
@@ -52,36 +56,31 @@ export const validateSignup = (req: Request, _res: Response, next: NextFunction)
 
   // Business account specific validation
   if (accountType === "business") {
-    if (!legalName || typeof legalName !== "string" || legalName.trim().length === 0) {
-      return next(new ApiError(400, "Legal name is required for business accounts"));
+    if (!businessName || typeof businessName !== "string" || businessName.trim().length < 2) {
+      return next(new ApiError(400, "Business name is required for business accounts"));
     }
   }
 
   // Address validation
-  if (address) {
-    if (typeof address !== "string") {
-      return next(new ApiError(400, "Address must be a string"));
-    }
-
-    const addressValidation = validateVancouverAddress(address);
-    if (!addressValidation.isValid) {
-      return next(new ApiError(400, addressValidation.message || "Invalid address"));
-    }
+  const addressValidation = validateVancouverAddress(address);
+  if (!addressValidation.isValid) {
+    return next(new ApiError(400, addressValidation.message || "Invalid address"));
   }
 
   // Sanitize strings
-  req.body.displayName = displayName.trim();
+  req.body.name = name.trim();
+  req.body.address = address.trim();
   if (email) {
     req.body.email = email.toLowerCase().trim();
   }
   if (phone) {
     req.body.phone = phone.trim();
   }
-  if (legalName) {
-    req.body.legalName = legalName.trim();
+  if (businessName) {
+    req.body.businessName = businessName.trim();
   }
-  if (address) {
-    req.body.address = address.trim();
+  if (gstNumber) {
+    req.body.gstNumber = gstNumber.trim();
   }
 
   next();

@@ -16,7 +16,15 @@ export const UserController = {
       if (!accountType) {
         throw new ApiError(400, "Account type is required");
       }
-      // Note: name and address are optional and can be completed later
+
+      // Name and address are now mandatory
+      if (!name || name.trim().length < 2) {
+        throw new ApiError(400, "Name is required and must be at least 2 characters");
+      }
+
+      if (!address || address.trim().length < 10) {
+        throw new ApiError(400, "Address is required");
+      }
 
       // Verification requirements based on account type
       if (accountType === "business") {
@@ -121,11 +129,15 @@ export const UserController = {
 
       // Return user without sensitive data
       const response = {
+        _id: user._id,
         uuid: user.uuid,
         accountType: user.accountType,
         roles: user.roles,
         status: user.status,
         profile: user.profile,
+        businessProfile: user.businessProfile,
+        email: user.auth?.email,
+        phone: user.auth?.phone,
         auth: {
           email: user.auth.email,
           phone: user.auth.phone,
@@ -215,6 +227,40 @@ export const UserController = {
         profile: user.profile,
         businessProfile: user.businessProfile
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async searchByIdentifier(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { identifier } = req.query;
+
+      if (!identifier || typeof identifier !== 'string') {
+        throw new ApiError(400, "Identifier (email or phone) is required");
+      }
+
+      // Search by email or phone
+      const user = await UserService.findByIdentifier(identifier);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Return user without sensitive data
+      const response = {
+        _id: user._id,
+        uuid: user.uuid,
+        accountType: user.accountType,
+        email: user.auth?.email,
+        phone: user.auth?.phone,
+        profile: user.profile,
+        businessProfile: user.businessProfile,
+        roles: user.roles,
+        status: user.status,
+      };
+
+      res.json({ user: response });
     } catch (err) {
       next(err);
     }

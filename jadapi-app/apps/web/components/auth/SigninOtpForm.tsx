@@ -36,23 +36,55 @@ export default function SigninOtpForm() {
 
     try {
       // Verify OTP using real API
-      await authAPI.verifyOTP({
+      const verifyResult = await authAPI.verifyOTP({
         identifier: identifier!,
         code: data.otp,
         type: 'login'
       });
 
-      // Mock user data for now - in real implementation, this would come from API after OTP verification
-      const userData = {
-        id: Math.random().toString(36).substring(2, 11),
-        email: email || undefined,
-        phoneNumber: phoneNumber || undefined,
-        name: 'User',
-        userType: 'individual',
-        lastLogin: new Date().toISOString()
-      };
+      if (!verifyResult?.verified) {
+        throw new Error('OTP verification failed');
+      }
 
-      setUser(userData);
+      // Fetch user data by identifier (email or phone)
+      // For now, we'll search by the identifier to find the user
+      const userResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api'}/users/search?identifier=${encodeURIComponent(identifier!)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+
+      const { user } = await userResponse.json();
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Set user data in store with all relevant details
+      setUser({
+        id: user._id || user.id,
+        uuid: user.uuid,
+        email: user.email || user.auth?.email,
+        phoneNumber: user.phone || user.phoneNumber,
+        name: user.profile?.name || user.name || 'User',
+        accountType: user.accountType || 'individual',
+        userType: user.accountType || 'individual',
+        profile: user.profile,
+        businessProfile: user.businessProfile,
+        roles: user.roles,
+        status: user.status,
+        auth: user.auth,
+        lastLogin: new Date().toISOString()
+      });
+
       toast.success('Successfully signed in!');
 
       // Redirect to search page
@@ -86,94 +118,116 @@ export default function SigninOtpForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-8 bg-white">
-      <div className="text-center space-y-3">
-        <div className="flex items-center justify-center space-x-3 mb-6">
-          <div className="p-4 bg-blue-600 rounded-xl shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-white to-slate-50 flex items-center">
+      <div className="w-full px-4 py-6 sm:px-6 sm:py-10">
+        <div className="mx-auto w-full max-w-[28rem] rounded-3xl border border-slate-200 bg-white p-5 sm:p-7 shadow-md">
+          {/* Header */}
+          <div className="text-center space-y-3 mb-3 sm:mb-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 shadow-lg">
+              <Shield className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+              Verify Your Identity
+            </h1>
+            <p className="text-[0.95rem] sm:text-base text-slate-600">
+              Enter the verification code sent to your {identifierType}
+            </p>
           </div>
-        </div>
-        <h1 className="text-3xl font-bold text-black">Verify Your Identity</h1>
-        <p className="text-gray-600 text-lg leading-relaxed">
-          Enter the verification code sent to your {identifierType}
-        </p>
-      </div>
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-center space-x-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
-          {isEmailLogin ? (
-            <Mail className="w-5 h-5 text-blue-600" />
-          ) : (
-            <Phone className="w-5 h-5 text-blue-600" />
-          )}
-          <span className="text-gray-700 font-medium">{identifier}</span>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="otp" className="text-base font-medium text-black">
-              Verification Code
-            </Label>
-            <Input
-              id="otp"
-              type="text"
-              placeholder="000000"
-              maxLength={6}
-              disabled={isSubmitting || isLoading}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black text-center text-lg font-mono tracking-widest placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
-              {...register('otp')}
-            />
-            {errors.otp && (
-              <div className="flex items-center space-x-2 text-red-600">
-                <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                  <span className="text-xs font-bold">!</span>
-                </div>
-                <p className="text-sm">{errors.otp.message}</p>
-              </div>
+          {/* Identifier Display */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 rounded-2xl border-2 border-blue-100 bg-blue-50 p-3 sm:p-4 mb-5 sm:mb-6">
+            {isEmailLogin ? (
+              <Mail className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            ) : (
+              <Phone className="w-5 h-5 text-blue-600 flex-shrink-0" />
             )}
+            <span className="font-semibold text-slate-900 text-[0.95rem] sm:text-base truncate">{identifier}</span>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="otp" className="text-base sm:text-[1rem] font-semibold text-slate-900">
+                Verification Code
+              </Label>
+              <Input
+                id="otp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="000000"
+                maxLength={6}
+                disabled={isSubmitting || isLoading}
+                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 sm:py-5 text-center text-2xl sm:text-3xl font-mono tracking-[0.5em] text-slate-900 placeholder-slate-300 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                {...register('otp')}
+                aria-invalid={!!errors.otp}
+              />
+
+              {/* Error / Resend */}
+              <div className="min-h-[1.25rem]">
+                {errors.otp ? (
+                  <div className="flex items-center gap-2 text-[0.92rem] font-medium text-rose-600">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-100 text-[0.8rem] font-bold">
+                      !
+                    </span>
+                    {errors.otp.message}
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={handleResendOTP}
+                    className="h-auto p-0 text-[0.92rem] font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Didn&apos;t receive the code? Resend
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={handleResendOTP}
-              className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
+              type="submit"
+              disabled={isSubmitting || isLoading}
+              className="group w-full rounded-2xl bg-blue-600 py-3.5 sm:py-4 text-[1.05rem] font-semibold text-white shadow-lg shadow-blue-600/20 transition-transform duration-200 hover:scale-[1.01] hover:bg-blue-700 disabled:opacity-60"
+              size="lg"
             >
-              Didn't receive the code? Resend
+              {isSubmitting ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Signing you in…</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2">
+                  <span>Sign In</span>
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                </div>
+              )}
+            </Button>
+          </form>
+
+          {/* Back Button */}
+          <div className="mt-4 sm:mt-5 text-center">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="text-[0.98rem] text-slate-600 hover:text-slate-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Sign In
             </Button>
           </div>
 
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-            size="lg"
-          >
-            {isSubmitting ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Signing you in...</span>
-              </div>
-            ) : (
-              'Sign In'
-            )}
-          </Button>
-        </form>
-
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="w-full text-gray-600 hover:text-gray-800 py-3 rounded-xl transition-colors duration-200"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Sign In
-        </Button>
-      </div>
-
-      <div className="text-center text-sm text-gray-500 bg-gray-50 p-4 rounded-xl">
-        <p className="leading-relaxed">
-          Having trouble? Contact our{' '}
-          <span className="text-blue-600 hover:text-blue-700 cursor-pointer underline">support team</span>
-        </p>
+          {/* Footer */}
+          <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-center text-[0.92rem] text-slate-500">
+            <p className="leading-relaxed">
+              Having trouble? Contact our{' '}
+              <span className="text-blue-600 underline decoration-blue-200 underline-offset-2 hover:text-blue-700 cursor-pointer">
+                support team
+              </span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

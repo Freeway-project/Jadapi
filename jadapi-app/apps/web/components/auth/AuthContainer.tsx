@@ -32,11 +32,13 @@ export default function AuthContainer() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       <Header />
-      <div className="flex items-center justify-center px-4 py-8 bg-gray-50">
-        <div className="w-full max-w-md">
-          {renderStep()}
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full flex items-center justify-center px-4 py-4 sm:py-8">
+          <div className="w-full max-w-md">
+            {renderStep()}
+          </div>
         </div>
       </div>
     </div>

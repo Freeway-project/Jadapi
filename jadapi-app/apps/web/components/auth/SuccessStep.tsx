@@ -125,14 +125,7 @@ export default function SuccessStep() {
           Continue to Search
         </Button>
 
-        <Button
-          variant="outline"
-          onClick={handleStartOver}
-          className="w-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 font-medium py-4 px-6 rounded-xl transition-all duration-300"
-          size="lg"
-        >
-          Create Another Account
-        </Button>
+    
       </div>
 
       <div className="text-center text-sm text-gray-500">
