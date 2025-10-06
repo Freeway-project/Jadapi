@@ -42,17 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(storedToken);
       // Decode JWT to get user info
       try {
-        const payload = JSON.parse(atob(storedToken.split('.')[1]));
-        setUser({
-          uuid: payload.userId,
-          email: payload.email,
-          displayName: payload.email || 'Admin',
-          roles: payload.roles || [],
-          status: 'active',
-          accountType: 'individual',
-        });
+        const parts = storedToken.split('.');
+        if (parts.length === 3 && parts[1]) {
+          const payload = JSON.parse(atob(parts[1]));
+          setUser({
+            uuid: payload.userId,
+            email: payload.email,
+            displayName: payload.email || 'Admin',
+            roles: payload.roles || [],
+            status: 'active',
+            accountType: 'individual',
+          });
+        }
       } catch (error) {
         console.error('Failed to decode token:', error);
+        tokenManager.removeToken();
       }
       setIsLoading(false);
     } else {

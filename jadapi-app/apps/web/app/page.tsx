@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Truck, Users, Building2, Star, Shield, Clock } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import FromToSearch from '@/components/search/FromToSearch';
+import BookingFlow from '@/components/booking/BookingFlow';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import Link from 'next/link';
@@ -11,10 +12,25 @@ import Link from 'next/link';
 export default function HomePage() {
   const { user } = useAuthStore();
   const [estimate, setEstimate] = useState<FareEstimateResponse | null>(null);
+  const [showBooking, setShowBooking] = useState(false);
   const estimateRef = useRef<HTMLDivElement>(null);
 
   const handleEstimate = (estimateData: FareEstimateResponse) => {
     setEstimate(estimateData);
+    // If user is authenticated, show booking flow automatically
+    if (user) {
+      setShowBooking(true);
+    }
+  };
+
+  const handleBackToEstimate = () => {
+    setShowBooking(false);
+  };
+
+  const handleBookingComplete = () => {
+    // TODO: Navigate to order tracking or dashboard
+    setEstimate(null);
+    setShowBooking(false);
   };
 
   useEffect(() => {
@@ -136,7 +152,14 @@ export default function HomePage() {
 
           {/* Right Column - Map & Results */}
           <div ref={estimateRef} className="space-y-4 sm:space-y-6">
-            {estimate ? (
+            {estimate && showBooking && user ? (
+              // Show booking flow for authenticated users
+              <BookingFlow
+                estimate={estimate}
+                onBack={handleBackToEstimate}
+                onComplete={handleBookingComplete}
+              />
+            ) : estimate ? (
               <div className="space-y-4 sm:space-y-6">
                 {/* Estimate Summary Card */}
                 <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
@@ -172,7 +195,10 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {user ? (
                     <>
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm sm:text-base">
+                      <Button
+                        onClick={() => setShowBooking(true)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-sm sm:text-base"
+                      >
                         Book This Delivery
                       </Button>
                       <Button variant="outline" className="w-full py-3 text-sm sm:text-base">
