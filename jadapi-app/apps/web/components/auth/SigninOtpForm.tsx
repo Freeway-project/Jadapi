@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { otpSchema, OTPFormData } from '@/lib/utils/validation';
 import { authAPI } from '@/lib/api/auth';
@@ -13,6 +14,7 @@ import { Shield, ArrowLeft, Mail, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function SigninOtpForm() {
+  const router = useRouter();
   const { email, phoneNumber, setLoading, isLoading, setUser, setStep } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,8 +53,10 @@ export default function SigninOtpForm() {
       };
 
       setUser(userData);
-      setStep('success');
       toast.success('Successfully signed in!');
+
+      // Redirect to search page
+      router.push('/search');
     } catch (error) {
       console.error('OTP verification failed:', error);
       toast.error(error instanceof Error ? error.message : 'OTP verification failed. Please try again.');

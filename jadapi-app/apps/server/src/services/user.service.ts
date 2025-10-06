@@ -6,9 +6,10 @@ export interface SignupData {
   accountType: "individual" | "business";
   email?: string;
   phone?: string;
-  displayName: string;
-  legalName?: string;
+  name?: string;
   address?: string;
+  businessName?: string;
+  gstNumber?: string;
 }
 
 export const UserService = {
@@ -34,16 +35,17 @@ export const UserService = {
     }
 
     // Set roles based on account type
-    const roles: ("business" | "customer" | "driver" | "dispatcher" | "admin")[] = data.accountType === "business" ? ["business"] : ["customer"];
+    const roles: ("business" | "customer" | "driver"  | "admin")[] = data.accountType === "business" ? ["business"] : ["customer"];
 
     // Create user
     const userData: CreateUserData = {
       accountType: data.accountType,
       email: data.email,
       phone: data.phone,
-      displayName: data.displayName,
-      legalName: data.legalName,
+      name: data.name,
       address: data.address,
+      businessName: data.businessName,
+      gstNumber: data.gstNumber,
       roles,
     };
 
@@ -76,5 +78,13 @@ export const UserService = {
       throw new ApiError(404, "User not found");
     }
     return UserRepository.updateVerification(user._id as any, "phone");
+  },
+
+  async updateProfile(userId: string, profileData: { name?: string; address?: string; businessName?: string; gstNumber?: string }): Promise<UserDoc | null> {
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    return UserRepository.updateProfile(user._id as any, profileData);
   }
 };

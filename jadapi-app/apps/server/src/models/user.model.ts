@@ -3,7 +3,7 @@ import { E164_REGEX } from "./common";
 import * as crypto from "crypto"; // for randomUUID()
 
 type AccountType = "individual" | "business";
-type Role = "customer" | "business" | "driver" | "dispatcher" | "admin" | "super_admin";
+type Role = "customer" | "business" | "driver" | "admin";
 
 export interface UserDoc extends Document<Types.ObjectId> {
   uuid: string;                       // public stable ID for verification/lookup
@@ -21,47 +21,18 @@ export interface UserDoc extends Document<Types.ObjectId> {
   };
 
   profile: {
-    displayName: string;              // Individual name or Business display name
-    legalName?: string | null;        // For businesses
-    defaultAddressId?: Types.ObjectId | null;
+    name?: string | null;             // User's name (individual or business)
+    address?: string | null;          // Primary address
   };
-
-  addressBook: Types.ObjectId[];      // -> Address._id
 
   businessProfile?: {
     gstNumber?: string | null;
-    billingEmail?: string | null;
-    billingAddressId?: Types.ObjectId | null;
-  };
-
-  delegation?: {
-    canSendOnBehalfOf: { userId: Types.ObjectId; grantedAt: Date }[];
-    authorizedSenders: { userId: Types.ObjectId; grantedAt: Date }[];
-    apiKeys: { keyId: string; hash: string; label?: string; createdAt: Date; revokedAt?: Date | null }[];
+    businessName?: string | null;     // Legal business name
   };
 
   createdAt: Date;
   updatedAt: Date;
 }
-
-const DelegationEntry = new Schema(
-  {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    grantedAt: { type: Date, default: Date.now },
-  },
-  { _id: false }
-);
-
-const ApiKeyEntry = new Schema(
-  {
-    keyId: { type: String, required: true },
-    hash: { type: String, required: true },  // store only hash of API key
-    label: { type: String },
-    createdAt: { type: Date, default: Date.now },
-    revokedAt: { type: Date, default: null },
-  },
-  { _id: false }
-);
 
 const UserSchema = new Schema<UserDoc>(
   {
@@ -75,7 +46,7 @@ const UserSchema = new Schema<UserDoc>(
     accountType: { type: String, enum: ["individual", "business"], required: true, index: true },
     roles: {
       type: [String],
-      enum: ["customer", "business", "driver", "dispatcher", "admin", "super_admin"],
+      enum: ["customer", "business", "driver", "admin"],
       default: ["customer"],
       index: true,
     },
@@ -108,23 +79,13 @@ const UserSchema = new Schema<UserDoc>(
     },
 
     profile: {
-      displayName: { type: String, required: true, trim: true },
-      legalName: { type: String, default: null },
-      defaultAddressId: { type: Schema.Types.ObjectId, ref: "Address", default: null },
+      name: { type: String, default: null, trim: true },
+      address: { type: String, default: null, trim: true },
     },
-
-    addressBook: [{ type: Schema.Types.ObjectId, ref: "Address" }],
 
     businessProfile: {
       gstNumber: { type: String, default: null },
-      billingEmail: { type: String, default: null, lowercase: true, trim: true },
-      billingAddressId: { type: Schema.Types.ObjectId, ref: "Address", default: null },
-    },
-
-    delegation: {
-      canSendOnBehalfOf: { type: [DelegationEntry], default: [] },
-      authorizedSenders: { type: [DelegationEntry], default: [] },
-      apiKeys: { type: [ApiKeyEntry], default: [] },
+      businessName: { type: String, default: null, trim: true },
     },
   },
   { timestamps: true }
@@ -134,15 +95,6 @@ const UserSchema = new Schema<UserDoc>(
 UserSchema.index({ "auth.email": 1 }, { unique: true, sparse: true });
 UserSchema.index({ "auth.phone": 1 }, { unique: true, sparse: true });
 
-// Ensure business fields when accountType=business
-UserSchema.pre("validate", function (next: any) {
-  const doc = this as any;
-  if (doc.accountType === "business") {
-    if (!doc.profile?.displayName) {
-      return next(new Error("Business accounts require profile.displayName"));
-    }
-  }
-  next();
-});
+// Note: Profile fields are optional and can be completed after signup
 
 export const User = model<UserDoc>("User", UserSchema);

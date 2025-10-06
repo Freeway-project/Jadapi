@@ -45,7 +45,7 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
   };
 
   driverId?: Types.ObjectId;
-  dispatcherId?: Types.ObjectId;
+
 
   timeline: {
     createdAt: Date;
@@ -116,7 +116,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
     },
 
     driverId: { type: Schema.Types.ObjectId, ref: "User", index: true },
-    dispatcherId: { type: Schema.Types.ObjectId, ref: "User", index: true },
+
 
     timeline: {
       createdAt: { type: Date, default: Date.now },

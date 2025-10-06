@@ -67,7 +67,7 @@ export const requireAuth = async (
 };
 
 /**
- * Middleware to require admin role (admin or super_admin are the same)
+ * Middleware to require admin role
  */
 export const requireAdmin = async (
   req: Request,
@@ -79,11 +79,7 @@ export const requireAdmin = async (
       throw new ApiError(401, "Authentication required");
     }
 
-    const hasAdminRole = req.user.roles?.some((role: string) =>
-      ["admin", "super_admin"].includes(role)
-    );
-
-    if (!hasAdminRole) {
+    if (!req.user.roles?.includes("admin")) {
       throw new ApiError(403, "Admin access required");
     }
 

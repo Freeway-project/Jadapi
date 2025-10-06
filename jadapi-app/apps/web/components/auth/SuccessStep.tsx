@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
@@ -7,7 +8,12 @@ import { User, Building2 } from 'lucide-react';
 import { BaseAnimation } from '../animations';
 
 export default function SuccessStep() {
+  const router = useRouter();
   const { userType, user, reset } = useAuthStore();
+
+  const handleContinue = () => {
+    router.push('/search');
+  };
 
   const handleStartOver = () => {
     reset();
@@ -63,19 +69,19 @@ export default function SuccessStep() {
             </div>
           )}
 
-          {user?.profile?.displayName && (
+          {user?.profile?.name && (
             <div className="space-y-1">
               <span className="text-sm font-semibold text-gray-700">
-                {isIndividual ? 'Name:' : 'Business Name:'}
+                Name:
               </span>
-              <p className="text-gray-900 font-medium">{user.profile.displayName}</p>
+              <p className="text-gray-900 font-medium">{user.profile.name}</p>
             </div>
           )}
 
-          {user?.profile?.legalName && !isIndividual && (
+          {user?.businessProfile?.businessName && !isIndividual && (
             <div className="space-y-1">
-              <span className="text-sm font-semibold text-gray-700">Legal Name:</span>
-              <p className="text-gray-900 font-medium">{user.profile.legalName}</p>
+              <span className="text-sm font-semibold text-gray-700">Business Name:</span>
+              <p className="text-gray-900 font-medium">{user.businessProfile.businessName}</p>
             </div>
           )}
 
@@ -112,10 +118,11 @@ export default function SuccessStep() {
 
       <div className="space-y-3">
         <Button
+          onClick={handleContinue}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:transform hover:scale-[1.02]"
           size="lg"
         >
-          Continue to Dashboard
+          Continue to Search
         </Button>
 
         <Button

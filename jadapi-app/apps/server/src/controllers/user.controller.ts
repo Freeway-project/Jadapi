@@ -6,24 +6,17 @@ import { ApiError } from "../utils/ApiError";
 export const UserController = {
   async signup(req: Request, res: Response, next: NextFunction) {
     try {
-      const { accountType, email, phone, displayName, legalName }: SignupData = req.body;
+      const { accountType, email, phone, name, address, businessName, gstNumber }: SignupData = req.body;
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ signup ~ input data:', { accountType, email, phone, displayName, legalName });
+        console.log('🚀 ~ signup ~ input data:', { accountType, email, phone, name, address, businessName, gstNumber });
       }
 
       // Validate required fields
       if (!accountType) {
         throw new ApiError(400, "Account type is required");
       }
-      if (!displayName) {
-        throw new ApiError(400, "Display name is required");
-      }
-
-      // Business accounts require legal name
-      if (accountType === "business" && !legalName) {
-        throw new ApiError(400, "Legal name is required for business accounts");
-      }
+      // Note: name and address are optional and can be completed later
 
       // Verification requirements based on account type
       if (accountType === "business") {
@@ -86,8 +79,10 @@ export const UserController = {
         accountType,
         email,
         phone,
-        displayName,
-        legalName,
+        name,
+        address,
+        businessName,
+        gstNumber,
       };
 
       if (process.env.NODE_ENV === 'development') {
@@ -192,6 +187,34 @@ export const UserController = {
       const user = await UserService.verifyPhone(req.params.id);
       if (!user) return res.status(404).json({ error: "User not found" });
       res.json({ message: "Phone verified successfully", phoneVerifiedAt: user.auth.phoneVerifiedAt });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.id || req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const { name, address, businessName, gstNumber } = req.body;
+
+      const user = await UserService.updateProfile(userId, {
+        name,
+        address,
+        businessName,
+        gstNumber
+      });
+
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      res.json({
+        message: "Profile updated successfully",
+        profile: user.profile,
+        businessProfile: user.businessProfile
+      });
     } catch (err) {
       next(err);
     }
