@@ -1,19 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Phone, MapPin, Package, CreditCard, ArrowLeft } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { FareEstimateResponse } from '@/lib/api/delivery';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 interface BookingFlowProps {
   estimate: FareEstimateResponse;
+  pickupAddress?: string;
+  dropoffAddress?: string;
   onBack?: () => void;
   onComplete?: () => void;
 }
 
-type BookingStep = 'recipient' | 'sender' | 'payment' | 'review';
+type BookingStep = 'sender' | 'recipient' | 'payment' | 'review';
 
 interface RecipientDetails {
   name: string;
@@ -28,8 +31,9 @@ interface SenderDetails {
   address: string;
 }
 
-export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlowProps) {
-  const [currentStep, setCurrentStep] = useState<BookingStep>('recipient');
+export default function BookingFlow({ estimate, pickupAddress, dropoffAddress, onBack, onComplete }: BookingFlowProps) {
+  const { user } = useAuthStore();
+  const [currentStep, setCurrentStep] = useState<BookingStep>('sender');
   const [recipient, setRecipient] = useState<RecipientDetails>({
     name: '',
     phone: '',
@@ -42,9 +46,30 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
     address: ''
   });
 
+  // Prefill sender info from logged-in user and addresses from search
+  useEffect(() => {
+    if (user) {
+      setSender({
+        name: user.profile?.name || '',
+        phone: user.auth?.phone || user.phone || '',
+        address: pickupAddress || ''
+      });
+    }
+  }, [user, pickupAddress]);
+
+  // Prefill recipient address from search
+  useEffect(() => {
+    if (dropoffAddress) {
+      setRecipient(prev => ({
+        ...prev,
+        address: dropoffAddress
+      }));
+    }
+  }, [dropoffAddress]);
+
   const steps = [
-    { id: 'recipient', label: 'Recipient', icon: User },
     { id: 'sender', label: 'Sender', icon: MapPin },
+    { id: 'recipient', label: 'Recipient', icon: User },
     { id: 'payment', label: 'Payment', icon: CreditCard },
     { id: 'review', label: 'Review', icon: Package }
   ];
@@ -52,24 +77,24 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
   const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
   const handleNext = () => {
-    if (currentStep === 'recipient') setCurrentStep('sender');
-    else if (currentStep === 'sender') setCurrentStep('payment');
+    if (currentStep === 'sender') setCurrentStep('recipient');
+    else if (currentStep === 'recipient') setCurrentStep('payment');
     else if (currentStep === 'payment') setCurrentStep('review');
   };
 
   const handlePrevious = () => {
     if (currentStep === 'review') setCurrentStep('payment');
-    else if (currentStep === 'payment') setCurrentStep('sender');
-    else if (currentStep === 'sender') setCurrentStep('recipient');
-    else if (currentStep === 'recipient' && onBack) onBack();
+    else if (currentStep === 'payment') setCurrentStep('recipient');
+    else if (currentStep === 'recipient') setCurrentStep('sender');
+    else if (currentStep === 'sender' && onBack) onBack();
   };
 
   const canProceed = () => {
-    if (currentStep === 'recipient') {
-      return recipient.name && recipient.phone && recipient.address;
-    }
     if (currentStep === 'sender') {
       return sender.name && sender.phone && sender.address;
+    }
+    if (currentStep === 'recipient') {
+      return recipient.name && recipient.phone && recipient.address;
     }
     return true;
   };
@@ -117,8 +142,74 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
         })}
       </div>
 
+      {/* Fare Estimate Summary */}
+      <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">Estimated Fare</p>
+            <p className="text-2xl font-bold text-blue-600">
+              ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
+            </p>
+          </div>
+          <div className="text-right space-y-1">
+            <p className="text-xs text-gray-500">Distance: {estimate?.data?.distance?.distanceKm?.toFixed(1)} km</p>
+            <p className="text-xs text-gray-500">Duration: ~{estimate?.data?.distance?.durationMinutes} min</p>
+          </div>
+        </div>
+      </div>
+
       {/* Step Content */}
       <div className="space-y-4">
+        {currentStep === 'sender' && (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <MapPin className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Sender Information</h3>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="sender-name" className="text-sm font-medium text-gray-700">Your Name *</Label>
+                <Input
+                  id="sender-name"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={sender.name}
+                  onChange={(e) => setSender({ ...sender, name: e.target.value })}
+                  className="mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="sender-phone" className="text-sm font-medium text-gray-700">Your Phone Number *</Label>
+                <Input
+                  id="sender-phone"
+                  type="tel"
+                  placeholder="+1 (555) 123-4567"
+                  value={sender.phone}
+                  onChange={(e) => setSender({ ...sender, phone: e.target.value })}
+                  className="mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="sender-address" className="text-sm font-medium text-gray-700">Pickup Address *</Label>
+                <Input
+                  id="sender-address"
+                  type="text"
+                  placeholder="Full address"
+                  value={sender.address}
+                  onChange={(e) => setSender({ ...sender, address: e.target.value })}
+                  className="mt-1"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {currentStep === 'recipient' && (
           <div className="space-y-4">
             <div className="flex items-center space-x-2 mb-4">
@@ -128,7 +219,7 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
 
             <div className="space-y-3">
               <div>
-                <Label htmlFor="recipient-name" className="text-sm font-medium text-gray-700">Full Name</Label>
+                <Label htmlFor="recipient-name" className="text-sm font-medium text-gray-700">Full Name *</Label>
                 <Input
                   id="recipient-name"
                   type="text"
@@ -136,11 +227,12 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
                   value={recipient.name}
                   onChange={(e) => setRecipient({ ...recipient, name: e.target.value })}
                   className="mt-1"
+                  required
                 />
               </div>
 
               <div>
-                <Label htmlFor="recipient-phone" className="text-sm font-medium text-gray-700">Phone Number</Label>
+                <Label htmlFor="recipient-phone" className="text-sm font-medium text-gray-700">Phone Number *</Label>
                 <Input
                   id="recipient-phone"
                   type="tel"
@@ -148,11 +240,12 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
                   value={recipient.phone}
                   onChange={(e) => setRecipient({ ...recipient, phone: e.target.value })}
                   className="mt-1"
+                  required
                 />
               </div>
 
               <div>
-                <Label htmlFor="recipient-address" className="text-sm font-medium text-gray-700">Delivery Address</Label>
+                <Label htmlFor="recipient-address" className="text-sm font-medium text-gray-700">Delivery Address *</Label>
                 <Input
                   id="recipient-address"
                   type="text"
@@ -160,6 +253,7 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
                   value={recipient.address}
                   onChange={(e) => setRecipient({ ...recipient, address: e.target.value })}
                   className="mt-1"
+                  required
                 />
               </div>
 
@@ -178,52 +272,6 @@ export default function BookingFlow({ estimate, onBack, onComplete }: BookingFlo
           </div>
         )}
 
-        {currentStep === 'sender' && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Sender Information</h3>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="sender-name" className="text-sm font-medium text-gray-700">Your Name</Label>
-                <Input
-                  id="sender-name"
-                  type="text"
-                  placeholder="Enter your name"
-                  value={sender.name}
-                  onChange={(e) => setSender({ ...sender, name: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="sender-phone" className="text-sm font-medium text-gray-700">Your Phone Number</Label>
-                <Input
-                  id="sender-phone"
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  value={sender.phone}
-                  onChange={(e) => setSender({ ...sender, phone: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="sender-address" className="text-sm font-medium text-gray-700">Pickup Address</Label>
-                <Input
-                  id="sender-address"
-                  type="text"
-                  placeholder="Full address"
-                  value={sender.address}
-                  onChange={(e) => setSender({ ...sender, address: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         {currentStep === 'payment' && (
           <div className="space-y-4">
