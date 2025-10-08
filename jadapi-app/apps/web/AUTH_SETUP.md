@@ -96,9 +96,9 @@ Beautiful login UI with:
    npm run dev
    ```
 
-2. **Create a super admin (if not exists):**
+2. **Create an admin (if not exists):**
    ```bash
-   curl -X POST http://localhost:3006/api/auth/create-super-admin \
+   curl -X POST http://localhost:3006/api/auth/create-admin \
      -H "Content-Type: application/json" \
      -d '{"email":"admin@jadapi.com","password":"Admin123!","displayName":"Jadapi Admin"}'
    ```
@@ -120,7 +120,7 @@ Beautiful login UI with:
 - JWT tokens expire in 7 days
 - Tokens stored in localStorage (consider httpOnly cookies for production)
 - Password field excluded from DB queries by default
-- Admin routes require valid JWT + admin/super_admin role
+- Admin routes require valid JWT + admin role
 
 ## Future Enhancements
 

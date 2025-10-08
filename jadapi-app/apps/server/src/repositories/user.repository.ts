@@ -1,4 +1,4 @@
-import { User, UserDoc } from "../models/user.model";
+import { User, UserDoc, generateCustomUUID } from "../models/user.model";
 import { Types } from "mongoose";
 
 export interface CreateUserData {
@@ -6,16 +6,37 @@ export interface CreateUserData {
   email?: string;
   phone?: string;
   password?: string;
-  displayName: string;
-  legalName?: string;
+  name?: string;
   address?: string;
-  roles?: ("customer" | "business" | "driver" | "dispatcher" | "admin" | "super_admin")[];
+  businessName?: string;
+  gstNumber?: string;
+  roles?: ("customer" | "business" | "driver" | "admin")[];
   status?: "active" | "inactive" | "suspended" | "deleted";
 }
 
 export const UserRepository = {
   async create(data: CreateUserData): Promise<UserDoc> {
-    const userData = {
+    // Generate unique UUID with retry logic
+    let uuid: string;
+    let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (!isUnique && attempts < maxAttempts) {
+      uuid = generateCustomUUID(data.accountType);
+      const existingUser = await User.findOne({ uuid }).lean();
+      if (!existingUser) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      throw new Error("Failed to generate unique UUID after multiple attempts");
+    }
+
+    const userData: any = {
+      uuid: uuid!,
       accountType: data.accountType,
       roles: data.roles || ["customer"],
       status: data.status || "active",
@@ -25,12 +46,17 @@ export const UserRepository = {
         password: data.password,
       },
       profile: {
-        displayName: data.displayName,
-        legalName: data.legalName,
-        address: data.address,
+        name: data.name!,  // Required field
+        address: data.address!,  // Required field
       },
-      addressBook: [],
     };
+
+    if (data.accountType === "business") {
+      userData.businessProfile = {
+        businessName: data.businessName || null,
+        gstNumber: data.gstNumber || null,
+      };
+    }
 
     return User.create(userData);
   },
@@ -71,6 +97,25 @@ export const UserRepository = {
     const update = type === "email"
       ? { "auth.emailVerifiedAt": new Date() }
       : { "auth.phoneVerifiedAt": new Date() };
+
+    return User.findByIdAndUpdate(userId, update, { new: true }).lean();
+  },
+
+  async updateProfile(userId: Types.ObjectId | string, profileData: { name?: string; address?: string; businessName?: string; gstNumber?: string }): Promise<UserDoc | null> {
+    const update: any = {};
+
+    if (profileData.name !== undefined) {
+      update["profile.name"] = profileData.name;
+    }
+    if (profileData.address !== undefined) {
+      update["profile.address"] = profileData.address;
+    }
+    if (profileData.businessName !== undefined) {
+      update["businessProfile.businessName"] = profileData.businessName;
+    }
+    if (profileData.gstNumber !== undefined) {
+      update["businessProfile.gstNumber"] = profileData.gstNumber;
+    }
 
     return User.findByIdAndUpdate(userId, update, { new: true }).lean();
   }

@@ -40,28 +40,28 @@ export default function UserTypeSelector() {
   ];
 
   return (
-    <div className="w-full space-y-8 bg-white">
+    <div className="w-full space-y-4 sm:space-y-4 bg-white p-4 sm:p-6 rounded-2xl shadow-sm">
       {/* Progress indicator */}
-      <div className="flex justify-center mb-8">
+      <div className="flex justify-center mb-4 sm:mb-8">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">1</div>
-          <div className="w-12 h-0.5 bg-gray-200"></div>
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-sm font-medium">2</div>
-          <div className="w-12 h-0.5 bg-gray-200"></div>
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-sm font-medium">3</div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium">1</div>
+          <div className="w-8 sm:w-12 h-0.5 bg-gray-200"></div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs sm:text-sm font-medium">2</div>
+          <div className="w-8 sm:w-12 h-0.5 bg-gray-200"></div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs sm:text-sm font-medium">3</div>
         </div>
       </div>
 
-      <div className="text-center space-y-3">
-
-        <BaseAnimation animationFile="online-delivery-service.json" width={250} height={250} />
-        <h1 className="text-3xl font-bold text-black">Choose Account Type</h1>
-        <p className="text-gray-600 text-lg">
+      <div className="text-center space-y-2 sm:space-y-3">
+        <BaseAnimation animationFile="online-delivery-service.json" width={200} height={200} className="hidden sm:block mx-auto" />
+        {/* <BaseAnimation animationFile="online-delivery-service.json" width={120} height={120} className="sm:hidden mx-auto" /> */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-black">Choose Account Type</h1>
+        <p className="text-gray-600 text-sm sm:text-lg">
           Select the type of account you want to create
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {userTypes.map(({ type, title, description, icon: Icon }) => (
           <Card
             key={type}
@@ -72,24 +72,24 @@ export default function UserTypeSelector() {
             }`}
             onClick={() => setSelectedType(type)}
           >
-            <CardHeader className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className={`p-3 rounded-xl transition-all duration-300 ${
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className={`p-2 sm:p-3 rounded-xl transition-all duration-300 ${
                   selectedType === type
                     ? 'bg-blue-600 text-white shadow-lg'
                     : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
                 }`}>
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-xl font-semibold text-black mb-1">{title}</CardTitle>
-                  <CardDescription className="text-gray-600 text-base leading-relaxed">{description}</CardDescription>
+                  <CardTitle className="text-lg sm:text-xl font-semibold text-black mb-0.5 sm:mb-1">{title}</CardTitle>
+                  <CardDescription className="text-gray-600 text-sm sm:text-base leading-relaxed">{description}</CardDescription>
                 </div>
                 <div className={`transition-all duration-300 ${
                   selectedType === type ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
                 }`}>
-                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                   </div>
                 </div>
               </div>
@@ -98,21 +98,21 @@ export default function UserTypeSelector() {
         ))}
       </div>
 
-      <div className="pt-4 space-y-4">
+      <div className="pt-2 sm:pt-4 space-y-3 sm:space-y-4">
         <Button
           onClick={handleContinue}
           disabled={!selectedType}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl text-sm sm:text-base"
           size="lg"
         >
-          Continue  Verification
+          Continue Verification
         </Button>
 
         <div className="text-center">
           <Button
             variant="ghost"
             onClick={handleSignin}
-            className="text-gray-600 hover:text-gray-800 transition-colors duration-200"
+            className="text-gray-600 hover:text-gray-800 transition-colors duration-200 text-md sm:text-base"
           >
             Already have an account? <span className="text-blue-600 hover:text-blue-700 ml-1">Sign in</span>
           </Button>

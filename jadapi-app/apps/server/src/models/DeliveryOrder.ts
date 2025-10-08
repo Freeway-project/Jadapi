@@ -4,12 +4,14 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
   orderId: string;
   userId: Types.ObjectId;
   status: "pending" | "assigned" | "picked_up" | "in_transit" | "delivered" | "cancelled";
+  paymentStatus: "unpaid" | "paid" | "refunded";
 
   pickup: {
     address: string;
     coordinates: { lat: number; lng: number };
     contactName?: string;
     contactPhone?: string;
+    notes?: string;
     scheduledAt?: Date;
     actualAt?: Date;
   };
@@ -19,6 +21,7 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
     coordinates: { lat: number; lng: number };
     contactName?: string;
     contactPhone?: string;
+    notes?: string;
     scheduledAt?: Date;
     actualAt?: Date;
   };
@@ -35,8 +38,16 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
     timeFare: number;
     subtotal: number;
     tax: number;
+    couponDiscount?: number;
     total: number;
     currency: string;
+  };
+
+  coupon?: {
+    code: string;
+    couponId: Types.ObjectId;
+    discountType: string;
+    discountValue?: number;
   };
 
   distance: {
@@ -45,8 +56,8 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
   };
 
   driverId?: Types.ObjectId;
-  dispatcherId?: Types.ObjectId;
 
+  Qrid?: string;
   timeline: {
     createdAt: Date;
     assignedAt?: Date;
@@ -69,6 +80,13 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       default: "pending",
       index: true
     },
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "paid", "refunded"],
+      default: "unpaid",
+      required: true,
+      index: true
+    },
 
     pickup: {
       address: { type: String, required: true },
@@ -78,6 +96,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       },
       contactName: String,
       contactPhone: String,
+      notes: String,
       scheduledAt: Date,
       actualAt: Date
     },
@@ -90,6 +109,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       },
       contactName: String,
       contactPhone: String,
+      notes: String,
       scheduledAt: Date,
       actualAt: Date
     },
@@ -99,6 +119,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       weight: String,
       description: String
     },
+    Qrid: { type: String,  },
 
     pricing: {
       baseFare: { type: Number, required: true },
@@ -106,8 +127,16 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       timeFare: { type: Number, required: true },
       subtotal: { type: Number, required: true },
       tax: { type: Number, required: true },
+      couponDiscount: { type: Number, default: 0 },
       total: { type: Number, required: true },
       currency: { type: String, default: "CAD" }
+    },
+
+    coupon: {
+      code: String,
+      couponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
+      discountType: String,
+      discountValue: Number
     },
 
     distance: {
@@ -116,7 +145,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
     },
 
     driverId: { type: Schema.Types.ObjectId, ref: "User", index: true },
-    dispatcherId: { type: Schema.Types.ObjectId, ref: "User", index: true },
+
 
     timeline: {
       createdAt: { type: Date, default: Date.now },

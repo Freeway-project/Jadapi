@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/lib/stores/authStore';
+import Header from '@/components/layout/Header';
 import UserTypeSelector from './UserTypeSelector';
 import EmailStep from './EmailStep';
 import VerificationStep from './VerificationStep';
@@ -31,9 +32,14 @@ export default function AuthContainer() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-white">
-      <div className="w-full max-w-md">
-        {renderStep()}
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      <Header />
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full flex items-center justify-center px-4 py-4 sm:py-8">
+          <div className="w-full max-w-md">
+            {renderStep()}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { AuthState, UserType } from '../types/auth';
 
 interface AuthStore extends AuthState {
@@ -11,6 +12,7 @@ interface AuthStore extends AuthState {
   setError: (error: string | null) => void;
   setUser: (user: any) => void;
   reset: () => void;
+  logout: () => void;
 }
 
 const initialState: AuthState = {
@@ -24,24 +26,45 @@ const initialState: AuthState = {
   user: null,
 };
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  ...initialState,
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      ...initialState,
 
-  setStep: (step) => set({ step }),
+      setStep: (step) => set({ step }),
 
-  setUserType: (userType) => set({ userType }),
+      setUserType: (userType) => set({ userType }),
 
-  setAuthMode: (authMode) => set({ authMode }),
+      setAuthMode: (authMode) => set({ authMode }),
 
-  setEmail: (email) => set({ email }),
+      setEmail: (email) => set({ email }),
 
-  setPhoneNumber: (phoneNumber) => set({ phoneNumber }),
+      setPhoneNumber: (phoneNumber) => set({ phoneNumber }),
 
-  setLoading: (isLoading) => set({ isLoading }),
+      setLoading: (isLoading) => set({ isLoading }),
 
-  setError: (error) => set({ error }),
+      setError: (error) => set({ error }),
 
-  setUser: (user) => set({ user }),
+      setUser: (user) => {
+        // Store user data in both state and localStorage
+        if (user) {
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        set({ user });
+      },
 
-  reset: () => set(initialState),
-}));
+      reset: () => set(initialState),
+
+      logout: () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('auth-storage');
+        set({ ...initialState, user: null });
+      },
+    }),
+    {
+      name: 'auth-storage',
+      // Only persist user data
+      partialize: (state) => ({ user: state.user }),
+    }
+  )
+);

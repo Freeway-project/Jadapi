@@ -38,16 +38,24 @@ export const otpSchema = z.object({
 export const individualSignupSchema = z.object({
   email: z.string().email('Please enter a valid email address').optional(),
   phoneNumber: z.string().regex(phoneRegex, 'Please enter a valid phone number'),
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  address: vancouverAddressSchema,
+  name: z.string().min(2, 'Name must be at least 2 characters').refine(val => val.trim().length >= 2, {
+    message: 'Name is required and must be at least 2 characters',
+  }),
+  address: vancouverAddressSchema.refine(val => val && val.trim().length >= 10, {
+    message: 'Address is required',
+  }),
   otp: z.string().length(6, 'OTP must be 6 digits').regex(/^\d+$/, 'OTP must contain only numbers'),
 });
 
 export const businessSignupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   phoneNumber: z.string().regex(phoneRegex, 'Please enter a valid phone number'),
-  businessName: z.string().min(2, 'Business name must be at least 2 characters'),
-  address: vancouverAddressSchema,
+  businessName: z.string().min(2, 'Business name must be at least 2 characters').refine(val => val.trim().length >= 2, {
+    message: 'Business name is required and must be at least 2 characters',
+  }),
+  address: vancouverAddressSchema.refine(val => val && val.trim().length >= 10, {
+    message: 'Address is required',
+  }),
   emailOtp: z.string().length(6, 'Email OTP must be 6 digits').regex(/^\d+$/, 'Email OTP must contain only numbers'),
   phoneOtp: z.string().length(6, 'Phone OTP must be 6 digits').regex(/^\d+$/, 'Phone OTP must contain only numbers'),
 });

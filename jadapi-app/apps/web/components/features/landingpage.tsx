@@ -1,26 +1,12 @@
 import { MapPin, Package, Shield, Clock, BarChart3, FileText, Camera, CheckCircle } from 'lucide-react';
 import { BaseAnimation } from '../animations';
+import Header from '../layout/Header';
 
 export default function JadapiLanding() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-gray-900">jadapi</div>
-          <nav className="hidden md:flex gap-6 text-sm text-gray-600">
-            <a href="#how-it-works" className="hover:text-gray-900 transition">How it works</a>
-            <a href="#pricing" className="hover:text-gray-900 transition">Pricing</a>
-            <a href="#business" className="hover:text-gray-900 transition">For Business</a>
-          </nav>
-          <a
-            href="/auth/signup"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow"
-          >
-            Sign up
-          </a>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24">
@@ -181,7 +167,7 @@ export default function JadapiLanding() {
                 <span>Photo proof of delivery</span>
               </li>
             </ul>
-            <a href="/app/sign-up" className="block w-full text-center px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
+            <a href="/search" className="block w-full text-center px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
               Get started
             </a>
           </div>

@@ -122,7 +122,7 @@ export class AdminController {
       const driverData = {
         email: req.body.email,
         phone: req.body.phone,
-        displayName: req.body.displayName,
+        name: req.body.name,
         vehicleType: req.body.vehicleType,
         licenseNumber: req.body.licenseNumber,
       };

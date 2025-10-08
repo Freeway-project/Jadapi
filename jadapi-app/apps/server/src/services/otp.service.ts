@@ -104,7 +104,7 @@ export const OtpService = {
         { verified: false },
         { expiresAt: { $gt: new Date() } }
       ]
-    };
+    }
 
     if (process.env.NODE_ENV === 'development') {
       console.log('🚀 ~ verifyOtp ~ query:', JSON.stringify(query, null, 2));

@@ -21,7 +21,7 @@ router.get(
   AdminController.getSystemMetrics
 );
 
-// Admin and super admin routes
+// Admin routes
 router.get(
   "/activity",
   activityLogger,
@@ -55,7 +55,6 @@ router.get(
 // Driver management routes
 router.post(
   "/drivers",
-  //requireSuperAdmin,
   activityLogger,
   AdminController.createDriver
 );
@@ -68,7 +67,6 @@ router.get(
 
 router.put(
   "/drivers/:driverId/status",
-  //requireSuperAdmin,
   activityLogger,
   AdminController.updateDriverStatus
 );

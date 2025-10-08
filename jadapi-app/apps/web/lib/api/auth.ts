@@ -22,9 +22,10 @@ export interface SignupData {
   accountType: 'individual' | 'business';
   email?: string;
   phone?: string;
-  displayName: string;
-  legalName?: string; // required for business
-  address?: string; // required for business
+  name: string;  // User's name (required)
+  address: string;  // Address (required)
+  businessName?: string;  // Business name for business accounts
+  gstNumber?: string;  // GST number for business accounts (optional)
 }
 
 export const authAPI = {
@@ -66,43 +67,6 @@ export const authAPI = {
     return response.data;
   },
 
-  // Legacy methods for backward compatibility (deprecated)
-  // @deprecated Use requestOTP instead
-  sendOTP: async (email: string): Promise<{ success: boolean; message: string }> => {
-    const result = await authAPI.requestOTP({ email, type: 'signup', deliveryMethod: 'email' });
-    return { success: true, message: result.message };
-  },
-
-  // @deprecated Use signup instead
-  signupIndividual: async (data: UserSignupData): Promise<{ success: boolean; user: any; token?: string }> => {
-    const signupData: SignupData = {
-      accountType: 'individual',
-      phone: data.phoneNumber,
-      email: data.email,
-      displayName: data.name,
-    };
-    const result = await authAPI.signup(signupData);
-    return { success: true, user: result, token: undefined };
-  },
-
-  // @deprecated Use signup instead
-  signupBusiness: async (data: BusinessSignupData): Promise<{ success: boolean; user: any; token?: string }> => {
-    const signupData: SignupData = {
-      accountType: 'business',
-      email: data.email,
-      phone: data.phoneNumber,
-      displayName: data.businessName,
-      legalName: data.businessName, // Use business name as legal name for now
-    };
-    const result = await authAPI.signup(signupData);
-    return { success: true, user: result, token: undefined };
-  },
-
-  // @deprecated Use requestOTP + verifyOTP instead
-  signin: async (email: string, otp: string): Promise<{ success: boolean; user: any; token?: string }> => {
-    const verifyResult = await authAPI.verifyOTP({ identifier: email, code: otp, type: 'login' });
-    return { success: true, user: verifyResult, token: undefined };
-  },
 
   // Login with email and password (returns JWT token)
   login: async (email: string, password: string) => {

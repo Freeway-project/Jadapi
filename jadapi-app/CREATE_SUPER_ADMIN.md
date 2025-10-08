@@ -6,29 +6,29 @@ The application uses JWT (JSON Web Token) authentication. All admin routes requi
 
 ---
 
-## 1. Create Super Admin
+## 1. Create Admin
 
-**Endpoint:** `POST /api/auth/create-super-admin`
+**Endpoint:** `POST /api/auth/create-admin`
 
 **Request Body:**
 ```json
 {
   "email": "admin@example.com",
   "password": "SecurePassword123!",
-  "displayName": "Super Admin"
+  "displayName": "Admin"
 }
 ```
 
 **Response:**
 ```json
 {
-  "message": "Super admin created successfully",
+  "message": "Admin created successfully",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
     "uuid": "...",
     "email": "admin@example.com",
-    "displayName": "Super Admin",
-    "roles": ["super_admin"],
+    "displayName": "Admin",
+    "roles": ["admin"],
     "status": "active"
   }
 }
@@ -36,7 +36,7 @@ The application uses JWT (JSON Web Token) authentication. All admin routes requi
 
 **Example:**
 ```bash
-curl -X POST http://localhost:3006/api/auth/create-super-admin \
+curl -X POST http://localhost:3006/api/auth/create-admin \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@jadapi.com",
@@ -67,8 +67,8 @@ curl -X POST http://localhost:3006/api/auth/create-super-admin \
   "user": {
     "uuid": "...",
     "email": "admin@example.com",
-    "displayName": "Super Admin",
-    "roles": ["super_admin"],
+    "displayName": "Admin",
+    "roles": ["admin"],
     "status": "active",
     "accountType": "individual"
   }
@@ -152,8 +152,8 @@ All these routes require `Authorization: Bearer TOKEN` header:
 ## Quick Setup
 
 ```bash
-# 1. Create super admin
-curl -X POST http://localhost:3006/api/auth/create-super-admin \
+# 1. Create admin
+curl -X POST http://localhost:3006/api/auth/create-admin \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@jadapi.com","password":"Admin123!","displayName":"Jadapi Admin"}'
 
@@ -173,7 +173,7 @@ curl -X GET http://localhost:3006/api/admin/drivers \
 ## Notes
 
 - Tokens expire in 7 days
-- `admin` and `super_admin` roles are treated the same
+- `admin` role is required for admin routes
 - Token is stored in localStorage on the client
 - Token is automatically included in all API requests
 - 401 responses automatically clear the token

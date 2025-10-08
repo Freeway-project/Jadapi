@@ -99,7 +99,7 @@ export class AdminService {
       .sort({ timestamp: -1 })
       .limit(limit)
       .skip(skip)
-      .populate("userId", "profile.displayName auth.email")
+      .populate("userId", "profile.name auth.email")
       .lean();
 
     const total = await ActivityLog.countDocuments();
@@ -135,8 +135,8 @@ export class AdminService {
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip)
-      .populate("userId", "profile.displayName auth.phone")
-      .populate("driverId", "profile.displayName auth.phone")
+      .populate("userId", "profile.name auth.phone")
+      .populate("driverId", "profile.name auth.phone")
       .lean();
 
     const total = await DeliveryOrder.countDocuments({
@@ -180,8 +180,8 @@ export class AdminService {
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip)
-      .populate("userId", "profile.displayName auth.phone auth.email")
-      .populate("driverId", "profile.displayName auth.phone")
+      .populate("userId", "profile.name auth.phone auth.email")
+      .populate("driverId", "profile.name auth.phone")
       .lean();
 
     const total = await DeliveryOrder.countDocuments(query);
@@ -214,7 +214,7 @@ export class AdminService {
     if (status) query.status = status;
     if (search) {
       query.$or = [
-        { "profile.displayName": { $regex: search, $options: "i" } },
+        { "profile.name": { $regex: search, $options: "i" } },
         { "auth.email": { $regex: search, $options: "i" } },
         { "auth.phone": { $regex: search, $options: "i" } },
       ];
@@ -301,7 +301,7 @@ export class AdminService {
   static async createDriver(driverData: {
     email?: string;
     phone?: string;
-    displayName: string;
+    name: string;
     vehicleType?: string;
     licenseNumber?: string;
   }) {
@@ -310,7 +310,7 @@ export class AdminService {
       throw new Error('Either email or phone is required');
     }
 
-    if (!driverData.displayName) {
+    if (!driverData.name) {
       throw new Error('Display name is required');
     }
 
@@ -338,7 +338,7 @@ export class AdminService {
         phoneVerifiedAt: driverData.phone ? new Date() : null,
       },
       profile: {
-        displayName: driverData.displayName,
+        name: driverData.name,
       },
     });
 
@@ -360,7 +360,7 @@ export class AdminService {
     if (status) query.status = status;
     if (search) {
       query.$or = [
-        { 'profile.displayName': { $regex: search, $options: 'i' } },
+        { 'profile.name': { $regex: search, $options: 'i' } },
         { 'auth.email': { $regex: search, $options: 'i' } },
         { 'auth.phone': { $regex: search, $options: 'i' } },
       ];

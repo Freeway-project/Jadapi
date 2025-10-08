@@ -6,23 +6,24 @@ import { ApiError } from "../utils/ApiError";
 export const UserController = {
   async signup(req: Request, res: Response, next: NextFunction) {
     try {
-      const { accountType, email, phone, displayName, legalName }: SignupData = req.body;
+      const { accountType, email, phone, name, address, businessName, gstNumber }: SignupData = req.body;
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ signup ~ input data:', { accountType, email, phone, displayName, legalName });
+        console.log('🚀 ~ signup ~ input data:', { accountType, email, phone, name, address, businessName, gstNumber });
       }
 
       // Validate required fields
       if (!accountType) {
         throw new ApiError(400, "Account type is required");
       }
-      if (!displayName) {
-        throw new ApiError(400, "Display name is required");
+
+      // Name and address are now mandatory
+      if (!name || name.trim().length < 2) {
+        throw new ApiError(400, "Name is required and must be at least 2 characters");
       }
 
-      // Business accounts require legal name
-      if (accountType === "business" && !legalName) {
-        throw new ApiError(400, "Legal name is required for business accounts");
+      if (!address || address.trim().length < 10) {
+        throw new ApiError(400, "Address is required");
       }
 
       // Verification requirements based on account type
@@ -86,8 +87,10 @@ export const UserController = {
         accountType,
         email,
         phone,
-        displayName,
-        legalName,
+        name,
+        address,
+        businessName,
+        gstNumber,
       };
 
       if (process.env.NODE_ENV === 'development') {
@@ -126,11 +129,15 @@ export const UserController = {
 
       // Return user without sensitive data
       const response = {
+        _id: user._id,
         uuid: user.uuid,
         accountType: user.accountType,
         roles: user.roles,
         status: user.status,
         profile: user.profile,
+        businessProfile: user.businessProfile,
+        email: user.auth?.email,
+        phone: user.auth?.phone,
         auth: {
           email: user.auth.email,
           phone: user.auth.phone,
@@ -192,6 +199,68 @@ export const UserController = {
       const user = await UserService.verifyPhone(req.params.id);
       if (!user) return res.status(404).json({ error: "User not found" });
       res.json({ message: "Phone verified successfully", phoneVerifiedAt: user.auth.phoneVerifiedAt });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.id || req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const { name, address, businessName, gstNumber } = req.body;
+
+      const user = await UserService.updateProfile(userId, {
+        name,
+        address,
+        businessName,
+        gstNumber
+      });
+
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      res.json({
+        message: "Profile updated successfully",
+        profile: user.profile,
+        businessProfile: user.businessProfile
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async searchByIdentifier(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { identifier } = req.query;
+
+      if (!identifier || typeof identifier !== 'string') {
+        throw new ApiError(400, "Identifier (email or phone) is required");
+      }
+
+      // Search by email or phone
+      const user = await UserService.findByIdentifier(identifier);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Return user without sensitive data
+      const response = {
+        _id: user._id,
+        uuid: user.uuid,
+        accountType: user.accountType,
+        email: user.auth?.email,
+        phone: user.auth?.phone,
+        profile: user.profile,
+        businessProfile: user.businessProfile,
+        roles: user.roles,
+        status: user.status,
+      };
+
+      res.json({ user: response });
     } catch (err) {
       next(err);
     }

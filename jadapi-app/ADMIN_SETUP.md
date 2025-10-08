@@ -1,14 +1,14 @@
-# Super Admin System - Setup Guide
+# Admin System - Setup Guide
 
 ## Overview
-A complete super admin system for monitoring and managing the Jadapi delivery platform.
+A complete admin system for monitoring and managing the Jadapi delivery platform.
 
 ## 🚀 What Was Built
 
 ### 1. **Database Models**
 - **User Model** (`apps/server/src/models/user.model.ts`)
-  - Added `super_admin` role to existing roles
-  - Super admins have full platform access
+  - Added `admin` role to existing roles
+  - Admins have full platform access
 
 - **ActivityLog Model** (`apps/server/src/models/ActivityLog.ts`)
   - Tracks all API activity
@@ -22,8 +22,7 @@ A complete super admin system for monitoring and managing the Jadapi delivery pl
 
 ### 2. **Authentication & Middleware**
 - **Admin Auth Middleware** (`apps/server/src/middlewares/adminAuth.ts`)
-  - `requireSuperAdmin` - Restricts to super_admin role only
-  - `requireAdmin` - Allows admin and super_admin roles
+  - `requireAdmin` - Restricts to admin role only
 
 - **Activity Logger** (`apps/server/src/middlewares/activityLogger.ts`)
   - Automatic API activity logging
@@ -40,11 +39,9 @@ A complete super admin system for monitoring and managing the Jadapi delivery pl
 
 ### 4. **API Endpoints** (`apps/server/src/routes/admin.routes.ts`)
 
-#### Super Admin Only:
+#### Admin Routes:
 - `GET /api/admin/dashboard/stats` - Dashboard statistics
 - `GET /api/admin/metrics` - System metrics
-
-#### Admin & Super Admin:
 - `GET /api/admin/activity` - Recent activity logs
 - `GET /api/admin/activity/user/:userId` - User-specific activity
 - `GET /api/admin/orders/active` - Active orders
@@ -92,7 +89,7 @@ A complete super admin system for monitoring and managing the Jadapi delivery pl
 ## 🔐 Security Features
 
 1. **Role-based Access Control**
-   - Super admin role required for sensitive operations
+   - Admin role required for sensitive operations
    - Middleware validates user roles
    - Active account status required
 
@@ -127,13 +124,13 @@ A complete super admin system for monitoring and managing the Jadapi delivery pl
 
 ## 🚦 Getting Started
 
-### 1. Create Super Admin User
+### 1. Create Admin User
 Run this in MongoDB or via API:
 ```javascript
-// Update existing user to super_admin
+// Update existing user to admin
 db.users.updateOne(
   { "auth.email": "admin@jadapi.com" },
-  { $addToSet: { roles: "super_admin" } }
+  { $addToSet: { roles: "admin" } }
 )
 ```
 
@@ -153,7 +150,7 @@ apps/server/src/
 ├── models/
 │   ├── ActivityLog.ts          # Activity tracking
 │   ├── DeliveryOrder.ts        # Order management
-│   └── user.model.ts           # Updated with super_admin role
+│   └── user.model.ts           # Updated with admin role
 ├── middlewares/
 │   ├── adminAuth.ts            # Admin authentication
 │   └── activityLogger.ts       # Activity logging
@@ -204,7 +201,7 @@ To enhance the admin system:
    - Bulk operations
 
 4. **Security Enhancements**
-   - 2FA for super admins
+   - 2FA for admins
    - IP whitelisting
    - Rate limiting
    - Audit log exports
@@ -237,7 +234,7 @@ orders.forEach(order => {
 
 1. **Authentication Required**: All admin routes require authentication middleware (not implemented in routes - add your existing auth middleware)
 
-2. **Role Assignment**: Only super_admin users can access dashboard stats and metrics
+2. **Role Assignment**: Only admin users can access dashboard stats and metrics
 
 3. **Activity Logging**: Add `activityLogger` middleware to routes you want to track
 
@@ -247,7 +244,7 @@ orders.forEach(order => {
 
 **Dashboard not loading?**
 - Check API URL in environment variables
-- Verify super_admin role is assigned
+- Verify admin role is assigned
 - Check browser console for errors
 
 **No data showing?**

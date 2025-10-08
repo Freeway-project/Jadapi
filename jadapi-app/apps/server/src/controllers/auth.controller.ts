@@ -6,15 +6,15 @@ import bcrypt from "bcrypt";
 
 export const AuthController = {
   /**
-   * Create super admin - for initial setup only
-   * POST /api/auth/create-super-admin
+   * Create admin - for initial setup only
+   * POST /api/auth/create-admin
    */
-  async createSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  async createAdmin(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password, displayName } = req.body;
+      const { email, password, name } = req.body;
 
-      if (!email || !password || !displayName) {
-        throw new ApiError(400, "Email, password, and display name are required");
+      if (!email || !password || !name) {
+        throw new ApiError(400, "Email, password, and name are required");
       }
 
       // Check if email already exists
@@ -26,14 +26,14 @@ export const AuthController = {
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Create super admin user
+      // Create admin user
       const user = await UserRepository.create({
         accountType: "individual",
         email,
         phone: undefined,
         password: hashedPassword,
-        displayName,
-        roles: ["super_admin"],
+        name,
+        roles: ["admin"],
         status: "active",
       });
 
@@ -45,12 +45,12 @@ export const AuthController = {
       });
 
       res.status(201).json({
-        message: "Super admin created successfully",
+        message: "Admin created successfully",
         token,
         user: {
           uuid: user.uuid,
           email: user.auth.email,
-          displayName: user.profile.displayName,
+          name: user.profile.name,
           roles: user.roles,
           status: user.status,
         },
@@ -107,7 +107,8 @@ export const AuthController = {
         user: {
           uuid: user.uuid,
           email: user.auth.email,
-          displayName: user.profile.displayName,
+          name: user.profile?.name,
+          address: user.profile?.address,
           roles: user.roles,
           status: user.status,
           accountType: user.accountType,
