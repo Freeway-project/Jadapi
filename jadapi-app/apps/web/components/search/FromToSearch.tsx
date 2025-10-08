@@ -14,6 +14,7 @@ interface FromToSearchProps {
   showPackageDetails?: boolean;
   className?: string;
   prefillFromLastSearch?: boolean;
+  onAddressChange?: (pickup: string, dropoff: string) => void;
 }
 
 interface PackageDetails {
@@ -33,7 +34,8 @@ export default function FromToSearch({
   onEstimate,
   showPackageDetails = false,
   className = '',
-  prefillFromLastSearch = false
+  prefillFromLastSearch = false,
+  onAddressChange
 }: FromToSearchProps) {
   const { addSearch, getLastSearch } = useSearchStore();
   const [fromAddress, setFromAddress] = useState('');
@@ -109,6 +111,9 @@ export default function FromToSearch({
         packageDescription: packageDetails.description,
         estimatedFare: estimate?.data?.fare?.total
       });
+
+      // Pass addresses to parent component
+      onAddressChange?.(fromAddress, toAddress);
 
       onEstimate?.(estimate);
     } catch (err: any) {

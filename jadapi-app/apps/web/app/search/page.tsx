@@ -15,6 +15,8 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const [estimate, setEstimate] = useState<FareEstimateResponse | null>(null);
   const [showBooking, setShowBooking] = useState(false);
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [dropoffAddress, setDropoffAddress] = useState('');
   const estimateRef = useRef<HTMLDivElement>(null);
 
   const handleEstimate = (estimateData: FareEstimateResponse) => {
@@ -92,6 +94,10 @@ export default function HomePage() {
               showPackageDetails={true}
               prefillFromLastSearch={true}
               className="w-full"
+              onAddressChange={(pickup, dropoff) => {
+                setPickupAddress(pickup);
+                setDropoffAddress(dropoff);
+              }}
             />
 
          
@@ -103,6 +109,8 @@ export default function HomePage() {
               // Show booking flow for authenticated users
               <BookingFlow
                 estimate={estimate}
+                pickupAddress={pickupAddress}
+                dropoffAddress={dropoffAddress}
                 onBack={handleBackToEstimate}
                 onComplete={handleBookingComplete}
               />
