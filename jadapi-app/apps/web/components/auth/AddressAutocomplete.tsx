@@ -22,7 +22,13 @@ interface AddressAutocompleteProps {
   error?: string;
   disabled?: boolean;
   className?: string;
+  showTestAddresses?: boolean;
 }
+
+const TEST_ADDRESSES = [
+  '1955 Alpha Wy., Burnaby, BC V5C 0K6',
+  '7304 Buller Ave, Burnaby, BC V5J 4S5'
+];
 
 // Simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -49,11 +55,11 @@ export default function AddressAutocomplete({
   error,
   disabled = false,
   className = "",
+  showTestAddresses = false,
 }: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAPIReady, setIsAPIReady] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const debouncedValue = useDebounce(value, 300);
 
@@ -61,12 +67,10 @@ export default function AddressAutocomplete({
   useEffect(() => {
     loadGoogleMaps()
       .then(() => {
-        setIsAPIReady(true);
         setApiError(null);
       })
       .catch((error) => {
         console.error('Failed to load Google Maps API:', error);
-        setIsAPIReady(false);
         setApiError('Address autocomplete is not available. Please type your address manually.');
       });
   }, []);
@@ -166,8 +170,26 @@ export default function AddressAutocomplete({
   return (
     <div className="relative">
       {label && (
-        <Label htmlFor="address" className="text-sm font-medium text-gray-700 mb-1 block">{label}</Label>
+        <Label htmlFor="address" className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 block">{label}</Label>
       )}
+
+      {showTestAddresses && (
+        <div className="mb-3 flex gap-2 flex-wrap">
+          {TEST_ADDRESSES.map((address, index) => (
+            <Button
+              key={index}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onChange(address)}
+              className="text-xs bg-blue-50 border-blue-300 hover:bg-blue-100 text-blue-700"
+            >
+              Test #{index + 1}
+            </Button>
+          ))}
+        </div>
+      )}
+
       <div className="relative">
         <Input
           id="address"
@@ -178,39 +200,39 @@ export default function AddressAutocomplete({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full bg-gray-50 border-0 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:ring-1 focus:ring-gray-300 disabled:bg-gray-100 disabled:text-gray-500 transition-all ${className}`}
+          className={`w-full bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-600 focus:ring-0 disabled:bg-gray-100 disabled:text-gray-500 transition-all ${className}`}
         />
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
           {isLoading && (
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-gray-400" />
           )}
         </div>
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
+        <p className="text-sm sm:text-base text-red-600 mt-1.5 sm:mt-2">{error}</p>
       )}
 
       {apiError && !error && (
-        <p className="text-sm text-amber-600 mt-1">{apiError}</p>
+        <p className="text-sm sm:text-base text-amber-600 mt-1.5 sm:mt-2">{apiError}</p>
       )}
 
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
           {suggestions.map((suggestion) => (
             <Button
               key={suggestion.place_id}
               variant="ghost"
-              className="w-full justify-start h-auto px-4 py-3 text-left rounded-none hover:bg-gray-50 transition-colors"
+              className="w-full justify-start h-auto px-4 py-3 sm:py-4 text-left rounded-none hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
               onClick={() => handleSuggestionClick(suggestion)}
             >
               <div className="flex items-start space-x-3 w-full">
-                <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm text-gray-900">
+                  <div className="font-semibold text-sm sm:text-base text-gray-900">
                     {suggestion.main_text}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
+                  <div className="text-xs sm:text-sm text-gray-500 truncate mt-0.5">
                     {suggestion.secondary_text}
                   </div>
                 </div>

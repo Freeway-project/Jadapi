@@ -46,7 +46,7 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
 
   driverId?: Types.ObjectId;
 
-
+  Qrid?: string;
   timeline: {
     createdAt: Date;
     assignedAt?: Date;
@@ -99,6 +99,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       weight: String,
       description: String
     },
+    Qrid: { type: String,  },
 
     pricing: {
       baseFare: { type: Number, required: true },

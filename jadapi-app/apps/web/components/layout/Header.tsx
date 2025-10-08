@@ -33,7 +33,7 @@ export default function Header() {
                   </span>
                 </div>
                 <Link href="/dashboard">
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                  <Button  size="sm" className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white">
                     Dashboard
                   </Button>
                 </Link>

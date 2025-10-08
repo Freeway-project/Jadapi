@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Clock, Package } from 'lucide-react';
+import { MapPin, Navigation, Clock, Package, ArrowRight, Locate, MapPinned } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -127,67 +127,105 @@ export default function FromToSearch({
   ];
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm p-3 sm:p-4 space-y-2 max-w-2xl mx-auto ${className}`}>
+    <div className={`bg-white rounded-xl sm:rounded-2xl shadow-md border border-gray-100 p-4 sm:p-6 space-y-5 sm:space-y-6 max-w-2xl mx-auto ${className}`}>
       {/* Address Selection */}
-      <div className="space-y-2">
-        {/* From Address */}
-        <AddressAutocomplete
-          value={fromAddress}
-          onChange={setFromAddress}
-          label='From'
-          placeholder="Pickup location"
-          className="h-11 sm:h-12 text-base rounded-lg"
-        />
+      <div className="space-y-4 sm:space-y-5">
+        {/* Pickup Address */}
+        <div>
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
+              <Locate className="w-4 h-4 text-green-600" />
+            </div>
+            <Label className="text-sm sm:text-base font-semibold text-gray-900">Pickup Location</Label>
+          </div>
+          <AddressAutocomplete
+            value={fromAddress}
+            onChange={setFromAddress}
+            label=''
+            placeholder="Enter pickup address"
+            className="h-12 sm:h-14 text-base sm:text-lg rounded-xl"
+            showTestAddresses={true}
+          />
+        </div>
 
-        {/* To Address */}
-        <AddressAutocomplete
-          value={toAddress}
-          label='To'
-          onChange={setToAddress}
-          placeholder="Drop-off location"
-          className="h-11 sm:h-12 text-base rounded-lg"
-        />
+        {/* Arrow Indicator */}
+        <div className="flex justify-center -my-2">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
+            <ArrowRight className="w-5 h-5 text-gray-600 rotate-90" />
+          </div>
+        </div>
+
+        {/* Dropoff Address */}
+        <div>
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100">
+              <MapPinned className="w-4 h-4 text-blue-600" />
+            </div>
+            <Label className="text-sm sm:text-base font-semibold text-gray-900">Dropoff Location</Label>
+          </div>
+          <AddressAutocomplete
+            value={toAddress}
+            label=''
+            onChange={setToAddress}
+            placeholder="Enter dropoff address"
+            className="h-12 sm:h-14 text-base sm:text-lg rounded-xl"
+            showTestAddresses={true}
+          />
+        </div>
       </div>
 
       {/* Package Details */}
       {showPackageDetails && (
-        <div className="space-y-2 pt-1">
+        <div className="space-y-3 sm:space-y-4 pt-2">
           {/* Package Type Selection */}
-          <div className="grid grid-cols-4 gap-2">
-            {packageTypes.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => setPackageDetails({ ...packageDetails, type: type.id as PackageDetails['type'] })}
-                className={`p-2 sm:p-3 rounded-lg transition-all ${
-                  packageDetails.type === type.id
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <div className="flex flex-col items-center justify-center space-y-0.5">
-                  <span className="text-lg sm:text-xl">{type.icon}</span>
-                  <div className="font-medium text-[10px] sm:text-xs">{type.label}</div>
-                </div>
-              </button>
-            ))}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100">
+                <Package className="w-4 h-4 text-orange-600" />
+              </div>
+              <Label className="text-sm sm:text-base font-semibold text-gray-900">Package Size</Label>
+            </div>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              {packageTypes.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setPackageDetails({ ...packageDetails, type: type.id as PackageDetails['type'] })}
+                  className={`p-3 sm:p-4 rounded-xl transition-all border-2 ${
+                    packageDetails.type === type.id
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                  }`}
+                >
+                  <div className="flex flex-col items-center justify-center space-y-1">
+                    <span className="text-xl sm:text-2xl">{type.icon}</span>
+                    <div className="font-semibold text-xs sm:text-sm">{type.label}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Description */}
-          <Input
-            id="description"
-            type="text"
-            placeholder="What are you sending?"
-            value={packageDetails.description || ''}
-            onChange={(e) => setPackageDetails({ ...packageDetails, description: e.target.value })}
-            className="h-11 sm:h-12 text-base rounded-lg bg-gray-50 border-0"
-          />
+          {/* <div>
+            <Label htmlFor="description" className="text-sm sm:text-base font-semibold text-gray-900 mb-3 block">
+              Package Description <span className="text-gray-400 font-normal text-sm">(Optional)</span>
+            </Label>
+            <Input
+              id="description"
+              type="text"
+              placeholder="What are you sending?"
+              value={packageDetails.description || ''}
+              onChange={(e) => setPackageDetails({ ...packageDetails, description: e.target.value })}
+              className="h-12 sm:h-14 text-base sm:text-lg rounded-xl border-2 border-gray-200 focus:border-blue-600"
+            />
+          </div> */}
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 rounded-lg p-3">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4">
+          <p className="text-sm sm:text-base text-red-600 font-medium">{error}</p>
         </div>
       )}
 
@@ -195,16 +233,16 @@ export default function FromToSearch({
       <Button
         onClick={handleSearch}
         disabled={!fromAddress || !toAddress || isLoading}
-        className="w-full bg-black hover:bg-gray-800 text-white font-semibold h-11 sm:h-12 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base mt-2"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 sm:h-14 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg shadow-lg hover:shadow-xl hover:transform hover:scale-[1.01]"
         size="lg"
       >
         {isLoading ? (
           <div className="flex items-center justify-center space-x-2">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <span>Finding routes...</span>
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <span>Getting estimate...</span>
           </div>
         ) : (
-          <span>See prices</span>
+          <span>Get Price Estimate</span>
         )}
       </Button>
     </div>

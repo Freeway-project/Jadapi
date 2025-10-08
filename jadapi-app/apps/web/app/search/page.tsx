@@ -9,6 +9,7 @@ import Header from '@/components/layout/Header';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import Link from 'next/link';
+import { BaseAnimation } from '@/components/animations';
 
 export default function HomePage() {
   const { user } = useAuthStore();
@@ -93,16 +94,7 @@ export default function HomePage() {
               className="w-full"
             />
 
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              {features.map((feature, index) => (
-                <div key={index} className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-100">
-                  <div className="text-blue-600 mb-2">{feature.icon}</div>
-                  <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">{feature.title}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600">{feature.description}</p>
-                </div>
-              ))}
-            </div>
+         
           </div>
 
           {/* Right Column - Map & Results */}
@@ -221,12 +213,16 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 sm:p-12 text-center">
-                <Truck className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4" />
+                  <BaseAnimation animationFile="truck-delivery-service.json" width={250} height={250} className="mx-auto mb-6" />
+
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">Ready to Deliver</h3>
                 <p className="text-sm sm:text-base text-gray-600">Enter pickup and delivery addresses to get an instant estimate</p>
               </div>
             )}
           </div>
+
+
+          
         </div>
       </main>
     </div>
