@@ -9,12 +9,17 @@ import AddressAutocomplete from '../auth/AddressAutocomplete';
 import { deliveryAPI, FareEstimateResponse } from '@/lib/api/delivery';
 import { useSearchStore } from '@/lib/stores/searchStore';
 
+interface Location {
+  lat: number;
+  lng: number;
+}
+
 interface FromToSearchProps {
   onEstimate?: (estimate: FareEstimateResponse) => void;
   showPackageDetails?: boolean;
   className?: string;
   prefillFromLastSearch?: boolean;
-  onAddressChange?: (pickup: string, dropoff: string) => void;
+  onAddressChange?: (pickup: string, dropoff: string, pickupCoords?: Location, dropoffCoords?: Location) => void;
 }
 
 interface PackageDetails {
@@ -112,8 +117,8 @@ export default function FromToSearch({
         estimatedFare: estimate?.data?.fare?.total
       });
 
-      // Pass addresses to parent component
-      onAddressChange?.(fromAddress, toAddress);
+      // Pass addresses and coordinates to parent component
+      onAddressChange?.(fromAddress, toAddress, pickupCoords, dropoffCoords);
 
       onEstimate?.(estimate);
     } catch (err: any) {
@@ -132,48 +137,49 @@ export default function FromToSearch({
   ];
 
   return (
-    <div className={`bg-white rounded-xl sm:rounded-2xl shadow-md border border-gray-100 p-4 sm:p-6 space-y-5 sm:space-y-6 max-w-2xl mx-auto ${className}`}>
+    <div className={`bg-white rounded-xl sm:rounded-2xl shadow-md border border-gray-500 p-3 sm:p-6 space-y-3 
+    sm:space-y-2 max-w-2xl mx-auto ${className}`}>
       {/* Address Selection */}
-      <div className="space-y-4 sm:space-y-5">
+      <div className="space-y-3 sm:space-y-5">
         {/* Pickup Address */}
         <div>
-          <div className="flex items-center gap-2 mb-2 sm:mb-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100">
-              <Locate className="w-4 h-4 text-green-600" />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-green-100">
+              <Locate className="w-3.5 h-3.5 text-green-600" />
             </div>
-            <Label className="text-sm sm:text-base font-semibold text-gray-900">Pickup Location</Label>
+            <Label className="text-xs sm:text-base font-semibold text-gray-900">Pickup Location</Label>
           </div>
           <AddressAutocomplete
             value={fromAddress}
             onChange={setFromAddress}
             label=''
             placeholder="Enter pickup address"
-            className="h-12 sm:h-14 text-base sm:text-lg rounded-xl"
+            className="h-11 sm:h-14 text-sm sm:text-lg rounded-xl"
             showTestAddresses={true}
           />
         </div>
 
         {/* Arrow Indicator */}
-        <div className="flex justify-center -my-2">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
-            <ArrowRight className="w-5 h-5 text-gray-600 rotate-90" />
+        <div className="flex justify-center -my-1">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100">
+            <ArrowRight className="w-4 h-4 text-gray-600 rotate-90" />
           </div>
         </div>
 
         {/* Dropoff Address */}
         <div>
-          <div className="flex items-center gap-2 mb-2 sm:mb-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100">
-              <MapPinned className="w-4 h-4 text-blue-600" />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-100">
+              <MapPinned className="w-3.5 h-3.5 text-blue-600" />
             </div>
-            <Label className="text-sm sm:text-base font-semibold text-gray-900">Dropoff Location</Label>
+            <Label className="text-xs sm:text-base font-semibold text-gray-900">Dropoff Location</Label>
           </div>
           <AddressAutocomplete
             value={toAddress}
             label=''
             onChange={setToAddress}
             placeholder="Enter dropoff address"
-            className="h-12 sm:h-14 text-base sm:text-lg rounded-xl"
+            className="h-11 sm:h-14 text-sm sm:text-lg rounded-xl"
             showTestAddresses={true}
           />
         </div>
@@ -181,29 +187,29 @@ export default function FromToSearch({
 
       {/* Package Details */}
       {showPackageDetails && (
-        <div className="space-y-3 sm:space-y-4 pt-2">
+        <div className="space-y-2 sm:space-y-4 pt-1">
           {/* Package Type Selection */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100">
-                <Package className="w-4 h-4 text-orange-600" />
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-orange-100">
+                <Package className="w-3.5 h-3.5 text-orange-600" />
               </div>
-              <Label className="text-sm sm:text-base font-semibold text-gray-900">Package Size</Label>
+              <Label className="text-xs sm:text-base font-semibold text-gray-900">Package Size</Label>
             </div>
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {packageTypes.map((type) => (
                 <button
                   key={type.id}
                   onClick={() => setPackageDetails({ ...packageDetails, type: type.id as PackageDetails['type'] })}
-                  className={`p-3 sm:p-4 rounded-xl transition-all border-2 ${
+                  className={`p-2 sm:p-4 rounded-xl transition-all border-2 ${
                     packageDetails.type === type.id
                       ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
                       : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
                   }`}
                 >
-                  <div className="flex flex-col items-center justify-center space-y-1">
-                    <span className="text-xl sm:text-2xl">{type.icon}</span>
-                    <div className="font-semibold text-xs sm:text-sm">{type.label}</div>
+                  <div className="flex flex-col items-center justify-center space-y-0.5">
+                    <span className="text-lg sm:text-2xl">{type.icon}</span>
+                    <div className="font-semibold text-[10px] sm:text-sm">{type.label}</div>
                   </div>
                 </button>
               ))}
@@ -229,8 +235,8 @@ export default function FromToSearch({
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4">
-          <p className="text-sm sm:text-base text-red-600 font-medium">{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-2 sm:p-4">
+          <p className="text-xs sm:text-base text-red-600 font-medium">{error}</p>
         </div>
       )}
 
@@ -238,7 +244,7 @@ export default function FromToSearch({
       <Button
         onClick={handleSearch}
         disabled={!fromAddress || !toAddress || isLoading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 sm:h-14 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg shadow-lg hover:shadow-xl hover:transform hover:scale-[1.01]"
+        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold h-11 sm:h-14 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-lg shadow-lg"
         size="lg"
       >
         {isLoading ? (
