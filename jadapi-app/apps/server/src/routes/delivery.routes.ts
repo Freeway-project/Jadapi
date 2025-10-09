@@ -2,6 +2,9 @@ import { Router, Request, Response } from "express";
 import { DeliveryAreaValidator } from "../utils/cityDeliveryValidator";
 import { CityServiceAreaService } from "../services/cityServiceArea.service";
 import { ApiError } from "../utils/ApiError";
+import { DeliveryOrder } from "../models/DeliveryOrder";
+import { authenticate } from "../middlewares/auth";
+import { CouponService } from "../services/coupon.service";
 
 const router = Router();
 
@@ -105,6 +108,134 @@ router.get("/service-areas", async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch service areas"
+    });
+  }
+});
+
+/**
+ * POST /api/delivery/create-order
+ * Create a new delivery order (with optional coupon)
+ */
+router.post("/create-order", authenticate, async (req: Request, res: Response) => {
+  try {
+    const {
+      pickup,
+      dropoff,
+      package: packageDetails,
+      pricing,
+      distance,
+      couponCode
+    } = req.body;
+
+    const user = (req as any).user;
+
+    // Validate required fields
+    if (!pickup?.address || !pickup?.coordinates || !pickup?.contactName || !pickup?.contactPhone) {
+      throw new ApiError(400, "Pickup address, coordinates, contact name and phone are required");
+    }
+
+    if (!dropoff?.address || !dropoff?.coordinates || !dropoff?.contactName || !dropoff?.contactPhone) {
+      throw new ApiError(400, "Dropoff address, coordinates, contact name and phone are required");
+    }
+
+    if (!packageDetails?.size) {
+      throw new ApiError(400, "Package size is required");
+    }
+
+    if (!pricing || !distance) {
+      throw new ApiError(400, "Pricing and distance information are required");
+    }
+
+    let finalPricing = { ...pricing };
+    let couponData = undefined;
+
+    // Handle coupon if provided
+    if (couponCode) {
+      const validation = await CouponService.validateCoupon(
+        couponCode,
+        user._id,
+        pricing.total,
+        user.accountType
+      );
+
+      if (!validation.valid) {
+        throw new ApiError(400, validation.message || "Invalid coupon");
+      }
+
+      // Calculate discount
+      const discount = CouponService.calculateDiscount(
+        validation.coupon!,
+        pricing.subtotal,
+        pricing.baseFare
+      );
+
+      // Update pricing with discount
+      finalPricing.couponDiscount = discount;
+      finalPricing.total = pricing.total - discount;
+
+      // Store coupon info
+      couponData = {
+        code: validation.coupon!.code,
+        couponId: validation.coupon!._id,
+        discountType: validation.coupon!.discountType,
+        discountValue: validation.coupon!.discountValue
+      };
+
+      // Increment coupon usage
+      await CouponService.applyCoupon(validation.coupon!._id);
+    }
+
+    // Generate unique order ID
+    const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+
+    // Create order
+    const order = await DeliveryOrder.create({
+      orderId,
+      userId: user._id,
+      status: "pending",
+      paymentStatus: "unpaid",
+      pickup: {
+        address: pickup.address,
+        coordinates: pickup.coordinates,
+        contactName: pickup.contactName,
+        contactPhone: pickup.contactPhone,
+        notes: pickup.notes,
+        scheduledAt: pickup.scheduledAt ? new Date(pickup.scheduledAt) : undefined
+      },
+      dropoff: {
+        address: dropoff.address,
+        coordinates: dropoff.coordinates,
+        contactName: dropoff.contactName,
+        contactPhone: dropoff.contactPhone,
+        notes: dropoff.notes,
+        scheduledAt: dropoff.scheduledAt ? new Date(dropoff.scheduledAt) : undefined
+      },
+      package: {
+        size: packageDetails.size,
+        weight: packageDetails.weight,
+        description: packageDetails.description
+      },
+      pricing: finalPricing,
+      coupon: couponData,
+      distance: {
+        km: distance.distanceKm || distance.km,
+        durationMinutes: distance.durationMinutes
+      },
+      timeline: {
+        createdAt: new Date()
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      data: { order },
+      message: couponCode ? "Order created successfully with coupon applied" : "Order created successfully"
+    });
+  } catch (error: any) {
+    console.error("Create order error:", error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to create order"
     });
   }
 });

@@ -56,6 +56,7 @@ export const UserService = {
     return UserRepository.findById(id);
   },
 
+
   async getByUuid(uuid: string): Promise<UserDoc | null> {
     return UserRepository.findByUuid(uuid);
   },
