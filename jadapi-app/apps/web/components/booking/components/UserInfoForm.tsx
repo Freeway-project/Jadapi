@@ -4,6 +4,7 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { userAPI, UserData } from '@/lib/api/user';
 import { useDebounce } from '@/hooks/useDebounce';
+import AddressAutocomplete from '@/components/auth/AddressAutocomplete';
 
 export interface UserDetails {
   name: string;
@@ -75,12 +76,12 @@ export default function UserInfoForm({
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center space-x-2 pb-3 border-b border-gray-200">
-        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-blue-600" />
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2 pb-3">
+        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+          <Icon className="w-3.5 h-3.5 text-gray-700" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
       </div>
 
       <div className="space-y-4">
@@ -94,19 +95,19 @@ export default function UserInfoForm({
             onChange={(e) => setUuid(e.target.value)}
             onFocus={() => suggestion && setShowSuggestion(true)}
             onBlur={() => setTimeout(() => setShowSuggestion(false), 200)}
-            className="border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="border-gray-200 focus:border-gray-900 focus:ring-0"
           />
           {isSearching && (
-            <Loader2 className="w-4 h-4 animate-spin text-blue-500 absolute right-3 top-9" />
+            <Loader2 className="w-4 h-4 animate-spin text-gray-400 absolute right-3 top-9" />
           )}
 
           {/* Suggestion */}
           {showSuggestion && suggestion && (
-            <div className="absolute z-50 w-full mt-2 bg-white border border-blue-200 rounded-lg shadow-xl">
+            <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
               <button
                 type="button"
                 onClick={() => handleSelectSuggestion(suggestion)}
-                className="w-full p-3 text-left hover:bg-blue-50 transition-colors rounded-lg"
+                className="w-full p-3 text-left hover:bg-gray-50 transition-colors rounded-lg"
               >
                 <div className="font-medium text-sm text-gray-900">{suggestion.profile?.name}</div>
                 <div className="text-xs text-gray-600 mt-0.5">{suggestion.auth?.phone || suggestion.phone}</div>
@@ -115,7 +116,7 @@ export default function UserInfoForm({
           )}
         </div>
 
-        <div className="pt-2 space-y-4">
+        <div className="space-y-3">
           {/* Name */}
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-1.5">Full Name *</Label>
@@ -124,7 +125,7 @@ export default function UserInfoForm({
               placeholder={`Enter ${type}'s full name`}
               value={userDetails.name}
               onChange={(e) => onUpdate({ ...userDetails, name: e.target.value })}
-              className="border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="border-gray-200 focus:border-gray-900 focus:ring-0"
               required
             />
           </div>
@@ -137,23 +138,19 @@ export default function UserInfoForm({
               placeholder="(555) 123-4567"
               value={userDetails.phone}
               onChange={(e) => onUpdate({ ...userDetails, phone: e.target.value })}
-              className="border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="border-gray-200 focus:border-gray-900 focus:ring-0"
               required
             />
           </div>
 
           {/* Address */}
           <div>
-            <Label className="text-sm font-medium text-gray-700 mb-1.5">
-              {type === 'sender' ? 'Pickup Address' : 'Delivery Address'} *
-            </Label>
-            <Input
-              type="text"
+            <AddressAutocomplete
+              label={`${type === 'sender' ? 'Pickup Address' : 'Delivery Address'} *`}
               placeholder={type === 'sender' ? 'Enter pickup address' : 'Enter delivery address'}
               value={userDetails.address}
-              onChange={(e) => onUpdate({ ...userDetails, address: e.target.value })}
-              className="border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              required
+              onChange={(value) => onUpdate({ ...userDetails, address: value })}
+              className="border-gray-200 focus:border-gray-900 focus:ring-0"
             />
           </div>
 
@@ -171,7 +168,7 @@ export default function UserInfoForm({
               }
               value={userDetails.notes}
               onChange={(e) => onUpdate({ ...userDetails, notes: e.target.value })}
-              className="border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="border-gray-200 focus:border-gray-900 focus:ring-0"
             />
           </div>
         </div>

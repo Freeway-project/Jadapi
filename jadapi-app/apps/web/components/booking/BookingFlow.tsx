@@ -5,11 +5,13 @@ import { User, MapPin, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { geocodeAddress } from '@/lib/utils/geocoding';
 import ProgressSteps, { BookingStep } from './components/ProgressSteps';
 import FareEstimate from './components/FareEstimate';
 import UserInfoForm, { UserDetails } from './components/UserInfoForm';
 import ReviewOrder from './components/ReviewOrder';
 import PaymentSection from './components/PaymentSection';
+import MapView from '@/components/map/MapView';
 
 interface BookingFlowProps {
   estimate: FareEstimateResponse;
@@ -43,27 +45,52 @@ export default function BookingFlow({
     notes: ''
   });
 
-  // Prefill sender info from logged-in user and addresses from search
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | undefined>();
+  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | undefined>();
+  const [initialPrefillDone, setInitialPrefillDone] = useState(false);
+
+  // Prefill sender info from logged-in user and addresses from search (only once)
   useEffect(() => {
-    if (user) {
+    if (!initialPrefillDone && user) {
       setSender({
         name: user.profile?.name || '',
         phone: user.auth?.phone || user.phone || '',
         address: pickupAddress || '',
         notes: ''
       });
-    }
-  }, [user, pickupAddress]);
 
-  // Prefill recipient address from search
-  useEffect(() => {
-    if (dropoffAddress) {
-      setRecipient(prev => ({
-        ...prev,
-        address: dropoffAddress
-      }));
+      if (dropoffAddress) {
+        setRecipient(prev => ({
+          ...prev,
+          address: dropoffAddress
+        }));
+      }
+
+      setInitialPrefillDone(true);
     }
-  }, [dropoffAddress]);
+  }, [user, pickupAddress, dropoffAddress, initialPrefillDone]);
+
+  // Geocode pickup address when it changes
+  useEffect(() => {
+    const geocodePickup = async () => {
+      if (sender.address) {
+        const coords = await geocodeAddress(sender.address);
+        setPickupCoords(coords || undefined);
+      }
+    };
+    geocodePickup();
+  }, [sender.address]);
+
+  // Geocode dropoff address when it changes
+  useEffect(() => {
+    const geocodeDropoff = async () => {
+      if (recipient.address) {
+        const coords = await geocodeAddress(recipient.address);
+        setDropoffCoords(coords || undefined);
+      }
+    };
+    geocodeDropoff();
+  }, [recipient.address]);
 
   const steps = [
     { id: 'sender' as BookingStep, label: 'Sender', icon: MapPin },
@@ -109,13 +136,24 @@ export default function BookingFlow({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg overflow-hidden">
       {/* Progress Steps */}
       <ProgressSteps steps={steps} currentStep={currentStep} />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4">
         {/* Fare Estimate Summary */}
         <FareEstimate estimate={estimate} />
+
+        {/* Map View - Show when dropoff address is entered */}
+        {dropoffCoords && (
+          <div className="rounded-lg overflow-hidden">
+            <MapView
+              pickupLocation={pickupCoords}
+              dropoffLocation={dropoffCoords}
+              className="h-48 sm:h-64 w-full"
+            />
+          </div>
+        )}
 
         {/* Step Content */}
         <div className="space-y-4">
@@ -153,12 +191,12 @@ export default function BookingFlow({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <div className="flex gap-3 pt-4">
           {currentStep !== 'sender' && (
             <Button
               variant="outline"
               onClick={handlePrevious}
-              className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="flex-1 border-gray-200 text-gray-900 hover:bg-gray-50 font-medium"
             >
               Back
             </Button>
@@ -170,14 +208,14 @@ export default function BookingFlow({
                 handleCreateOrder();
                 handleNext();
               }}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md font-medium"
+              className="flex-1 bg-black hover:bg-gray-800 text-white font-medium"
             >
               Continue to Payment
             </Button>
           ) : currentStep === 'payment' ? (
             <Button
               onClick={handlePaymentComplete}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md font-medium"
+              className="flex-1 bg-black hover:bg-gray-800 text-white font-medium"
             >
               Confirm Payment
             </Button>
@@ -185,7 +223,7 @@ export default function BookingFlow({
             <Button
               onClick={handleNext}
               disabled={!canProceed()}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md font-medium disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:shadow-none"
+              className="flex-1 bg-black hover:bg-gray-800 text-white font-medium disabled:bg-gray-200 disabled:text-gray-400"
             >
               Continue
             </Button>

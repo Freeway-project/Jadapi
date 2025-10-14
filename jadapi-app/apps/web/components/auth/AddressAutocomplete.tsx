@@ -22,13 +22,8 @@ interface AddressAutocompleteProps {
   error?: string;
   disabled?: boolean;
   className?: string;
-  showTestAddresses?: boolean;
 }
 
-const TEST_ADDRESSES = [
-  '1955 Alpha Wy., Burnaby, BC V5C 0K6',
-  '7304 Buller Ave, Burnaby, BC V5J 4S5'
-];
 
 // Simple debounce hook
 function useDebounce(value: string, delay: number) {
@@ -55,7 +50,6 @@ export default function AddressAutocomplete({
   error,
   disabled = false,
   className = "",
-  showTestAddresses = false,
 }: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -75,7 +69,7 @@ export default function AddressAutocomplete({
       });
   }, []);
 
-  // Google Places API call - restricted to Canada
+  // Google Places API call - restricted to Canada (using new AutocompleteSuggestion API)
   const fetchSuggestions = useCallback(async (input: string) => {
     if (input.length < 3) {
       setSuggestions([]);
@@ -87,31 +81,35 @@ export default function AddressAutocomplete({
     try {
       // Check if Google Maps API is available
       if (isGoogleMapsLoaded()) {
-        const service = new window.google.maps.places.AutocompleteService();
+        const { AutocompleteSuggestion } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
-        const request = {
+        const request: google.maps.places.AutocompleteRequest = {
           input: input,
-          componentRestrictions: { country: 'ca' }, // Canada only
-          types: ['address'], // Only addresses, not businesses
-          region: 'ca'
+          includedRegionCodes: ['ca'], // Canada only
         };
 
-        service.getPlacePredictions(request, (predictions, status) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-            const canadianSuggestions = predictions
-              .map(prediction => ({
-                description: prediction.description,
-                place_id: prediction.place_id,
-                main_text: prediction.structured_formatting.main_text,
-                secondary_text: prediction.structured_formatting.secondary_text || ''
-              }));
+        const { suggestions: predictions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
 
-            setSuggestions(canadianSuggestions);
-          } else {
-            setSuggestions([]);
-          }
-          setIsLoading(false);
-        });
+        if (predictions && predictions.length > 0) {
+          const canadianSuggestions = predictions
+            .map(prediction => {
+              const placePrediction = prediction.placePrediction;
+              if (!placePrediction) return null;
+
+              return {
+                description: placePrediction.text?.text || '',
+                place_id: placePrediction.placeId || '',
+                main_text: placePrediction.mainText?.text || '',
+                secondary_text: placePrediction.secondaryText?.text || ''
+              };
+            })
+            .filter((s): s is AddressSuggestion => s !== null && s.description !== '');
+
+          setSuggestions(canadianSuggestions);
+        } else {
+          setSuggestions([]);
+        }
+        setIsLoading(false);
       } else {
         // Show error message if Google Maps API is not available
         console.error('Google Maps API is not loaded. Please check your API key.');
@@ -131,6 +129,7 @@ export default function AddressAutocomplete({
       fetchSuggestions(debouncedValue);
     } else {
       setSuggestions([]);
+      setIsLoading(false);
     }
   }, [debouncedValue, showSuggestions, fetchSuggestions]);
 
@@ -142,6 +141,7 @@ export default function AddressAutocomplete({
     } else {
       setShowSuggestions(false);
       setSuggestions([]);
+      setIsLoading(false);
     }
   };
 
@@ -149,12 +149,14 @@ export default function AddressAutocomplete({
     onChange(suggestion.description);
     setShowSuggestions(false);
     setSuggestions([]);
+    setIsLoading(false);
   };
 
   const handleInputBlur = () => {
     setTimeout(() => {
       setShowSuggestions(false);
       setSuggestions([]);
+      setIsLoading(false);
     }, 200);
   };
 
@@ -173,22 +175,6 @@ export default function AddressAutocomplete({
         <Label htmlFor="address" className="text-sm sm:text-base font-semibold text-gray-900 mb-2 sm:mb-3 block">{label}</Label>
       )}
 
-      {showTestAddresses && (
-        <div className="mb-3 flex gap-2 flex-wrap">
-          {TEST_ADDRESSES.map((address, index) => (
-            <Button
-              key={index}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onChange(address)}
-              className="text-xs bg-blue-50 border-blue-300 hover:bg-blue-100 text-blue-700"
-            >
-              Test #{index + 1}
-            </Button>
-          ))}
-        </div>
-      )}
 
       <div className="relative">
         <Input

@@ -155,7 +155,7 @@ export default function FromToSearch({
             label=''
             placeholder="Enter pickup address"
             className="h-11 sm:h-14 text-sm sm:text-lg rounded-xl"
-            showTestAddresses={true}
+
           />
         </div>
 

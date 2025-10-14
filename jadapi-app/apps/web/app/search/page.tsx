@@ -10,6 +10,9 @@ import MapView from '@/components/map/MapView';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import Link from 'next/link';
+import Lottie from 'lottie-react';
+import { BaseAnimation } from '@/components/animations';
+
 
 interface Location {
   lat: number;
@@ -67,13 +70,15 @@ export default function HomePage() {
           {/* SCREEN 1: Search Screen (No Estimate) */}
           {!estimate && (
             <>
-              {/* Map - Top 40% */}
-              <div className="h-[50vh] relative">
-                <MapView
-                  pickupLocation={pickupLocation}
-                  dropoffLocation={dropoffLocation}
-                  className="w-full h-full"
-                />
+              {/* Animation & Text - Top 40% */}
+              <div className="h-[50vh] relative bg-gradient-to-b from-blue-200 to-white flex flex-col items-center justify-center p-2">
+                <div className="w-full max-w-md">
+                  <div className="text-center -mt-24">
+                 <BaseAnimation animationFile="global-delivery.json" width={250} height={250} className="mx-auto" />
+                    <h2 className="text-2xl font-bold text-gray-900">Fast & Reliable Delivery</h2>
+                    <p className="text-gray-600">Get instant price estimates and book your delivery in minutes</p>
+                  </div>
+                </div>
               </div>
 
               {/* Search Form - Bottom 60% (No Scroll) */}
