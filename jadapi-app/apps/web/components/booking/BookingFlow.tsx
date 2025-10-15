@@ -136,27 +136,21 @@ export default function BookingFlow({
   };
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden">
-      {/* Progress Steps */}
-      <ProgressSteps steps={steps} currentStep={currentStep} />
+    <div className="max-h-full flex flex-col bg-white">
+      {/* Progress Steps - Fixed at top */}
+      <div className="shrink-0">
+        <ProgressSteps steps={steps} currentStep={currentStep} />
+      </div>
 
-      <div className="p-4 sm:p-6 space-y-4">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2">
         {/* Fare Estimate Summary */}
-        <FareEstimate estimate={estimate} />
-
-        {/* Map View - Show when dropoff address is entered */}
-        {dropoffCoords && (
-          <div className="rounded-lg overflow-hidden">
-            <MapView
-              pickupLocation={pickupCoords}
-              dropoffLocation={dropoffCoords}
-              className="h-48 sm:h-64 w-full"
-            />
-          </div>
-        )}
+        <div className="mb-2">
+          <FareEstimate estimate={estimate} />
+        </div>
 
         {/* Step Content */}
-        <div className="space-y-4">
+        <div className="pb-4">
           {currentStep === 'sender' && (
             <UserInfoForm
               type="sender"
@@ -164,6 +158,7 @@ export default function BookingFlow({
               title="Sender Information"
               userDetails={sender}
               onUpdate={setSender}
+              addressEditable={false}
             />
           )}
 
@@ -174,6 +169,7 @@ export default function BookingFlow({
               title="Recipient Details"
               userDetails={recipient}
               onUpdate={setRecipient}
+              addressEditable={false}
             />
           )}
 
@@ -189,45 +185,41 @@ export default function BookingFlow({
             <PaymentSection estimate={estimate} />
           )}
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4">
+      {/* Action Buttons - Fixed at bottom */}
+      <div className="relative bottom-0 border-t border-gray-200 bg-white p-3">
+        <div className="flex gap-2">
           {currentStep !== 'sender' && (
             <Button
               variant="outline"
               onClick={handlePrevious}
-              className="flex-1 border-gray-200 text-gray-900 hover:bg-gray-50 font-medium"
+              className="flex-1 border-gray-300 text-gray-900 hover:bg-gray-50 font-medium h-11"
             >
               Back
             </Button>
           )}
 
-          {currentStep === 'review' ? (
-            <Button
-              onClick={() => {
-                handleCreateOrder();
-                handleNext();
-              }}
-              className="flex-1 bg-black hover:bg-gray-800 text-white font-medium"
-            >
-              Continue to Payment
-            </Button>
-          ) : currentStep === 'payment' ? (
-            <Button
-              onClick={handlePaymentComplete}
-              className="flex-1 bg-black hover:bg-gray-800 text-white font-medium"
-            >
-              Confirm Payment
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="flex-1 bg-black hover:bg-gray-800 text-white font-medium disabled:bg-gray-200 disabled:text-gray-400"
-            >
-              Continue
-            </Button>
-          )}
+          <Button
+            onClick={
+              currentStep === 'review'
+                ? () => {
+                    handleCreateOrder();
+                    handleNext();
+                  }
+                : currentStep === 'payment'
+                ? handlePaymentComplete
+                : handleNext
+            }
+            disabled={currentStep !== 'review' && currentStep !== 'payment' && !canProceed()}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 disabled:bg-gray-200 disabled:text-gray-400"
+          >
+            {currentStep === 'review'
+              ? 'Continue to Payment'
+              : currentStep === 'payment'
+              ? 'Confirm Payment'
+              : 'Continue'}
+          </Button>
         </div>
       </div>
     </div>

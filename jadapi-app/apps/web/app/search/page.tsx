@@ -10,7 +10,6 @@ import MapView from '@/components/map/MapView';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import Link from 'next/link';
-import Lottie from 'lottie-react';
 import { BaseAnimation } from '@/components/animations';
 
 
