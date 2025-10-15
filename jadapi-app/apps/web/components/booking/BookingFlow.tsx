@@ -1,12 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Phone, MapPin, Package, CreditCard, ArrowLeft } from 'lucide-react';
+import { User, MapPin, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Label } from '@workspace/ui/components/label';
 import { FareEstimateResponse } from '@/lib/api/delivery';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { geocodeAddress } from '@/lib/utils/geocoding';
+import ProgressSteps, { BookingStep } from './components/ProgressSteps';
+import FareEstimate from './components/FareEstimate';
+import UserInfoForm, { UserDetails } from './components/UserInfoForm';
+import ReviewOrder from './components/ReviewOrder';
+import PaymentSection from './components/PaymentSection';
+import MapView from '@/components/map/MapView';
 
 interface BookingFlowProps {
   estimate: FareEstimateResponse;
@@ -16,75 +21,93 @@ interface BookingFlowProps {
   onComplete?: () => void;
 }
 
-type BookingStep = 'sender' | 'recipient' | 'payment' | 'review';
-
-interface RecipientDetails {
-  name: string;
-  phone: string;
-  address: string;
-  notes?: string;
-}
-
-interface SenderDetails {
-  name: string;
-  phone: string;
-  address: string;
-}
-
-export default function BookingFlow({ estimate, pickupAddress, dropoffAddress, onBack, onComplete }: BookingFlowProps) {
+export default function BookingFlow({
+  estimate,
+  pickupAddress,
+  dropoffAddress,
+  onBack,
+  onComplete
+}: BookingFlowProps) {
   const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState<BookingStep>('sender');
-  const [recipient, setRecipient] = useState<RecipientDetails>({
+
+  const [sender, setSender] = useState<UserDetails>({
     name: '',
     phone: '',
     address: '',
     notes: ''
   });
-  const [sender, setSender] = useState<SenderDetails>({
+
+  const [recipient, setRecipient] = useState<UserDetails>({
     name: '',
     phone: '',
-    address: ''
+    address: '',
+    notes: ''
   });
 
-  // Prefill sender info from logged-in user and addresses from search
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | undefined>();
+  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | undefined>();
+  const [initialPrefillDone, setInitialPrefillDone] = useState(false);
+
+  // Prefill sender info from logged-in user and addresses from search (only once)
   useEffect(() => {
-    if (user) {
+    if (!initialPrefillDone && user) {
       setSender({
         name: user.profile?.name || '',
         phone: user.auth?.phone || user.phone || '',
-        address: pickupAddress || ''
+        address: pickupAddress || '',
+        notes: ''
       });
-    }
-  }, [user, pickupAddress]);
 
-  // Prefill recipient address from search
-  useEffect(() => {
-    if (dropoffAddress) {
-      setRecipient(prev => ({
-        ...prev,
-        address: dropoffAddress
-      }));
+      if (dropoffAddress) {
+        setRecipient(prev => ({
+          ...prev,
+          address: dropoffAddress
+        }));
+      }
+
+      setInitialPrefillDone(true);
     }
-  }, [dropoffAddress]);
+  }, [user, pickupAddress, dropoffAddress, initialPrefillDone]);
+
+  // Geocode pickup address when it changes
+  useEffect(() => {
+    const geocodePickup = async () => {
+      if (sender.address) {
+        const coords = await geocodeAddress(sender.address);
+        setPickupCoords(coords || undefined);
+      }
+    };
+    geocodePickup();
+  }, [sender.address]);
+
+  // Geocode dropoff address when it changes
+  useEffect(() => {
+    const geocodeDropoff = async () => {
+      if (recipient.address) {
+        const coords = await geocodeAddress(recipient.address);
+        setDropoffCoords(coords || undefined);
+      }
+    };
+    geocodeDropoff();
+  }, [recipient.address]);
 
   const steps = [
-    { id: 'sender', label: 'Sender', icon: MapPin },
-    { id: 'recipient', label: 'Recipient', icon: User },
-    { id: 'payment', label: 'Payment', icon: CreditCard },
-    { id: 'review', label: 'Review', icon: Package }
+    { id: 'sender' as BookingStep, label: 'Sender', icon: MapPin },
+    { id: 'recipient' as BookingStep, label: 'Recipient', icon: User },
+    { id: 'review' as BookingStep, label: 'Review', icon: Package },
+    { id: 'payment' as BookingStep, label: 'Payment', icon: Package }
   ];
-
-  const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
   const handleNext = () => {
     if (currentStep === 'sender') setCurrentStep('recipient');
-    else if (currentStep === 'recipient') setCurrentStep('payment');
-    else if (currentStep === 'payment') setCurrentStep('review');
+    else if (currentStep === 'recipient') setCurrentStep('review');
+    else if (currentStep === 'review') setCurrentStep('payment');
   };
 
   const handlePrevious = () => {
-    if (currentStep === 'review') setCurrentStep('payment');
-    else if (currentStep === 'payment') setCurrentStep('recipient');
+    if (currentStep === 'payment') setCurrentStep('review');
+    else if (currentStep === 'review') setCurrentStep('recipient');
     else if (currentStep === 'recipient') setCurrentStep('sender');
     else if (currentStep === 'sender' && onBack) onBack();
   };
@@ -99,288 +122,105 @@ export default function BookingFlow({ estimate, pickupAddress, dropoffAddress, o
     return true;
   };
 
-  const handleBooking = async () => {
-    // TODO: Implement actual booking API call
-    console.log('Booking:', { recipient, sender, estimate });
+  const handleCreateOrder = async () => {
+    // Create unpaid order
+    console.log('Creating unpaid order:', { recipient, sender, estimate });
+    // TODO: Call deliveryAPI.createOrder with paymentStatus: 'unpaid'
+  };
+
+  const handlePaymentComplete = async () => {
+    // After payment is confirmed, mark order as paid
+    console.log('Payment completed, confirming order');
+    // TODO: Update order status to 'paid'
     onComplete?.();
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6">
-      {/* Progress Steps */}
-      <div className="flex items-center justify-between mb-6">
-        {steps.map((step, index) => {
-          const StepIcon = step.icon;
-          const isActive = currentStep === step.id;
-          const isCompleted = index < currentStepIndex;
-
-          return (
-            <div key={step.id} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                  isActive ? 'bg-blue-600 text-white' :
-                  isCompleted ? 'bg-green-500 text-white' :
-                  'bg-gray-200 text-gray-500'
-                }`}>
-                  <StepIcon className="w-5 h-5" />
-                </div>
-                <span className={`text-xs mt-2 font-medium ${
-                  isActive ? 'text-blue-600' :
-                  isCompleted ? 'text-green-600' :
-                  'text-gray-500'
-                }`}>
-                  {step.label}
-                </span>
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`h-0.5 flex-1 mx-2 transition-all ${
-                  isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          );
-        })}
+    <div className="max-h-full flex flex-col bg-white">
+      {/* Progress Steps - Fixed at top */}
+      <div className="shrink-0">
+        <ProgressSteps steps={steps} currentStep={currentStep} />
       </div>
 
-      {/* Fare Estimate Summary */}
-      <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-gray-600">Estimated Fare</p>
-            <p className="text-2xl font-bold text-blue-600">
-              ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
-            </p>
-          </div>
-          <div className="text-right space-y-1">
-            <p className="text-xs text-gray-500">Distance: {estimate?.data?.distance?.distanceKm?.toFixed(1)} km</p>
-            <p className="text-xs text-gray-500">Duration: ~{estimate?.data?.distance?.durationMinutes} min</p>
-          </div>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2">
+        {/* Fare Estimate Summary */}
+        <div className="mb-2">
+          <FareEstimate estimate={estimate} />
+        </div>
+
+        {/* Step Content */}
+        <div className="pb-4">
+          {currentStep === 'sender' && (
+            <UserInfoForm
+              type="sender"
+              icon={MapPin}
+              title="Sender Information"
+              userDetails={sender}
+              onUpdate={setSender}
+              addressEditable={false}
+            />
+          )}
+
+          {currentStep === 'recipient' && (
+            <UserInfoForm
+              type="recipient"
+              icon={User}
+              title="Recipient Details"
+              userDetails={recipient}
+              onUpdate={setRecipient}
+              addressEditable={false}
+            />
+          )}
+
+          {currentStep === 'review' && (
+            <ReviewOrder
+              sender={sender}
+              recipient={recipient}
+              estimate={estimate}
+            />
+          )}
+
+          {currentStep === 'payment' && (
+            <PaymentSection estimate={estimate} />
+          )}
         </div>
       </div>
 
-      {/* Step Content */}
-      <div className="space-y-4">
-        {currentStep === 'sender' && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Sender Information</h3>
-            </div>
+      {/* Action Buttons - Fixed at bottom */}
+      <div className="relative bottom-0 border-t border-gray-200 bg-white p-3">
+        <div className="flex gap-2">
+          {currentStep !== 'sender' && (
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              className="flex-1 border-gray-300 text-gray-900 hover:bg-gray-50 font-medium h-11"
+            >
+              Back
+            </Button>
+          )}
 
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="sender-name" className="text-sm font-medium text-gray-700">Your Name *</Label>
-                <Input
-                  id="sender-name"
-                  type="text"
-                  placeholder="Enter your name"
-                  value={sender.name}
-                  onChange={(e) => setSender({ ...sender, name: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="sender-phone" className="text-sm font-medium text-gray-700">Your Phone Number *</Label>
-                <Input
-                  id="sender-phone"
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  value={sender.phone}
-                  onChange={(e) => setSender({ ...sender, phone: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="sender-address" className="text-sm font-medium text-gray-700">Pickup Address *</Label>
-                <Input
-                  id="sender-address"
-                  type="text"
-                  placeholder="Full address"
-                  value={sender.address}
-                  onChange={(e) => setSender({ ...sender, address: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 'recipient' && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <User className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Who will receive this delivery?</h3>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="recipient-name" className="text-sm font-medium text-gray-700">Full Name *</Label>
-                <Input
-                  id="recipient-name"
-                  type="text"
-                  placeholder="Enter recipient's name"
-                  value={recipient.name}
-                  onChange={(e) => setRecipient({ ...recipient, name: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="recipient-phone" className="text-sm font-medium text-gray-700">Phone Number *</Label>
-                <Input
-                  id="recipient-phone"
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  value={recipient.phone}
-                  onChange={(e) => setRecipient({ ...recipient, phone: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="recipient-address" className="text-sm font-medium text-gray-700">Delivery Address *</Label>
-                <Input
-                  id="recipient-address"
-                  type="text"
-                  placeholder="Full address"
-                  value={recipient.address}
-                  onChange={(e) => setRecipient({ ...recipient, address: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="recipient-notes" className="text-sm font-medium text-gray-700">Delivery Instructions (Optional)</Label>
-                <textarea
-                  id="recipient-notes"
-                  placeholder="E.g., Leave at door, Ring doorbell twice"
-                  value={recipient.notes}
-                  onChange={(e) => setRecipient({ ...recipient, notes: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-
-        {currentStep === 'payment' && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <CreditCard className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Payment Method</h3>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-sm text-gray-600 mb-4">Choose your payment method</p>
-
-              <div className="space-y-2">
-                <button className="w-full p-4 border-2 border-blue-600 bg-blue-50 rounded-lg text-left transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <CreditCard className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-gray-900">Credit/Debit Card</span>
-                    </div>
-                    <span className="text-blue-600">•</span>
-                  </div>
-                </button>
-
-                <button className="w-full p-4 border border-gray-300 rounded-lg text-left hover:border-gray-400 transition-all">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-gray-400 rounded" />
-                    <span className="font-medium text-gray-600">Cash on Delivery</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 'review' && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <Package className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Review & Confirm</h3>
-            </div>
-
-            <div className="space-y-3">
-              {/* Delivery Summary */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-3">Delivery Details</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">From:</span>
-                    <span className="font-medium text-right">{sender.address}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">To:</span>
-                    <span className="font-medium text-right">{recipient.address}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Recipient:</span>
-                    <span className="font-medium">{recipient.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Distance:</span>
-                    <span className="font-medium">{estimate?.data?.distance?.distanceKm} km</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Est. Time:</span>
-                    <span className="font-medium">{estimate?.data?.distance?.durationMinutes} min</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fare Summary */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-700 font-medium">Total Amount</span>
-                  <span className="text-2xl font-bold text-blue-600">
-                    ${(estimate?.data?.fare?.total / 100).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          className="flex items-center space-x-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </Button>
-
-        {currentStep === 'review' ? (
           <Button
-            onClick={handleBooking}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+            onClick={
+              currentStep === 'review'
+                ? () => {
+                    handleCreateOrder();
+                    handleNext();
+                  }
+                : currentStep === 'payment'
+                ? handlePaymentComplete
+                : handleNext
+            }
+            disabled={currentStep !== 'review' && currentStep !== 'payment' && !canProceed()}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 disabled:bg-gray-200 disabled:text-gray-400"
           >
-            Confirm Booking
+            {currentStep === 'review'
+              ? 'Continue to Payment'
+              : currentStep === 'payment'
+              ? 'Confirm Payment'
+              : 'Continue'}
           </Button>
-        ) : (
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-          >
-            Continue
-          </Button>
-        )}
+        </div>
       </div>
     </div>
   );

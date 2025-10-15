@@ -44,9 +44,49 @@ export interface FareEstimateResponse {
   };
 }
 
+export interface CreateOrderRequest {
+  pickup: {
+    address: string;
+    coordinates: Coordinates;
+    contactName: string;
+    contactPhone: string;
+    scheduledAt?: string;
+  };
+  dropoff: {
+    address: string;
+    coordinates: Coordinates;
+    contactName: string;
+    contactPhone: string;
+    scheduledAt?: string;
+  };
+  package: {
+    size: 'XS' | 'S' | 'M' | 'L';
+    weight?: string;
+    description?: string;
+  };
+  pricing: FareBreakdown;
+  distance: {
+    distanceKm: number;
+    durationMinutes: number;
+  };
+}
+
+export interface CreateOrderResponse {
+  success: boolean;
+  data: {
+    order: any;
+  };
+  message: string;
+}
+
 export const deliveryAPI = {
   getFareEstimate: async (data: FareEstimateRequest): Promise<FareEstimateResponse> => {
     const response = await apiClient.post('/pricing/estimate', data);
+    return response.data;
+  },
+
+  createOrder: async (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
+    const response = await apiClient.post('/delivery/create-order', data);
     return response.data;
   },
 };
