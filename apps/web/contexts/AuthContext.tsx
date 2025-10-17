@@ -67,14 +67,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login(email, password);
+
+      // Token is already stored in localStorage by authAPI.login
+      // Now update the state
       setToken(response.token);
       setUser({
         uuid: response.user.uuid,
         email: response.user.email,
-        displayName: response.user.displayName,
-        roles: response.user.roles,
-        status: response.user.status,
-        accountType: response.user.accountType,
+        displayName: response.user.displayName || response.user.name || response.user.email || 'Admin',
+        roles: response.user.roles || [],
+        status: response.user.status || 'active',
+        accountType: response.user.accountType || 'individual',
       });
     } catch (error: any) {
       throw new Error(error.message || 'Login failed');

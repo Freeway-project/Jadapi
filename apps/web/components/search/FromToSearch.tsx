@@ -180,7 +180,7 @@ export default function FromToSearch({
             onChange={setToAddress}
             placeholder="Enter dropoff address"
             className="h-11 sm:h-14 text-sm sm:text-lg rounded-xl"
-            showTestAddresses={true}
+
           />
         </div>
       </div>

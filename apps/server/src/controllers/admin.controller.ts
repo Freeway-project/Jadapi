@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AdminService } from "../services/admin.service";
+import { AppConfigService } from "../services/appConfig.service";
 import { ApiError } from "../utils/ApiError";
 
 export class AdminController {
@@ -172,6 +173,44 @@ export class AdminController {
         success: true,
         data: driver,
         message: `Driver status updated to ${status}`
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/admin/config
+   * Get app configuration
+   */
+  static async getAppConfig(req: Request, res: Response, next: NextFunction) {
+    try {
+      const config = await AppConfigService.getFullConfig();
+      res.json({ success: true, data: config });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/admin/config/active
+   * Update app active status
+   */
+  static async updateAppActiveStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { isActive } = req.body;
+      const updatedBy = (req as any).user?.email || (req as any).user?.phone || 'admin';
+
+      if (typeof isActive !== 'boolean') {
+        throw new ApiError(400, 'isActive must be a boolean value');
+      }
+
+      const config = await AppConfigService.updateAppActiveStatus(isActive, updatedBy);
+
+      res.json({
+        success: true,
+        data: config,
+        message: `App is now ${isActive ? 'active' : 'inactive'}`
       });
     } catch (error) {
       next(error);

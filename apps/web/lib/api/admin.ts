@@ -99,6 +99,33 @@ export interface CreateDriverData {
   licenseNumber?: string;
 }
 
+export interface Coupon {
+  _id: string;
+  code: string;
+  discountType: 'eliminate_fee' | 'fixed_discount' | 'percentage_discount';
+  discountValue?: number;
+  expiryDate?: string;
+  isActive: boolean;
+  maxUsesTotal?: number;
+  maxUsesPerUser?: number;
+  currentUsesTotal: number;
+  minOrderAmount?: number;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCouponData {
+  code: string;
+  discountType: 'eliminate_fee' | 'fixed_discount' | 'percentage_discount';
+  discountValue?: number;
+  expiryDate?: string;
+  maxUsesTotal?: number;
+  maxUsesPerUser?: number;
+  minOrderAmount?: number;
+  description?: string;
+}
+
 export const adminAPI = {
   async getDashboardStats(): Promise<DashboardStats> {
     const res = await apiClient.get('/admin/dashboard/stats');
@@ -153,5 +180,40 @@ export const adminAPI = {
   async updateDriverStatus(driverId: string, status: 'active' | 'suspended' | 'deleted'): Promise<Driver> {
     const res = await apiClient.put(`/admin/drivers/${driverId}/status`, { status });
     return res.data.data;
+  },
+
+  async getCoupons(filters: {
+    isActive?: boolean;
+    limit?: number;
+    skip?: number;
+  } = {}): Promise<{
+    coupons: Coupon[];
+    count: number;
+  }> {
+    const res = await apiClient.get('/coupons/admin', {
+      params: filters
+    });
+    return res.data.data;
+  },
+
+  async createCoupon(couponData: CreateCouponData): Promise<Coupon> {
+    const res = await apiClient.post('/coupons/admin', couponData);
+    return res.data.data.coupon;
+  },
+
+  async getAppConfig(): Promise<{
+    id: string;
+    appActive: boolean;
+    promo: { activeCodes: string[] };
+    updatedAt: string;
+    updatedBy: string;
+    version: number;
+  }> {
+    const res = await apiClient.get('/admin/config');
+    return res.data.data;
+  },
+
+  async updateAppActiveStatus(isActive: boolean): Promise<void> {
+    await apiClient.put('/admin/config/active', { isActive });
   },
 };

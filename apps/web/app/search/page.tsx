@@ -114,19 +114,17 @@ export default function HomePage() {
               </div>
 
               {/* Content - Bottom 80vh */}
-              <div className="h-[80vh] bg-white overflow-y-auto">
-                <div className="h-full flex flex-col p-4">
-                  {showBooking && user ? (
-                    <div className="flex-1 overflow-y-auto">
-                      <BookingFlow
-                        estimate={estimate}
-                        pickupAddress={pickupAddress}
-                        dropoffAddress={dropoffAddress}
-                        onBack={handleBackToEstimate}
-                        onComplete={handleBookingComplete}
-                      />
-                    </div>
-                  ) : (
+              <div className="h-[80vh] bg-white">
+                {showBooking && user ? (
+                  <BookingFlow
+                    estimate={estimate}
+                    pickupAddress={pickupAddress}
+                    dropoffAddress={dropoffAddress}
+                    onBack={handleBackToEstimate}
+                    onComplete={handleBookingComplete}
+                  />
+                ) : (
+                  <div className="h-full flex flex-col p-4">
                     <div className="h-full flex flex-col space-y-3">
                       {/* Estimate Summary - Compact */}
                       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 shrink-0">
@@ -198,8 +196,8 @@ export default function HomePage() {
                         )}
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </>
           )}

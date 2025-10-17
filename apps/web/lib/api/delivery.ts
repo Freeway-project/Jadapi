@@ -69,6 +69,11 @@ export interface CreateOrderRequest {
     distanceKm: number;
     durationMinutes: number;
   };
+  coupon?: {
+    couponId: string;
+    code: string;
+    discount: number;
+  };
 }
 
 export interface CreateOrderResponse {

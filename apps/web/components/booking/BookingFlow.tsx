@@ -48,6 +48,12 @@ export default function BookingFlow({
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | undefined>();
   const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | undefined>();
   const [initialPrefillDone, setInitialPrefillDone] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    couponId: string;
+    code: string;
+    discount: number;
+    newTotal: number;
+  } | null>(null);
 
   // Prefill sender info from logged-in user and addresses from search (only once)
   useEffect(() => {
@@ -124,8 +130,21 @@ export default function BookingFlow({
 
   const handleCreateOrder = async () => {
     // Create unpaid order
-    console.log('Creating unpaid order:', { recipient, sender, estimate });
-    // TODO: Call deliveryAPI.createOrder with paymentStatus: 'unpaid'
+    console.log('Creating unpaid order:', {
+      recipient,
+      sender,
+      estimate,
+      coupon: appliedCoupon ? {
+        couponId: appliedCoupon.couponId,
+        code: appliedCoupon.code,
+        discount: appliedCoupon.discount,
+      } : undefined,
+    });
+    // TODO: Call deliveryAPI.createOrder with paymentStatus: 'unpaid' and coupon info
+  };
+
+  const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; newTotal: number } | null) => {
+    setAppliedCoupon(couponData);
   };
 
   const handlePaymentComplete = async () => {
@@ -136,21 +155,23 @@ export default function BookingFlow({
   };
 
   return (
-    <div className="max-h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white">
       {/* Progress Steps - Fixed at top */}
       <div className="shrink-0">
         <ProgressSteps steps={steps} currentStep={currentStep} />
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2">
-        {/* Fare Estimate Summary */}
-        <div className="mb-2">
-          <FareEstimate estimate={estimate} />
-        </div>
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 min-h-0">
+        {/* Fare Estimate Summary - Hide on review and payment steps */}
+        {currentStep !== 'review' && currentStep !== 'payment' && (
+          <div className="mb-2">
+            <FareEstimate estimate={estimate} />
+          </div>
+        )}
 
         {/* Step Content */}
-        <div className="pb-4">
+        <div className="pb-20">
           {currentStep === 'sender' && (
             <UserInfoForm
               type="sender"
@@ -178,6 +199,8 @@ export default function BookingFlow({
               sender={sender}
               recipient={recipient}
               estimate={estimate}
+              appliedCoupon={appliedCoupon}
+              onCouponApplied={handleCouponApplied}
             />
           )}
 
@@ -188,7 +211,7 @@ export default function BookingFlow({
       </div>
 
       {/* Action Buttons - Fixed at bottom */}
-      <div className="relative bottom-0 border-t border-gray-200 bg-white p-3">
+      <div className="shrink-0 border-t border-gray-200 bg-white p-3 sticky bottom-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="flex gap-2">
           {currentStep !== 'sender' && (
             <Button

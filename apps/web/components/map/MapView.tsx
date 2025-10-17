@@ -72,17 +72,25 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
       // If both locations exist, fit to bounds
       if (pickupLocation && dropoffLocation) {
         map.fitBounds(bounds, {
-          top: 100,
-          bottom: 100,
-          left: 50,
-          right: 50
+          top: 80,
+          bottom: 80,
+          left: 40,
+          right: 40
+        });
+
+        // Prevent zoom from being too far out
+        google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+          const currentZoom = map.getZoom();
+          if (currentZoom && currentZoom < 12) {
+            map.setZoom(10);
+          }
         });
       } else {
-        // If only one location, center on it
+        // If only one location, center on it with closer zoom
         const location = pickupLocation || dropoffLocation;
         if (location) {
           map.setCenter(location);
-          map.setZoom(14);
+          map.setZoom(15);
         }
       }
     }
@@ -101,7 +109,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
       mapContainerStyle={containerStyle}
       mapContainerClassName={className}
       center={defaultCenter}
-      zoom={12}
+      zoom={13}
       onLoad={onLoad}
       onUnmount={onUnmount}
       options={mapOptions}

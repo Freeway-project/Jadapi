@@ -71,4 +71,17 @@ router.put(
   AdminController.updateDriverStatus
 );
 
+// App configuration routes
+router.get(
+  "/config",
+  activityLogger,
+  AdminController.getAppConfig
+);
+
+router.put(
+  "/config/active",
+  activityLogger,
+  AdminController.updateAppActiveStatus
+);
+
 export default router;
