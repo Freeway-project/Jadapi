@@ -1,0 +1,8 @@
+{
+  "buildCommand": "pnpm build --filter=web",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "devCommand": "pnpm dev --filter=web",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./apps/web"
+}
