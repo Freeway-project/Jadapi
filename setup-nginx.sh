@@ -29,7 +29,7 @@ fi
 # Copy Nginx configuration
 echo ""
 echo "📋 Copying Nginx configuration..."
-cp /home/ubuntu/Development/Jadapi/nginx-jadapi.conf /etc/nginx/sites-available/jadapi
+cp /home/ubuntu/Jadapi/nginx-jadapi.conf /etc/nginx/sites-available/jadapi
 print_success "Configuration copied to /etc/nginx/sites-available/jadapi"
 
 # Remove default site if it exists
