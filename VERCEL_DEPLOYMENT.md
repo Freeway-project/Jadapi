@@ -52,10 +52,10 @@ NEXT_PUBLIC_CDN_URL=https://cdn.yourdomain.com
 |---------|-------|
 | Framework Preset | Next.js |
 | Root Directory | `.` (project root) |
-| Build Command | `pnpm build --filter=web` |
+| Build Command | `cd apps/web && pnpm build` |
 | Output Directory | `apps/web/.next` |
 | Install Command | `pnpm install` |
-| Development Command | `pnpm dev --filter=web` |
+| Development Command | `cd apps/web && pnpm dev` |
 
 ### Node.js Version
 - Set to **20.x** (matches your project requirement)
@@ -120,10 +120,11 @@ vercel --prod
 ### Issue: "Cannot find package" errors
 
 **Solution:**
+- Ensure build command is correct: `cd apps/web && pnpm build`
 - Clear Vercel build cache:
   1. Go to **Settings** → **General**
   2. Scroll to **Build & Development Settings**
-  3. Enable "Override" and add: `pnpm install --no-frozen-lockfile`
+  3. Click "Clear Cache and Redeploy"
 
 ### Issue: Environment variables not available
 
