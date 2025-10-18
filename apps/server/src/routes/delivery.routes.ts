@@ -5,8 +5,12 @@ import { ApiError } from "../utils/ApiError";
 import { DeliveryOrder } from "../models/DeliveryOrder";
 import { authenticate } from "../middlewares/auth";
 import { CouponService } from "../services/coupon.service";
+import { checkAppActive } from "../middlewares/appActive";
 
 const router = Router();
+
+// Apply app active check to all delivery routes
+router.use(checkAppActive);
 
 /**
  * POST /api/delivery/check-address

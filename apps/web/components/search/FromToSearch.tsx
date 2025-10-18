@@ -8,6 +8,7 @@ import { Label } from '@workspace/ui/components/label';
 import AddressAutocomplete from '../auth/AddressAutocomplete';
 import { deliveryAPI, FareEstimateResponse } from '@/lib/api/delivery';
 import { useSearchStore } from '@/lib/stores/searchStore';
+import toast from 'react-hot-toast';
 
 interface Location {
   lat: number;
@@ -15,7 +16,15 @@ interface Location {
 }
 
 interface FromToSearchProps {
-  onEstimate?: (estimate: FareEstimateResponse) => void;
+  onEstimate?: (estimate: FareEstimateResponse, additionalData?: {
+    pickupAddress: string;
+    dropoffAddress: string;
+    pickupLat: number;
+    pickupLng: number;
+    dropoffLat: number;
+    dropoffLng: number;
+    packageSize: string;
+  }) => void;
   showPackageDetails?: boolean;
   className?: string;
   prefillFromLastSearch?: boolean;
@@ -49,7 +58,6 @@ export default function FromToSearch({
     type: 'small'
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Prefill from last search if enabled
   useEffect(() => {
@@ -89,10 +97,12 @@ export default function FromToSearch({
   };
 
   const handleSearch = async () => {
-    if (!fromAddress || !toAddress) return;
+    if (!fromAddress || !toAddress) {
+      toast.error('Please enter both pickup and dropoff addresses');
+      return;
+    }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const pickupCoords = await geocodeAddress(fromAddress);
@@ -105,6 +115,10 @@ export default function FromToSearch({
         dropoff: dropoffCoords,
         packageSize,
       });
+
+      if (!estimate?.data?.fare) {
+        throw new Error('Invalid response from server');
+      }
 
       // Save search to local storage
       addSearch({
@@ -120,10 +134,19 @@ export default function FromToSearch({
       // Pass addresses and coordinates to parent component
       onAddressChange?.(fromAddress, toAddress, pickupCoords, dropoffCoords);
 
-      onEstimate?.(estimate);
+      onEstimate?.(estimate, {
+        pickupAddress: fromAddress,
+        dropoffAddress: toAddress,
+        pickupLat: pickupCoords.lat,
+        pickupLng: pickupCoords.lng,
+        dropoffLat: dropoffCoords.lat,
+        dropoffLng: dropoffCoords.lng,
+        packageSize: packageSize,
+      });
     } catch (err: any) {
       console.error('Fare estimate error:', err);
-      setError(err.message || 'Failed to get estimate. Please try again.');
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to get estimate. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -180,7 +203,7 @@ export default function FromToSearch({
             onChange={setToAddress}
             placeholder="Enter dropoff address"
             className="h-11 sm:h-14 text-sm sm:text-lg rounded-xl"
-            showTestAddresses={true}
+
           />
         </div>
       </div>
@@ -230,13 +253,6 @@ export default function FromToSearch({
               className="h-12 sm:h-14 text-base sm:text-lg rounded-xl border-2 border-gray-200 focus:border-blue-600"
             />
           </div> */}
-        </div>
-      )}
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-2 sm:p-4">
-          <p className="text-xs sm:text-base text-red-600 font-medium">{error}</p>
         </div>
       )}
 

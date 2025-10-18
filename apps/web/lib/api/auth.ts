@@ -71,7 +71,14 @@ export const authAPI = {
   // Login with email and password (returns JWT token)
   login: async (email: string, password: string) => {
     const response = await apiClient.post('/auth/login', { email, password });
-    const { token, user } = response.data;
+
+    // Backend returns { message, token, user } directly in response.data
+    const token = response.data?.token;
+    const user = response.data?.user;
+
+    if (!token || !user) {
+      throw new Error('Invalid response from server');
+    }
 
     // Store token in localStorage
     tokenManager.setToken(token);

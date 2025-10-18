@@ -14,6 +14,7 @@ export const ENV = {
   SMTP_PASS: process.env.SMTP_PASS ?? "",
   SMTP_FROM_NAME: process.env.SMTP_FROM_NAME ?? "Jadapi App",
   SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL ?? process.env.SMTP_USER ?? "",
+  ADMIN_NOTIFICATION_EMAIL: process.env.ADMIN_NOTIFICATION_EMAIL ?? "canadaharsh2002@gmail.com",
 
   // Cloudinary configuration
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ?? "",
@@ -22,5 +23,10 @@ export const ENV = {
 
   // Google Maps configuration
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY ?? "",
-  JWT_SECRET: process.env.JWT_SECRET
+  JWT_SECRET: process.env.JWT_SECRET,
+
+  // Stripe configuration
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ?? "",
+  STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY ?? "",
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ?? "",
 };

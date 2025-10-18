@@ -8,7 +8,7 @@ export default function FareEstimate({ estimate }: FareEstimateProps) {
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2.5 border border-blue-100">
       <div className="flex items-center justify-between">
-        <div className="text-left flex items-center justify-between gap-5">
+        <div>
           <p className="text-xs text-gray-600 mb-0.5">Estimated Fare</p>
           <p className="text-lg font-bold text-blue-600">
             ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}

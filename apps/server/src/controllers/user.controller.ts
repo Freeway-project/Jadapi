@@ -264,5 +264,23 @@ export const UserController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async getDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const dashboardData = await UserService.getDashboardData(userId);
+
+      res.json({
+        success: true,
+        data: dashboardData
+      });
+    } catch (err) {
+      next(err);
+    }
   }
 };

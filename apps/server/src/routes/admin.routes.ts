@@ -71,4 +71,30 @@ router.put(
   AdminController.updateDriverStatus
 );
 
+// App configuration routes
+router.get(
+  "/config",
+  activityLogger,
+  AdminController.getAppConfig
+);
+
+router.put(
+  "/config/active",
+  activityLogger,
+  AdminController.updateAppActiveStatus
+);
+
+// Early access request routes
+router.get(
+  "/early-access-requests",
+  activityLogger,
+  AdminController.getEarlyAccessRequests
+);
+
+router.put(
+  "/early-access-requests/:requestId/status",
+  activityLogger,
+  AdminController.updateEarlyAccessRequestStatus
+);
+
 export default router;

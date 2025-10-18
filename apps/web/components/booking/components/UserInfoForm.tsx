@@ -35,6 +35,7 @@ export default function UserInfoForm({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<UserData | null>(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const debouncedUuid = useDebounce(uuid, 500);
 
@@ -135,14 +136,37 @@ export default function UserInfoForm({
           {/* Phone */}
           <div>
             <Label className="text-xs font-medium text-gray-700 mb-0.5">Phone Number *</Label>
-            <Input
-              type="tel"
-              placeholder="(555) 123-4567"
-              value={userDetails.phone}
-              onChange={(e) => onUpdate({ ...userDetails, phone: e.target.value })}
-              className="h-9 text-sm border-gray-200 focus:border-blue-600 focus:ring-0"
-              required
-            />
+              <Input
+                type="tel"
+                inputMode="numeric"
+                pattern="\d*"
+                maxLength={15}
+                placeholder="e.g. 15551234567"
+                value={userDetails.phone}
+                onChange={(e) => {
+                  // allow only digits (strip all non-digit characters)
+                  const digits = e.target.value.replace(/\D/g, '');
+                  // optional: limit to 15 digits (E.164 max length)
+                  const limited = digits.slice(0, 15);
+                  onUpdate({ ...userDetails, phone: limited });
+                  // clear error while typing
+                  if (phoneError) setPhoneError(null);
+                }}
+                onBlur={() => {
+                  // basic validation: require at least 7 digits (adjustable)
+                  const len = (userDetails.phone || '').replace(/\D/g, '').length;
+                  if (len > 0 && len < 7) {
+                    setPhoneError('Please enter a valid phone number (at least 7 digits)');
+                  } else {
+                    setPhoneError(null);
+                  }
+                }}
+                className="h-9 text-sm border-gray-200 focus:border-blue-600 focus:ring-0"
+                required
+              />
+              {phoneError && (
+                <p className="text-xs text-red-600 mt-1">{phoneError}</p>
+              )}
           </div>
 
           {/* Address */}

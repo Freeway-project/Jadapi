@@ -16,11 +16,13 @@ export async function geocodeAddress(address: string): Promise<Location | null> 
     const result = await geocoder.geocode({ address });
 
     if (result.results && result.results.length > 0) {
-      const location = result.results[0].geometry.location;
-      return {
-        lat: location.lat(),
-        lng: location.lng()
-      };
+      const location = result.results[0]?.geometry?.location;
+      if (location) {
+        return {
+          lat: location.lat(),
+          lng: location.lng()
+        };
+      }
     }
 
     return null;

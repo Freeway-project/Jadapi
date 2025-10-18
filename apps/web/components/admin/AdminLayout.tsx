@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,8 +14,13 @@ import {
   Menu,
   X,
   LogOut,
-  Truck
+  Truck,
+  Tag,
+  Power,
+  Loader2
 } from 'lucide-react';
+import { adminAPI } from '@/lib/api/admin';
+import toast from 'react-hot-toast';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -23,6 +28,9 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAppActive, setIsAppActive] = useState<boolean>(false);
+  const [isToggling, setIsToggling] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -31,8 +39,40 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/drivers', name: 'Drivers', icon: Car },
     { href: '/admin/orders', name: 'Orders', icon: Package },
     { href: '/admin/users', name: 'Users', icon: Users },
+    { href: '/admin/coupons', name: 'Coupons', icon: Tag },
+    { href: '/admin/early-access', name: 'Early Access', icon: Users },
     { href: '/admin/analytics', name: 'Analytics', icon: BarChart3 },
   ];
+
+  // Fetch app config on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const config = await adminAPI.getAppConfig();
+        setIsAppActive(config?.appActive ?? false);
+      } catch (error) {
+        console.error('Failed to fetch app config:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleToggleAppActive = async () => {
+    const newStatus = !isAppActive;
+    setIsToggling(true);
+
+    try {
+      await adminAPI.updateAppActiveStatus(newStatus);
+      setIsAppActive(newStatus);
+      toast.success(`App is now ${newStatus ? 'ACTIVE' : 'INACTIVE'}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update app status');
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -76,14 +116,48 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </nav>
 
             {/* Bottom section */}
-            <div className="flex-shrink-0 px-4 py-4 border-t border-gray-800">
+            <div className="flex-shrink-0 px-4 py-4 border-t border-gray-800 space-y-3">
+              {/* App Active Toggle - Only show when user is logged in */}
+              {user && (
+                <div className="px-4 py-3 bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-400">App Status</span>
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <span className={`text-xs font-bold ${isAppActive ? 'text-green-400' : 'text-red-400'}`}>
+                        {isAppActive ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleToggleAppActive}
+                    disabled={isToggling || isLoading}
+                    className={`w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                      isAppActive
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {isToggling ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Power className="mr-2 h-4 w-4" />
+                        {isAppActive ? 'Deactivate App' : 'Activate App'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
               <Link href="/admin/settings" className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <Settings className="mr-3 h-5 w-5" />
                 Settings
               </Link>
               <button
                 onClick={logout}
-                className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-all mt-2"
+                className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-all"
               >
                 <LogOut className="mr-3 h-5 w-5" />
                 Sign Out
@@ -118,7 +192,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Mobile sidebar */}
         {sidebarOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}>
-            <div className="w-64 h-full bg-gray-900" onClick={(e) => e.stopPropagation()}>
+            <div className="w-64 h-full bg-gray-900 flex flex-col" onClick={(e) => e.stopPropagation()}>
               <Link href="/admin/dashboard" className="flex items-center h-16 px-6 border-b border-gray-800">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-blue-600 rounded-lg">
@@ -130,7 +204,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   </div>
                 </div>
               </Link>
-              <nav className="px-4 py-6 space-y-1">
+              <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                 {navigation.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href;
@@ -151,6 +225,55 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   );
                 })}
               </nav>
+
+              {/* Mobile Bottom section */}
+              <div className="flex-shrink-0 px-4 py-4 border-t border-gray-800 space-y-3">
+                {/* App Active Toggle - Only show when user is logged in */}
+                {user && (
+                  <div className="px-4 py-3 bg-gray-800 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-400">App Status</span>
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <span className={`text-xs font-bold ${isAppActive ? 'text-green-400' : 'text-red-400'}`}>
+                          {isAppActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleToggleAppActive}
+                      disabled={isToggling || isLoading}
+                      className={`w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                        isAppActive
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-red-600 hover:bg-red-700 text-white'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {isToggling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Power className="mr-2 h-4 w-4" />
+                          {isAppActive ? 'Deactivate' : 'Activate'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                <Link href="/admin/settings" onClick={() => setSidebarOpen(false)} className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
+                  <Settings className="mr-3 h-5 w-5" />
+                  Settings
+                </Link>
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white rounded-lg transition-all"
+                >
+                  <LogOut className="mr-3 h-5 w-5" />
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         )}
