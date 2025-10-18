@@ -52,10 +52,10 @@ NEXT_PUBLIC_CDN_URL=https://cdn.yourdomain.com
 |---------|-------|
 | Framework Preset | Next.js |
 | Root Directory | `.` (project root) |
-| Build Command | `cd apps/web && pnpm build` |
+| Build Command | `pnpm --filter web build` |
 | Output Directory | `apps/web/.next` |
 | Install Command | `pnpm install` |
-| Development Command | `cd apps/web && pnpm dev` |
+| Development Command | `pnpm --filter web dev` |
 
 ### Node.js Version
 - Set to **20.x** (matches your project requirement)
@@ -120,7 +120,7 @@ vercel --prod
 ### Issue: "Cannot find package" errors
 
 **Solution:**
-- Ensure build command is correct: `cd apps/web && pnpm build`
+- Ensure build command is correct: `pnpm --filter web build`
 - Clear Vercel build cache:
   1. Go to **Settings** → **General**
   2. Scroll to **Build & Development Settings**
