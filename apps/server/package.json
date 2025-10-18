@@ -53,6 +53,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.12",
+    "@types/minimatch": "^6.0.0",
     "@types/node": "^24.5.2",
     "@types/nodemailer": "^7.0.1",
     "@types/supertest": "^6.0.2",
