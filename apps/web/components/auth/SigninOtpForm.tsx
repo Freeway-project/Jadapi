@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -17,11 +17,14 @@ export default function SigninOtpForm() {
   const router = useRouter();
   const { email, phoneNumber, setLoading, isLoading, setUser, setStep } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm<OTPFormData>({
     resolver: zodResolver(otpSchema),
   });
@@ -30,15 +33,65 @@ export default function SigninOtpForm() {
   const identifier = email || phoneNumber;
   const identifierType = isEmailLogin ? 'email' : 'phone';
 
-  const onSubmit = async (data: OTPFormData) => {
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) {
+      value = value.slice(-1);
+    }
+
+    if (value && !/^\d$/.test(value)) {
+      return;
+    }
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    clearErrors('otp');
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').slice(0, 6);
+
+    if (!/^\d+$/.test(pastedData)) {
+      return;
+    }
+
+    const newOtp = [...otp];
+    for (let i = 0; i < pastedData.length && i < 6; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+    clearErrors('otp');
+
+    const nextIndex = Math.min(pastedData.length, 5);
+    inputRefs.current[nextIndex]?.focus();
+  };
+
+  const onSubmit = async () => {
+    const otpCode = otp.join('');
+
+    if (otpCode.length !== 6) {
+      setError('otp', { message: 'Please enter all 6 digits' });
+      return;
+    }
+
     setIsSubmitting(true);
     setLoading(true);
 
     try {
-      // Verify OTP using real API
       const verifyResult = await authAPI.verifyOTP({
         identifier: identifier!,
-        code: data.otp,
+        code: otpCode,
         type: 'login'
       });
 
@@ -146,27 +199,35 @@ export default function SigninOtpForm() {
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="otp" className="text-base sm:text-[1rem] font-semibold text-slate-900">
+            <div className="space-y-3">
+              <Label className="text-base sm:text-[1rem] font-semibold text-slate-900 text-center block">
                 Verification Code
               </Label>
-              <Input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="000000"
-                maxLength={6}
-                disabled={isSubmitting || isLoading}
-                className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 sm:py-5 text-center text-2xl sm:text-3xl font-mono tracking-[0.5em] text-slate-900 placeholder-slate-300 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-                {...register('otp')}
-                aria-invalid={!!errors.otp}
-              />
 
-              {/* Error / Resend */}
-              <div className="min-h-[1.25rem]">
+              <div className="flex gap-2 sm:gap-3 justify-center">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => (inputRefs.current[index] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onPaste={handlePaste}
+                    disabled={isSubmitting || isLoading}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 bg-white text-center text-2xl font-mono font-semibold text-slate-900 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+                      errors.otp ? 'border-rose-500' : 'border-slate-200'
+                    }`}
+                    aria-label={`Digit ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              <div className="min-h-[1.25rem] text-center">
                 {errors.otp ? (
-                  <div className="flex items-center gap-2 text-[0.92rem] font-medium text-rose-600">
+                  <div className="flex items-center justify-center gap-2 text-[0.92rem] font-medium text-rose-600">
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-100 text-[0.8rem] font-bold">
                       !
                     </span>

@@ -15,7 +15,15 @@ interface Location {
 }
 
 interface FromToSearchProps {
-  onEstimate?: (estimate: FareEstimateResponse) => void;
+  onEstimate?: (estimate: FareEstimateResponse, additionalData?: {
+    pickupAddress: string;
+    dropoffAddress: string;
+    pickupLat: number;
+    pickupLng: number;
+    dropoffLat: number;
+    dropoffLng: number;
+    packageSize: string;
+  }) => void;
   showPackageDetails?: boolean;
   className?: string;
   prefillFromLastSearch?: boolean;
@@ -120,7 +128,15 @@ export default function FromToSearch({
       // Pass addresses and coordinates to parent component
       onAddressChange?.(fromAddress, toAddress, pickupCoords, dropoffCoords);
 
-      onEstimate?.(estimate);
+      onEstimate?.(estimate, {
+        pickupAddress: fromAddress,
+        dropoffAddress: toAddress,
+        pickupLat: pickupCoords.lat,
+        pickupLng: pickupCoords.lng,
+        dropoffLat: dropoffCoords.lat,
+        dropoffLng: dropoffCoords.lng,
+        packageSize: packageSize,
+      });
     } catch (err: any) {
       console.error('Fare estimate error:', err);
       setError(err.message || 'Failed to get estimate. Please try again.');

@@ -5,6 +5,7 @@ import deliveryRoutes from "./delivery.routes";
 import pricingRoutes from "./pricing.routes";
 import adminRoutes from "./admin.routes";
 import couponRoutes from "./coupon.routes";
+import driverRoutes from "./driver.routes";
 import { AppConfigService } from "../services/appConfig.service";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 import { ApiError } from "../utils/ApiError";
@@ -88,5 +89,8 @@ router.use("/admin", adminRoutes);
 
 // Coupon routes
 router.use("/coupons", couponRoutes);
+
+// Driver routes
+router.use("/driver", driverRoutes);
 
 export default router;

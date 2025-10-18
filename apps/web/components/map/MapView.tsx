@@ -72,8 +72,8 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
       // If both locations exist, fit to bounds
       if (pickupLocation && dropoffLocation) {
         map.fitBounds(bounds, {
-          top: 80,
-          bottom: 80,
+          top: 60,
+          bottom: 60,
           left: 40,
           right: 40
         });
@@ -106,6 +106,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
 
   return (
     <GoogleMap
+
       mapContainerStyle={containerStyle}
       mapContainerClassName={className}
       center={defaultCenter}
@@ -113,6 +114,8 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
       onLoad={onLoad}
       onUnmount={onUnmount}
       options={mapOptions}
+
+
     >
       {/* Pickup Marker (Blue) */}
       {pickupLocation && (
@@ -152,7 +155,9 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
             strokeColor: '#3B82F6',
             strokeOpacity: 0.8,
             strokeWeight: 4,
-            geodesic: true
+            geodesic: true,
+            path: [pickupLocation, dropoffLocation]
+
           }}
         />
       )}

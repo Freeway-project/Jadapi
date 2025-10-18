@@ -14,17 +14,31 @@ import PaymentSection from './components/PaymentSection';
 import MapView from '@/components/map/MapView';
 
 interface BookingFlowProps {
-  estimate: FareEstimateResponse;
-  pickupAddress?: string;
-  dropoffAddress?: string;
+  initialPickup: {
+    address: string;
+    lat: number;
+    lng: number;
+  };
+  initialDropoff: {
+    address: string;
+    lat: number;
+    lng: number;
+  };
+  initialPackageSize: 'XS' | 'S' | 'M' | 'L';
+  initialFareEstimate: {
+    distance: number;
+    duration: number;
+    total: number;
+  };
   onBack?: () => void;
   onComplete?: () => void;
 }
 
 export default function BookingFlow({
-  estimate,
-  pickupAddress,
-  dropoffAddress,
+  initialPickup,
+  initialDropoff,
+  initialPackageSize,
+  initialFareEstimate,
   onBack,
   onComplete
 }: BookingFlowProps) {
@@ -45,8 +59,14 @@ export default function BookingFlow({
     notes: ''
   });
 
-  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | undefined>();
-  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number } | undefined>();
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number }>({
+    lat: initialPickup.lat,
+    lng: initialPickup.lng
+  });
+  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number }>({
+    lat: initialDropoff.lat,
+    lng: initialDropoff.lng
+  });
   const [initialPrefillDone, setInitialPrefillDone] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     couponId: string;
@@ -55,48 +75,44 @@ export default function BookingFlow({
     newTotal: number;
   } | null>(null);
 
+  // Create estimate object from initial data
+  const estimate: FareEstimateResponse = {
+    success: true,
+    data: {
+      packageSize: initialPackageSize,
+      pricing: {
+        baseFare: 0,
+        distanceFare: 0,
+        timeFare: 0,
+        subtotal: initialFareEstimate.total,
+        tax: 0,
+        total: initialFareEstimate.total
+      },
+      distance: {
+        km: initialFareEstimate.distance,
+        durationMinutes: initialFareEstimate.duration
+      }
+    }
+  };
+
   // Prefill sender info from logged-in user and addresses from search (only once)
   useEffect(() => {
-    if (!initialPrefillDone && user) {
+    if (!initialPrefillDone) {
       setSender({
-        name: user.profile?.name || '',
-        phone: user.auth?.phone || user.phone || '',
-        address: pickupAddress || '',
+        name: user?.profile?.name || '',
+        phone: user?.auth?.phone || user?.phone || '',
+        address: initialPickup.address,
         notes: ''
       });
 
-      if (dropoffAddress) {
-        setRecipient(prev => ({
-          ...prev,
-          address: dropoffAddress
-        }));
-      }
+      setRecipient(prev => ({
+        ...prev,
+        address: initialDropoff.address
+      }));
 
       setInitialPrefillDone(true);
     }
-  }, [user, pickupAddress, dropoffAddress, initialPrefillDone]);
-
-  // Geocode pickup address when it changes
-  useEffect(() => {
-    const geocodePickup = async () => {
-      if (sender.address) {
-        const coords = await geocodeAddress(sender.address);
-        setPickupCoords(coords || undefined);
-      }
-    };
-    geocodePickup();
-  }, [sender.address]);
-
-  // Geocode dropoff address when it changes
-  useEffect(() => {
-    const geocodeDropoff = async () => {
-      if (recipient.address) {
-        const coords = await geocodeAddress(recipient.address);
-        setDropoffCoords(coords || undefined);
-      }
-    };
-    geocodeDropoff();
-  }, [recipient.address]);
+  }, [user, initialPickup.address, initialDropoff.address, initialPrefillDone]);
 
   const steps = [
     { id: 'sender' as BookingStep, label: 'Sender', icon: MapPin },

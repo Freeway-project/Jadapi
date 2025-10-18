@@ -19,5 +19,6 @@ router.get("/otp/status", OtpController.checkVerificationStatus);
 router.post("/signup", validateSignup, UserController.signup);
 router.post("/login", AuthController.login);
 router.post("/create-admin", AuthController.createAdmin);
+router.post("/create-driver", AuthController.createDriver);
 
 export default router;
