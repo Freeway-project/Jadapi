@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BookingFlow from '@/components/booking/BookingFlow';
 import EarlyAccessForm from '@/components/booking/EarlyAccessForm';
 import { appConfigAPI } from '@/lib/api/appConfig';
 import { Loader2 } from 'lucide-react';
 
-export default function BookingPage() {
+function BookingPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -101,5 +101,22 @@ export default function BookingPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-slate-50">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
+            <p className="text-slate-600 font-medium">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <BookingPageContent />
+    </Suspense>
   );
 }

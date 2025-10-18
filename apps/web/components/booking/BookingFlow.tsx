@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User, MapPin, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
-import { FareEstimateResponse } from '@/lib/api/delivery';
+import { FareEstimateResponse, deliveryAPI } from '@/lib/api/delivery';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { geocodeAddress } from '@/lib/utils/geocoding';
 import ProgressSteps, { BookingStep } from './components/ProgressSteps';
@@ -12,6 +12,7 @@ import UserInfoForm, { UserDetails } from './components/UserInfoForm';
 import ReviewOrder from './components/ReviewOrder';
 import PaymentSection from './components/PaymentSection';
 import MapView from '@/components/map/MapView';
+import toast from 'react-hot-toast';
 
 interface BookingFlowProps {
   initialPickup: {
@@ -74,6 +75,8 @@ export default function BookingFlow({
     discount: number;
     newTotal: number;
   } | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   // Create estimate object from initial data
   const estimate: FareEstimateResponse = {
@@ -153,122 +156,335 @@ export default function BookingFlow({
   };
 
   const handleCreateOrder = async () => {
-    // Create unpaid order
-    console.log('Creating unpaid order:', {
-      recipient,
-      sender,
-      estimate,
-      coupon: appliedCoupon ? {
-        couponId: appliedCoupon.couponId,
-        code: appliedCoupon.code,
-        discount: appliedCoupon.discount,
-      } : undefined,
-    });
-    // TODO: Call deliveryAPI.createOrder with paymentStatus: 'unpaid' and coupon info
+    setIsCreatingOrder(true);
+    try {
+      const orderData = {
+        pickup: {
+          address: sender.address,
+          coordinates: pickupCoords,
+          contactName: sender.name,
+          contactPhone: sender.phone,
+        },
+        dropoff: {
+          address: recipient.address,
+          coordinates: dropoffCoords,
+          contactName: recipient.name,
+          contactPhone: recipient.phone,
+        },
+        package: {
+          size: initialPackageSize,
+          description: recipient.notes || sender.notes,
+        },
+        pricing: estimate.data.fare,
+        distance: estimate.data.distance,
+        coupon: appliedCoupon ? {
+          couponId: appliedCoupon.couponId,
+          code: appliedCoupon.code,
+          discount: appliedCoupon.discount,
+        } : undefined,
+      };
+
+      const response = await deliveryAPI.createOrder(orderData);
+
+      if (response.success && response.data.order) {
+        setOrderId(response.data.order._id);
+        toast.success('Order created successfully');
+        handleNext();
+      } else {
+        toast.error('Failed to create order');
+      }
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      toast.error(error?.response?.data?.message || 'Failed to create order');
+    } finally {
+      setIsCreatingOrder(false);
+    }
   };
 
   const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; newTotal: number } | null) => {
     setAppliedCoupon(couponData);
   };
 
-  const handlePaymentComplete = async () => {
-    // After payment is confirmed, mark order as paid
-    console.log('Payment completed, confirming order');
-    // TODO: Update order status to 'paid'
+  const handlePaymentSuccess = () => {
+    toast.success('Payment successful! Your order is confirmed.');
     onComplete?.();
   };
 
+  const handlePaymentError = (error: string) => {
+    toast.error(`Payment failed: ${error}`);
+  };
+
+  // Create a modified estimate with coupon discount applied
+  const finalEstimate: FareEstimateResponse = appliedCoupon
+    ? {
+        ...estimate,
+        data: {
+          ...estimate.data,
+          fare: {
+            ...estimate.data.fare,
+            total: appliedCoupon.newTotal,
+          },
+        },
+      }
+    : estimate;
+
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Progress Steps - Fixed at top */}
-      <div className="shrink-0">
-        <ProgressSteps steps={steps} currentStep={currentStep} />
-      </div>
+    <>
+      {/* ========== MOBILE LAYOUT (Uber-like with Map) ========== */}
+      <div className="lg:hidden h-full flex flex-col bg-white">
+        {/* Map Section - Top 40% */}
+        <div className="h-[40vh] relative">
+          <MapView
+            pickupLocation={pickupCoords}
+            dropoffLocation={dropoffCoords}
+            className="w-full h-full"
+          />
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 min-h-0">
-        {/* Fare Estimate Summary - Hide on review and payment steps */}
-        {currentStep !== 'review' && currentStep !== 'payment' && (
-          <div className="mb-2">
-            <FareEstimate estimate={estimate} />
+          {/* Floating Progress Bar on Map */}
+          <div className="absolute top-0 left-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-3 shadow-sm">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-gray-900">
+                {currentStep === 'sender' ? 'Pickup Details' :
+                 currentStep === 'recipient' ? 'Delivery Details' :
+                 currentStep === 'review' ? 'Review Order' : 'Payment'}
+              </span>
+              <span className="text-gray-600">
+                {steps.findIndex(s => s.id === currentStep) + 1}/{steps.length}
+              </span>
+            </div>
+            <div className="mt-2 flex gap-1">
+              {steps.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={`h-0.5 flex-1 rounded-full transition-all ${
+                    steps.findIndex(s => s.id === currentStep) >= index
+                      ? 'bg-black'
+                      : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
-        )}
 
-        {/* Step Content */}
-        <div className="pb-20">
-          {currentStep === 'sender' && (
-            <UserInfoForm
-              type="sender"
-              icon={MapPin}
-              title="Sender Information"
-              userDetails={sender}
-              onUpdate={setSender}
-              addressEditable={false}
-            />
+          {/* Floating Fare Card on Map (Uber-style) */}
+          {currentStep !== 'review' && currentStep !== 'payment' && (
+            <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-600 font-medium mb-1">Trip Estimate</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {estimate?.data?.distance?.distanceKm?.toFixed(1)} km
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {estimate?.data?.distance?.durationMinutes} min
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
+        </div>
 
-          {currentStep === 'recipient' && (
-            <UserInfoForm
-              type="recipient"
-              icon={User}
-              title="Recipient Details"
-              userDetails={recipient}
-              onUpdate={setRecipient}
-              addressEditable={false}
-            />
-          )}
+        {/* Form Section - Bottom 60% (Uber-style rounded top) */}
+        <div className="flex-1 flex flex-col bg-gray-50 rounded-t-3xl -mt-4 relative z-10 shadow-2xl min-h-0">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-2 min-h-0">
+            <div className="pb-4">
+              {currentStep === 'sender' && (
+                <UserInfoForm
+                  type="sender"
+                  icon={MapPin}
+                  title="Pickup Details"
+                  userDetails={sender}
+                  onUpdate={setSender}
+                  addressEditable={false}
+                />
+              )}
 
-          {currentStep === 'review' && (
-            <ReviewOrder
-              sender={sender}
-              recipient={recipient}
-              estimate={estimate}
-              appliedCoupon={appliedCoupon}
-              onCouponApplied={handleCouponApplied}
-            />
-          )}
+              {currentStep === 'recipient' && (
+                <UserInfoForm
+                  type="recipient"
+                  icon={User}
+                  title="Delivery Details"
+                  userDetails={recipient}
+                  onUpdate={setRecipient}
+                  addressEditable={false}
+                />
+              )}
 
-          {currentStep === 'payment' && (
-            <PaymentSection estimate={estimate} />
-          )}
+              {currentStep === 'review' && (
+                <ReviewOrder
+                  sender={sender}
+                  recipient={recipient}
+                  estimate={estimate}
+                  appliedCoupon={appliedCoupon}
+                  onCouponApplied={handleCouponApplied}
+                />
+              )}
+
+              {currentStep === 'payment' && (
+                <PaymentSection
+                  estimate={finalEstimate}
+                  orderId={orderId || undefined}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons - Fixed at bottom (Uber-style) */}
+          <div className="shrink-0 bg-white border-t border-gray-200 p-4 shadow-lg sticky bottom-0">
+            <div className="flex gap-3">
+              {currentStep !== 'sender' && (
+                <button
+                  onClick={handlePrevious}
+                  className="w-14 h-14 flex items-center justify-center rounded-full border-2 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 transition-colors flex-shrink-0"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              <Button
+                onClick={
+                  currentStep === 'review'
+                    ? handleCreateOrder
+                    : handleNext
+                }
+                disabled={
+                  (currentStep !== 'review' && currentStep !== 'payment' && !canProceed()) ||
+                  (currentStep === 'review' && isCreatingOrder) ||
+                  currentStep === 'payment'
+                }
+                className="flex-1 h-14 bg-black hover:bg-gray-900 text-white font-bold text-base rounded-full disabled:bg-gray-300 disabled:text-gray-500 shadow-lg transition-all"
+              >
+                {currentStep === 'review' && isCreatingOrder
+                  ? 'Creating Order...'
+                  : currentStep === 'review'
+                  ? 'Continue to Payment'
+                  : currentStep === 'payment'
+                  ? 'Processing...'
+                  : 'Continue'}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Action Buttons - Fixed at bottom */}
-      <div className="shrink-0 border-t border-gray-200 bg-white p-3 sticky bottom-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-        <div className="flex gap-2">
-          {currentStep !== 'sender' && (
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              className="flex-1 border-gray-300 text-gray-900 hover:bg-gray-50 font-medium h-11"
-            >
-              Back
-            </Button>
-          )}
+      {/* ========== DESKTOP LAYOUT ========== */}
+      <div className="hidden lg:flex h-full bg-white">
+        {/* Left Side - Form Content (40% width) */}
+        <div className="w-[480px] flex flex-col border-r border-gray-200">
+          {/* Progress Steps */}
+          <div className="shrink-0">
+            <ProgressSteps steps={steps} currentStep={currentStep} />
+          </div>
 
-          <Button
-            onClick={
-              currentStep === 'review'
-                ? () => {
-                    handleCreateOrder();
-                    handleNext();
-                  }
-                : currentStep === 'payment'
-                ? handlePaymentComplete
-                : handleNext
-            }
-            disabled={currentStep !== 'review' && currentStep !== 'payment' && !canProceed()}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium h-11 disabled:bg-gray-200 disabled:text-gray-400"
-          >
-            {currentStep === 'review'
-              ? 'Continue to Payment'
-              : currentStep === 'payment'
-              ? 'Confirm Payment'
-              : 'Continue'}
-          </Button>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Fare Estimate Summary */}
+            {currentStep !== 'review' && currentStep !== 'payment' && (
+              <div className="mb-4">
+                <FareEstimate estimate={estimate} />
+              </div>
+            )}
+
+            {/* Step Content */}
+            <div className="pb-24">
+              {currentStep === 'sender' && (
+                <UserInfoForm
+                  type="sender"
+                  icon={MapPin}
+                  title="Sender Information"
+                  userDetails={sender}
+                  onUpdate={setSender}
+                  addressEditable={false}
+                />
+              )}
+
+              {currentStep === 'recipient' && (
+                <UserInfoForm
+                  type="recipient"
+                  icon={User}
+                  title="Recipient Details"
+                  userDetails={recipient}
+                  onUpdate={setRecipient}
+                  addressEditable={false}
+                />
+              )}
+
+              {currentStep === 'review' && (
+                <ReviewOrder
+                  sender={sender}
+                  recipient={recipient}
+                  estimate={estimate}
+                  appliedCoupon={appliedCoupon}
+                  onCouponApplied={handleCouponApplied}
+                />
+              )}
+
+              {currentStep === 'payment' && (
+                <PaymentSection
+                  estimate={finalEstimate}
+                  orderId={orderId || undefined}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons - Fixed at bottom */}
+          <div className="shrink-0 border-t border-gray-200 bg-white p-4">
+            <div className="flex gap-3">
+              {currentStep !== 'sender' && (
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  className="flex-1 border-gray-300 text-gray-900 hover:bg-gray-50 font-medium h-12"
+                >
+                  Back
+                </Button>
+              )}
+              <Button
+                onClick={
+                  currentStep === 'review'
+                    ? handleCreateOrder
+                    : handleNext
+                }
+                disabled={
+                  (currentStep !== 'review' && currentStep !== 'payment' && !canProceed()) ||
+                  (currentStep === 'review' && isCreatingOrder) ||
+                  currentStep === 'payment'
+                }
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 disabled:bg-gray-200 disabled:text-gray-400"
+              >
+                {currentStep === 'review' && isCreatingOrder
+                  ? 'Creating Order...'
+                  : currentStep === 'review'
+                  ? 'Continue to Payment'
+                  : currentStep === 'payment'
+                  ? 'Processing...'
+                  : 'Continue'}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Map (60% width) */}
+        <div className="flex-1 relative bg-gray-100">
+          <MapView
+            pickupLocation={pickupCoords}
+            dropoffLocation={dropoffCoords}
+            className="w-full h-full"
+          />
         </div>
       </div>
-    </div>
+    </>
   );
 }

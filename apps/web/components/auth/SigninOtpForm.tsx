@@ -10,7 +10,7 @@ import { authAPI } from '@/lib/api/auth';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { Shield, ArrowLeft, Mail, Phone } from 'lucide-react';
+import { Shield, ArrowLeft, ArrowRight, Mail, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function SigninOtpForm() {
@@ -68,7 +68,7 @@ export default function SigninOtpForm() {
 
     const newOtp = [...otp];
     for (let i = 0; i < pastedData.length && i < 6; i++) {
-      newOtp[i] = pastedData[i];
+      newOtp[i] = pastedData[i] || '';
     }
     setOtp(newOtp);
     clearErrors('otp');
@@ -208,7 +208,7 @@ export default function SigninOtpForm() {
                 {otp.map((digit, index) => (
                   <input
                     key={index}
-                    ref={(el) => (inputRefs.current[index] = el)}
+                    ref={(el) => { inputRefs.current[index] = el; }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
