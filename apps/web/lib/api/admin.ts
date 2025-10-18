@@ -216,4 +216,20 @@ export const adminAPI = {
   async updateAppActiveStatus(isActive: boolean): Promise<void> {
     await apiClient.put('/admin/config/active', { isActive });
   },
+
+  async getEarlyAccessRequests(filters: {
+    status?: string;
+    limit?: number;
+    skip?: number;
+  } = {}): Promise<any> {
+    const res = await apiClient.get('/admin/early-access-requests', {
+      params: filters
+    });
+    return res.data;
+  },
+
+  async updateEarlyAccessRequestStatus(requestId: string, status: string): Promise<any> {
+    const res = await apiClient.put(`/admin/early-access-requests/${requestId}/status`, { status });
+    return res.data;
+  },
 };

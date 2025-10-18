@@ -107,8 +107,8 @@ export default function EarlyAccessForm({
           Service Coming Soon
         </h2>
         <p className="text-slate-600">
-          Our service is currently unavailable. Join the waitlist and we'll notify you when
-          we launch in your area!
+          Our service is currently Inactive
+
         </p>
       </div>
 
@@ -242,7 +242,7 @@ export default function EarlyAccessForm({
               <span>Submitting...</span>
             </div>
           ) : (
-            'Join Waitlist'
+            'Request'
           )}
         </Button>
       </form>

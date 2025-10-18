@@ -40,6 +40,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/orders', name: 'Orders', icon: Package },
     { href: '/admin/users', name: 'Users', icon: Users },
     { href: '/admin/coupons', name: 'Coupons', icon: Tag },
+    { href: '/admin/early-access', name: 'Early Access', icon: Users },
     { href: '/admin/analytics', name: 'Analytics', icon: BarChart3 },
   ];
 
@@ -116,37 +117,39 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Bottom section */}
             <div className="flex-shrink-0 px-4 py-4 border-t border-gray-800 space-y-3">
-              {/* App Active Toggle */}
-              <div className="px-4 py-3 bg-gray-800 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-400">App Status</span>
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                  ) : (
-                    <span className={`text-xs font-bold ${isAppActive ? 'text-green-400' : 'text-red-400'}`}>
-                      {isAppActive ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                  )}
+              {/* App Active Toggle - Only show when user is logged in */}
+              {user && (
+                <div className="px-4 py-3 bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-400">App Status</span>
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    ) : (
+                      <span className={`text-xs font-bold ${isAppActive ? 'text-green-400' : 'text-red-400'}`}>
+                        {isAppActive ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleToggleAppActive}
+                    disabled={isToggling || isLoading}
+                    className={`w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                      isAppActive
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {isToggling ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Power className="mr-2 h-4 w-4" />
+                        {isAppActive ? 'Deactivate App' : 'Activate App'}
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  onClick={handleToggleAppActive}
-                  disabled={isToggling || isLoading}
-                  className={`w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                    isAppActive
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-red-600 hover:bg-red-700 text-white'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {isToggling ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Power className="mr-2 h-4 w-4" />
-                      {isAppActive ? 'Deactivate App' : 'Activate App'}
-                    </>
-                  )}
-                </button>
-              </div>
+              )}
 
               <Link href="/admin/settings" className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                 <Settings className="mr-3 h-5 w-5" />
@@ -225,37 +228,39 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
               {/* Mobile Bottom section */}
               <div className="flex-shrink-0 px-4 py-4 border-t border-gray-800 space-y-3">
-                {/* App Active Toggle */}
-                <div className="px-4 py-3 bg-gray-800 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-400">App Status</span>
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                    ) : (
-                      <span className={`text-xs font-bold ${isAppActive ? 'text-green-400' : 'text-red-400'}`}>
-                        {isAppActive ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
-                    )}
+                {/* App Active Toggle - Only show when user is logged in */}
+                {user && (
+                  <div className="px-4 py-3 bg-gray-800 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-400">App Status</span>
+                      {isLoading ? (
+                        <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      ) : (
+                        <span className={`text-xs font-bold ${isAppActive ? 'text-green-400' : 'text-red-400'}`}>
+                          {isAppActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleToggleAppActive}
+                      disabled={isToggling || isLoading}
+                      className={`w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                        isAppActive
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-red-600 hover:bg-red-700 text-white'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {isToggling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Power className="mr-2 h-4 w-4" />
+                          {isAppActive ? 'Deactivate' : 'Activate'}
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={handleToggleAppActive}
-                    disabled={isToggling || isLoading}
-                    className={`w-full flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                      isAppActive
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'bg-red-600 hover:bg-red-700 text-white'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {isToggling ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Power className="mr-2 h-4 w-4" />
-                        {isAppActive ? 'Deactivate' : 'Activate'}
-                      </>
-                    )}
-                  </button>
-                </div>
+                )}
 
                 <Link href="/admin/settings" onClick={() => setSidebarOpen(false)} className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-all">
                   <Settings className="mr-3 h-5 w-5" />

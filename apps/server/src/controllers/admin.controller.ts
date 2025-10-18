@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AdminService } from "../services/admin.service";
 import { AppConfigService } from "../services/appConfig.service";
 import { ApiError } from "../utils/ApiError";
+import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 
 export class AdminController {
   /**
@@ -211,6 +212,77 @@ export class AdminController {
         success: true,
         data: config,
         message: `App is now ${isActive ? 'active' : 'inactive'}`
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/admin/early-access-requests
+   * Get all early access requests
+   */
+  static async getEarlyAccessRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const filters = {
+        status: req.query.status as string,
+        limit: parseInt(req.query.limit as string) || 50,
+        skip: parseInt(req.query.skip as string) || 0,
+      };
+
+      const query: any = {};
+      if (filters.status) {
+        query.status = filters.status;
+      }
+
+      const total = await EarlyAccessRequest.countDocuments(query);
+      const requests = await EarlyAccessRequest.find(query)
+        .sort({ createdAt: -1 })
+        .limit(filters.limit)
+        .skip(filters.skip)
+        .lean();
+
+      res.json({
+        success: true,
+        data: {
+          requests,
+          total,
+          limit: filters.limit,
+          skip: filters.skip,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/admin/early-access-requests/:requestId/status
+   * Update early access request status
+   */
+  static async updateEarlyAccessRequestStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { requestId } = req.params;
+      const { status } = req.body;
+
+      if (!['pending', 'contacted', 'completed', 'cancelled'].includes(status)) {
+        throw new ApiError(400, 'Invalid status value');
+      }
+
+      const request = await EarlyAccessRequest.findByIdAndUpdate(
+        requestId,
+        { status, updatedAt: new Date() },
+        { new: true }
+      );
+
+      if (!request) {
+        throw new ApiError(404, 'Request not found');
+      }
+
+      res.json({
+        success: true,
+        data: request,
+        message: `Request status updated to ${status}`,
       });
     } catch (error) {
       next(error);

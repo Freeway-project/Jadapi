@@ -38,9 +38,9 @@ export default function SearchPage() {
       dropoffLat: additionalData.dropoffLat.toString(),
       dropoffLng: additionalData.dropoffLng.toString(),
       packageSize: additionalData.packageSize,
-      distance: estimateData.data.distance.km.toString(),
-      duration: estimateData.data.distance.durationMinutes.toString(),
-      total: estimateData.data.pricing.total.toString(),
+      distance: estimateData.data.distance?.distanceKm?.toString() || '0',
+      duration: estimateData.data.distance?.durationMinutes?.toString() || '0',
+      total: estimateData.data.fare?.total?.toString() || '0',
     });
 
     router.push(`/booking?${params.toString()}`);

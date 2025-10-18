@@ -9,6 +9,8 @@ import driverRoutes from "./driver.routes";
 import { AppConfigService } from "../services/appConfig.service";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 import { ApiError } from "../utils/ApiError";
+import { EmailService } from "../services/email.service";
+import { ENV } from "../config/env";
 
 const router = Router();
 
@@ -61,6 +63,66 @@ router.post("/early-access", async (req, res, next) => {
       status: "pending",
       source: "web-app"
     });
+
+    // Send email notification to admin if configured
+    if (ENV.ADMIN_NOTIFICATION_EMAIL) {
+      try {
+        const fareInfo = estimatedFare
+          ? `\n  Distance: ${estimatedFare.distance?.toFixed(2)} km\n  Estimated Fare: ${estimatedFare.currency || 'CAD'} $${estimatedFare.total?.toFixed(2)}`
+          : '';
+
+        await EmailService.sendEmail({
+          to: ENV.ADMIN_NOTIFICATION_EMAIL,
+          subject: `New Early Access Request - ${contactName}`,
+          text: `New early access request received:
+
+Name: ${contactName}
+Phone: ${contactPhone}
+Email: ${contactEmail || 'Not provided'}
+
+Pickup: ${pickupAddress}
+Dropoff: ${dropoffAddress}${fareInfo}
+
+Notes: ${notes || 'None'}
+
+Request ID: ${request._id}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">New Early Access Request</h2>
+
+              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Contact Information</h3>
+                <p><strong>Name:</strong> ${contactName}</p>
+                <p><strong>Phone:</strong> ${contactPhone}</p>
+                <p><strong>Email:</strong> ${contactEmail || 'Not provided'}</p>
+              </div>
+
+              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Route Details</h3>
+                <p><strong>Pickup:</strong> ${pickupAddress}</p>
+                <p><strong>Dropoff:</strong> ${dropoffAddress}</p>
+                ${estimatedFare ? `
+                  <p><strong>Distance:</strong> ${estimatedFare.distance?.toFixed(2)} km</p>
+                  <p><strong>Estimated Fare:</strong> ${estimatedFare.currency || 'CAD'} $${estimatedFare.total?.toFixed(2)}</p>
+                ` : ''}
+              </div>
+
+              ${notes ? `
+                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3 style="margin-top: 0;">Additional Notes</h3>
+                  <p>${notes}</p>
+                </div>
+              ` : ''}
+
+              <p style="color: #6b7280; font-size: 12px;">Request ID: ${request._id}</p>
+            </div>
+          `
+        });
+      } catch (emailError) {
+        // Log error but don't fail the request
+        console.error('Failed to send admin notification email:', emailError);
+      }
+    }
 
     res.status(201).json({
       success: true,

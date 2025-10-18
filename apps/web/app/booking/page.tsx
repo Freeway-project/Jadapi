@@ -72,7 +72,7 @@ export default function BookingPage() {
           dropoffAddress={dropoffAddress}
           estimatedFare={{
             distance: distance ? parseFloat(distance) : undefined,
-            total: total ? parseFloat(total) : undefined,
+            total: total ? parseFloat(total) / 100 : undefined,
           }}
         />
       </div>

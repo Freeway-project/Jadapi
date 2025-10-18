@@ -84,4 +84,17 @@ router.put(
   AdminController.updateAppActiveStatus
 );
 
+// Early access request routes
+router.get(
+  "/early-access-requests",
+  activityLogger,
+  AdminController.getEarlyAccessRequests
+);
+
+router.put(
+  "/early-access-requests/:requestId/status",
+  activityLogger,
+  AdminController.updateEarlyAccessRequestStatus
+);
+
 export default router;
