@@ -21,7 +21,7 @@ build/
 **/build/
 out/
 **/out/
-lib/
+
 **/lib/
 .next/
 **/.next/
