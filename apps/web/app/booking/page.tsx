@@ -14,17 +14,17 @@ function BookingPageContent() {
   const [isAppActive, setIsAppActive] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get search params
-  const pickupAddress = searchParams.get('pickupAddress') || '';
-  const dropoffAddress = searchParams.get('dropoffAddress') || '';
-  const pickupLat = searchParams.get('pickupLat');
-  const pickupLng = searchParams.get('pickupLng');
-  const dropoffLat = searchParams.get('dropoffLat');
-  const dropoffLng = searchParams.get('dropoffLng');
-  const packageSize = searchParams.get('packageSize') || 'M';
-  const distance = searchParams.get('distance');
-  const duration = searchParams.get('duration');
-  const total = searchParams.get('total');
+  // Get search params with null checks
+  const pickupAddress = searchParams?.get('pickupAddress') || '';
+  const dropoffAddress = searchParams?.get('dropoffAddress') || '';
+  const pickupLat = searchParams?.get('pickupLat') || null;
+  const pickupLng = searchParams?.get('pickupLng') || null;
+  const dropoffLat = searchParams?.get('dropoffLat') || null;
+  const dropoffLng = searchParams?.get('dropoffLng') || null;
+  const packageSize = searchParams?.get('packageSize') || 'M';
+  const distance = searchParams?.get('distance') || null;
+  const duration = searchParams?.get('duration') || null;
+  const total = searchParams?.get('total') || null;
 
   // Check app status on mount
   useEffect(() => {
