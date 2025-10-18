@@ -75,8 +75,10 @@ echo ""
 # echo ""
 
 # Step 6: Start PM2 process
+# Start or restart the specific PM2 process for the server
 print_info "Starting PM2 process..."
-pm2 restart-all
+# Try to restart the existing process; if it's not found, start it from the built dist
+pm2 restart jadapi-server || pm2 start dist/server.js --name jadapi-server --time
 # if [ $? -ne 0 ]; then
 #     print_error "Failed to start PM2 process"
 #     exit 1

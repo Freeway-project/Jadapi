@@ -15,7 +15,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Project directory
-PROJECT_DIR="/home/ubuntu/Development/Jadapi"
+PROJECT_DIR="/home/ubuntu/Jadapi"
 cd "$PROJECT_DIR"
 
 # Function to print colored output
