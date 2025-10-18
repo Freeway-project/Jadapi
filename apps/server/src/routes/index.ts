@@ -8,128 +8,40 @@ import couponRoutes from "./coupon.routes";
 import driverRoutes from "./driver.routes";
 import paymentRoutes from "./payment.routes";
 import webhookRoutes from "./webhook.routes";
+import earlyAccessRoutes from "./earlyAccess.routes";
 import { AppConfigService } from "../services/appConfig.service";
-import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
-import { ApiError } from "../utils/ApiError";
-import { EmailService } from "../services/email.service";
-import { ENV } from "../config/env";
+import { SystemStatsService } from "../services/systemStats.service";
 
 const router = Router();
 
-router.get("/", (_req, res) => res.json({status:200, ok: true }));
+router.get("/", async (_req, res) => {
+  const stats = SystemStatsService.getStats();
+  const isActive = await AppConfigService.isAppActive();
+  
+  res.json({
+    status: 200,
+    ok: true,
+    systemStats: stats,
+    serviceStatus: {
+      active: isActive,
+      message: isActive ? 'Service is available' : 'Service is currently unavailable'
+    }
+  });
+});
 
 // Public endpoint to check app status
 router.get("/status", async (_req, res, next) => {
   try {
     const isActive = await AppConfigService.isAppActive();
+    const stats = SystemStatsService.getStats();
+    
     res.json({
       success: true,
       data: {
         appActive: isActive,
-        message: isActive ? 'Service is available' : 'Service is currently unavailable'
+        message: isActive ? 'Service is available' : 'Service is currently unavailable',
+        systemStats: stats
       }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Public endpoint to submit early access request
-router.post("/early-access", async (req, res, next) => {
-  try {
-    const { pickupAddress, dropoffAddress, contactName, contactPhone, contactEmail, estimatedFare, notes } = req.body;
-
-    // Validate required fields
-    if (!pickupAddress || !dropoffAddress || !contactName || !contactPhone) {
-      throw new ApiError(400, "Pickup address, dropoff address, contact name, and phone are required");
-    }
-
-    // Validate phone format (basic)
-    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-    if (!phoneRegex.test(contactPhone)) {
-      throw new ApiError(400, "Invalid phone number format");
-    }
-
-    const request = await EarlyAccessRequest.create({
-      pickupAddress,
-      dropoffAddress,
-      contactName,
-      contactPhone,
-      contactEmail,
-      estimatedFare: estimatedFare ? {
-        distance: estimatedFare?.distance,
-        total: estimatedFare?.total,
-        currency: estimatedFare?.currency || "CAD"
-      } : undefined,
-      notes,
-      status: "pending",
-      source: "web-app"
-    });
-
-    // Send email notification to admin if configured
-    if (ENV.ADMIN_NOTIFICATION_EMAIL) {
-      try {
-        const fareInfo = estimatedFare
-          ? `\n  Distance: ${estimatedFare.distance?.toFixed(2)} km\n  Estimated Fare: ${estimatedFare.currency || 'CAD'} $${estimatedFare.total?.toFixed(2)}`
-          : '';
-
-        await EmailService.sendEmail({
-          to: ENV.ADMIN_NOTIFICATION_EMAIL,
-          subject: `New Early Access Request - ${contactName}`,
-          text: `New early access request received:
-
-Name: ${contactName}
-Phone: ${contactPhone}
-Email: ${contactEmail || 'Not provided'}
-
-Pickup: ${pickupAddress}
-Dropoff: ${dropoffAddress}${fareInfo}
-
-Notes: ${notes || 'None'}
-
-Request ID: ${request._id}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #2563eb;">New Early Access Request</h2>
-
-              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0;">Contact Information</h3>
-                <p><strong>Name:</strong> ${contactName}</p>
-                <p><strong>Phone:</strong> ${contactPhone}</p>
-                <p><strong>Email:</strong> ${contactEmail || 'Not provided'}</p>
-              </div>
-
-              <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0;">Route Details</h3>
-                <p><strong>Pickup:</strong> ${pickupAddress}</p>
-                <p><strong>Dropoff:</strong> ${dropoffAddress}</p>
-                ${estimatedFare ? `
-                  <p><strong>Distance:</strong> ${estimatedFare.distance?.toFixed(2)} km</p>
-                  <p><strong>Estimated Fare:</strong> ${estimatedFare.currency || 'CAD'} $${estimatedFare.total?.toFixed(2)}</p>
-                ` : ''}
-              </div>
-
-              ${notes ? `
-                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                  <h3 style="margin-top: 0;">Additional Notes</h3>
-                  <p>${notes}</p>
-                </div>
-              ` : ''}
-
-              <p style="color: #6b7280; font-size: 12px;">Request ID: ${request._id}</p>
-            </div>
-          `
-        });
-      } catch (emailError) {
-        // Log error but don't fail the request
-        console.error('Failed to send admin notification email:', emailError);
-      }
-    }
-
-    res.status(201).json({
-      success: true,
-      data: { requestId: request._id },
-      message: "Thank you! We'll contact you as soon as service is available in your area."
     });
   } catch (error) {
     next(error);
@@ -162,5 +74,8 @@ router.use("/payment", paymentRoutes);
 
 // Webhook routes
 router.use("/webhooks", webhookRoutes);
+
+// Early Access routes
+router.use("/early-access", earlyAccessRoutes);
 
 export default router;
