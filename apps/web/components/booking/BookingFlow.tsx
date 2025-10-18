@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User, MapPin, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
-import { FareEstimateResponse, deliveryAPI } from '@/lib/api/delivery';
+import { FareEstimateResponse } from '@/lib/api/delivery';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { geocodeAddress } from '@/lib/utils/geocoding';
 import ProgressSteps, { BookingStep } from './components/ProgressSteps';
@@ -12,7 +12,6 @@ import UserInfoForm, { UserDetails } from './components/UserInfoForm';
 import ReviewOrder from './components/ReviewOrder';
 import PaymentSection from './components/PaymentSection';
 import MapView from '@/components/map/MapView';
-import toast from 'react-hot-toast';
 
 interface BookingFlowProps {
   initialPickup: {
@@ -75,8 +74,6 @@ export default function BookingFlow({
     discount: number;
     newTotal: number;
   } | null>(null);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   // Create estimate object from initial data
   const estimate: FareEstimateResponse = {
@@ -112,7 +109,7 @@ export default function BookingFlow({
       setSender({
         name: user?.profile?.name || '',
         phone: user?.auth?.phone || user?.phone || '',
-        address: initialPickup.address,
+        address: initialPickup.address, 
         notes: ''
       });
 
@@ -156,77 +153,30 @@ export default function BookingFlow({
   };
 
   const handleCreateOrder = async () => {
-    setIsCreatingOrder(true);
-    try {
-      const orderData = {
-        pickup: {
-          address: sender.address,
-          coordinates: pickupCoords,
-          contactName: sender.name,
-          contactPhone: sender.phone,
-        },
-        dropoff: {
-          address: recipient.address,
-          coordinates: dropoffCoords,
-          contactName: recipient.name,
-          contactPhone: recipient.phone,
-        },
-        package: {
-          size: initialPackageSize,
-          description: recipient.notes || sender.notes,
-        },
-        pricing: estimate.data.fare,
-        distance: estimate.data.distance,
-        coupon: appliedCoupon ? {
-          couponId: appliedCoupon.couponId,
-          code: appliedCoupon.code,
-          discount: appliedCoupon.discount,
-        } : undefined,
-      };
-
-      const response = await deliveryAPI.createOrder(orderData);
-
-      if (response.success && response.data.order) {
-        setOrderId(response.data.order._id);
-        toast.success('Order created successfully');
-        handleNext();
-      } else {
-        toast.error('Failed to create order');
-      }
-    } catch (error: any) {
-      console.error('Error creating order:', error);
-      toast.error(error?.response?.data?.message || 'Failed to create order');
-    } finally {
-      setIsCreatingOrder(false);
-    }
+    // Create unpaid order
+    console.log('Creating unpaid order:', {
+      recipient,
+      sender,
+      estimate,
+      coupon: appliedCoupon ? {
+        couponId: appliedCoupon.couponId,
+        code: appliedCoupon.code,
+        discount: appliedCoupon.discount,
+      } : undefined,
+    });
+    // TODO: Call deliveryAPI.createOrder with paymentStatus: 'unpaid' and coupon info
   };
 
   const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; newTotal: number } | null) => {
     setAppliedCoupon(couponData);
   };
 
-  const handlePaymentSuccess = () => {
-    toast.success('Payment successful! Your order is confirmed.');
+  const handlePaymentComplete = async () => {
+    // After payment is confirmed, mark order as paid
+    console.log('Payment completed, confirming order');
+    // TODO: Update order status to 'paid'
     onComplete?.();
   };
-
-  const handlePaymentError = (error: string) => {
-    toast.error(`Payment failed: ${error}`);
-  };
-
-  // Create a modified estimate with coupon discount applied
-  const finalEstimate: FareEstimateResponse = appliedCoupon
-    ? {
-        ...estimate,
-        data: {
-          ...estimate.data,
-          fare: {
-            ...estimate.data.fare,
-            total: appliedCoupon.newTotal,
-          },
-        },
-      }
-    : estimate;
 
   return (
     <>
@@ -268,9 +218,9 @@ export default function BookingFlow({
 
           {/* Floating Fare Card on Map (Uber-style) */}
           {currentStep !== 'review' && currentStep !== 'payment' && (
-            <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-xl">
+            <div className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-200">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex flex-row  items-center gap-3">
                   <p className="text-xs text-gray-600 font-medium mb-1">Trip Estimate</p>
                   <p className="text-2xl font-bold text-gray-900">
                     ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
@@ -290,10 +240,10 @@ export default function BookingFlow({
         </div>
 
         {/* Form Section - Bottom 60% (Uber-style rounded top) */}
-        <div className="flex-1 flex flex-col bg-gray-50 rounded-t-3xl -mt-4 relative z-10 shadow-2xl min-h-0">
+        <div className="flex-1 flex flex-col bg-gray-50 rounded-t-3xl -mt-4 relative z-10 shadow-2xl">
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-2 min-h-0">
-            <div className="pb-4">
+          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-4">
+            <div className="pb-24">
               {currentStep === 'sender' && (
                 <UserInfoForm
                   type="sender"
@@ -327,23 +277,18 @@ export default function BookingFlow({
               )}
 
               {currentStep === 'payment' && (
-                <PaymentSection
-                  estimate={finalEstimate}
-                  orderId={orderId || undefined}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentError={handlePaymentError}
-                />
+                <PaymentSection estimate={estimate} />
               )}
             </div>
           </div>
 
           {/* Action Buttons - Fixed at bottom (Uber-style) */}
-          <div className="shrink-0 bg-white border-t border-gray-200 p-4 shadow-lg sticky bottom-0">
+          <div className="bg-white border-t border-gray-200 p-4 shadow-lg">
             <div className="flex gap-3">
               {currentStep !== 'sender' && (
                 <button
                   onClick={handlePrevious}
-                  className="w-14 h-14 flex items-center justify-center rounded-full border-2 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 transition-colors flex-shrink-0"
+                  className="w-14 h-14 flex items-center justify-center rounded-full border-2 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -353,22 +298,21 @@ export default function BookingFlow({
               <Button
                 onClick={
                   currentStep === 'review'
-                    ? handleCreateOrder
+                    ? () => {
+                        handleCreateOrder();
+                        handleNext();
+                      }
+                    : currentStep === 'payment'
+                    ? handlePaymentComplete
                     : handleNext
                 }
-                disabled={
-                  (currentStep !== 'review' && currentStep !== 'payment' && !canProceed()) ||
-                  (currentStep === 'review' && isCreatingOrder) ||
-                  currentStep === 'payment'
-                }
+                disabled={currentStep !== 'review' && currentStep !== 'payment' && !canProceed()}
                 className="flex-1 h-14 bg-black hover:bg-gray-900 text-white font-bold text-base rounded-full disabled:bg-gray-300 disabled:text-gray-500 shadow-lg transition-all"
               >
-                {currentStep === 'review' && isCreatingOrder
-                  ? 'Creating Order...'
-                  : currentStep === 'review'
+                {currentStep === 'review'
                   ? 'Continue to Payment'
                   : currentStep === 'payment'
-                  ? 'Processing...'
+                  ? 'Confirm Payment'
                   : 'Continue'}
               </Button>
             </div>
@@ -429,12 +373,7 @@ export default function BookingFlow({
               )}
 
               {currentStep === 'payment' && (
-                <PaymentSection
-                  estimate={finalEstimate}
-                  orderId={orderId || undefined}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  onPaymentError={handlePaymentError}
-                />
+                <PaymentSection estimate={estimate} />
               )}
             </div>
           </div>
@@ -454,22 +393,21 @@ export default function BookingFlow({
               <Button
                 onClick={
                   currentStep === 'review'
-                    ? handleCreateOrder
+                    ? () => {
+                        handleCreateOrder();
+                        handleNext();
+                      }
+                    : currentStep === 'payment'
+                    ? handlePaymentComplete
                     : handleNext
                 }
-                disabled={
-                  (currentStep !== 'review' && currentStep !== 'payment' && !canProceed()) ||
-                  (currentStep === 'review' && isCreatingOrder) ||
-                  currentStep === 'payment'
-                }
+                disabled={currentStep !== 'review' && currentStep !== 'payment' && !canProceed()}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold h-12 disabled:bg-gray-200 disabled:text-gray-400"
               >
-                {currentStep === 'review' && isCreatingOrder
-                  ? 'Creating Order...'
-                  : currentStep === 'review'
+                {currentStep === 'review'
                   ? 'Continue to Payment'
                   : currentStep === 'payment'
-                  ? 'Processing...'
+                  ? 'Confirm Payment'
                   : 'Continue'}
               </Button>
             </div>
