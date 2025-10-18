@@ -29,6 +29,38 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
+      setError('Please enter a coupon code');
+      return;
+    }
+
+    setIsValidating(true);
+    setError(null);
+
+    try {
+      const response = await couponAPI.validateCoupon({
+        code: couponCode.trim(),
+        orderAmount: estimate.data.fare.total
+      });
+
+      if (response.success && response.data) {
+        onCouponApplied?.({
+          couponId: response.data.coupon.code,
+          code: response.data.coupon.code,
+          discount: response.data.discount,
+          newTotal: response.data.newTotal
+        });
+        toast.success('Coupon applied successfully!');
+        setCouponCode('');
+      } else {
+        setError(response.message || 'Invalid coupon code');
+      }
+    } catch (err) {
+      setError('Failed to validate coupon');
+      console.error('Coupon validation error:', err);
+    } finally {
+      setIsValidating(false);
+    }
+    if (!couponCode.trim()) {
       toast.error('Please enter a coupon code');
       return;
     }

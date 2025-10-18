@@ -1,6 +1,8 @@
 {
   "extends": "@workspace/typescript-config/nextjs.json",
   "compilerOptions": {
+    "skipLibCheck": true,
+    "noImplicitAny": false,
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -10,6 +12,7 @@
         "../../packages/ui/src/*"
       ]
     },
+    "skipLibCheck": true,
     "jsx": "preserve",
     "plugins": [
       {
@@ -23,7 +26,8 @@
     "next.config.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules"

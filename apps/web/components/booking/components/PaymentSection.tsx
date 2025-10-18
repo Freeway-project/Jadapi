@@ -16,11 +16,16 @@ interface PaymentSectionProps {
   onPaymentError?: (error: string) => void;
 }
 
+// Initialize Stripe Promise outside component to maintain singleton instance
 let stripePromise: Promise<Stripe | null> | null = null;
 
-const getStripe = async () => {
+interface StripeConfig {
+  publishableKey: string;
+}
+
+const getStripe = async (): Promise<Stripe | null> => {
   if (!stripePromise) {
-    const config = await paymentAPI.getConfig();
+    const config = await paymentAPI.getConfig() as StripeConfig;
     stripePromise = loadStripe(config.publishableKey);
   }
   return stripePromise;
