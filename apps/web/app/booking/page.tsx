@@ -6,6 +6,7 @@ import BookingFlow from '@/components/booking/BookingFlow';
 import EarlyAccessForm from '@/components/booking/EarlyAccessForm';
 import { appConfigAPI } from '@/lib/api/appConfig';
 import { Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 function BookingPageContent() {
   const searchParams = useSearchParams();
@@ -31,6 +32,10 @@ function BookingPageContent() {
     const checkStatus = async () => {
       try {
         const response = await appConfigAPI.checkAppStatus();
+        if(response === null || response.data === undefined) {
+          toast.error('Failed to retrieve app status. Please try again later.');
+          setIsAppActive(false);
+        }
         setIsAppActive(response?.data?.appActive ?? true);
       } catch (error) {
         console.error('Failed to check app status:', error);

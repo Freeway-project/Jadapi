@@ -7,7 +7,8 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { appConfigAPI } from '@/lib/api/appConfig';
 import toast from 'react-hot-toast';
-import { Mail, Phone, User, MapPin, Check } from 'lucide-react';
+import { Mail, Phone, User, MapPin, Check, ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface EarlyAccessFormProps {
   pickupAddress?: string;
@@ -30,6 +31,7 @@ export default function EarlyAccessForm({
   dropoffAddress = '',
   estimatedFare,
 }: EarlyAccessFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -101,6 +103,15 @@ export default function EarlyAccessForm({
 
   return (
     <div className="w-full max-w-2xl mx-auto p-6 sm:p-8 bg-white rounded-2xl shadow-md">
+      {/* Back Button */}
+      <button
+        onClick={() => router.push('/search')}
+        className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm font-medium">Back to Search</span>
+      </button>
+
       {/* Header */}
       <div className="mb-6 text-center">
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
