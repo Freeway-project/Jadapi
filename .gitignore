@@ -69,3 +69,4 @@ temp/
 # Misc
 *.bak
 *.tmp
+.vercel
