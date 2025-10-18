@@ -79,19 +79,27 @@ export default function BookingFlow({
   const estimate: FareEstimateResponse = {
     success: true,
     data: {
-      packageSize: initialPackageSize,
-      pricing: {
+      fare: {
         baseFare: 0,
         distanceFare: 0,
         timeFare: 0,
+        bandMultiplier: 1,
+        bandLabel: '',
+        sizeMultiplier: 1,
+        edgeSurcharge: 0,
         subtotal: initialFareEstimate.total,
         tax: 0,
-        total: initialFareEstimate.total
+        total: initialFareEstimate.total,
+        currency: 'CAD',
+        distanceKm: initialFareEstimate.distance,
+        durationMinutes: initialFareEstimate.duration
       },
       distance: {
-        km: initialFareEstimate.distance,
-        durationMinutes: initialFareEstimate.duration
-      }
+        distanceKm: initialFareEstimate.distance,
+        durationMinutes: initialFareEstimate.duration,
+        method: 'google_maps'
+      },
+      serviceAreas: {}
     }
   };
 

@@ -8,6 +8,7 @@ import { Label } from '@workspace/ui/components/label';
 import AddressAutocomplete from '../auth/AddressAutocomplete';
 import { deliveryAPI, FareEstimateResponse } from '@/lib/api/delivery';
 import { useSearchStore } from '@/lib/stores/searchStore';
+import toast from 'react-hot-toast';
 
 interface Location {
   lat: number;
@@ -57,7 +58,6 @@ export default function FromToSearch({
     type: 'small'
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Prefill from last search if enabled
   useEffect(() => {
@@ -97,10 +97,12 @@ export default function FromToSearch({
   };
 
   const handleSearch = async () => {
-    if (!fromAddress || !toAddress) return;
+    if (!fromAddress || !toAddress) {
+      toast.error('Please enter both pickup and dropoff addresses');
+      return;
+    }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const pickupCoords = await geocodeAddress(fromAddress);
@@ -113,6 +115,10 @@ export default function FromToSearch({
         dropoff: dropoffCoords,
         packageSize,
       });
+
+      if (!estimate?.data?.fare) {
+        throw new Error('Invalid response from server');
+      }
 
       // Save search to local storage
       addSearch({
@@ -139,7 +145,8 @@ export default function FromToSearch({
       });
     } catch (err: any) {
       console.error('Fare estimate error:', err);
-      setError(err.message || 'Failed to get estimate. Please try again.');
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to get estimate. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -246,13 +253,6 @@ export default function FromToSearch({
               className="h-12 sm:h-14 text-base sm:text-lg rounded-xl border-2 border-gray-200 focus:border-blue-600"
             />
           </div> */}
-        </div>
-      )}
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-2 sm:p-4">
-          <p className="text-xs sm:text-base text-red-600 font-medium">{error}</p>
         </div>
       )}
 

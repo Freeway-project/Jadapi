@@ -7,7 +7,7 @@ import { User } from "../models/user.model";
  */
 export async function driverAuth(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   try {

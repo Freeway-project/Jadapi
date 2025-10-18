@@ -118,4 +118,71 @@ export const AuthController = {
       next(err);
     }
   },
+
+  /**
+   * Create driver account
+   * POST /api/auth/create-driver
+   */
+  async createDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, password, phone, name, address } = req.body;
+
+      if (!email || !password || !name || !phone || !address) {
+        throw new ApiError(400, "Email, password, name, phone, and address are required");
+      }
+
+      // Check if email already exists
+      const existingUser = await UserRepository.findByEmail(email);
+      if (existingUser) {
+        throw new ApiError(409, "Email already exists");
+      }
+
+      // Check if phone already exists
+      if (phone) {
+        const existingPhone = await UserRepository.findByPhone(phone);
+        if (existingPhone) {
+          throw new ApiError(409, "Phone number already exists");
+        }
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create driver user
+      const user = await UserRepository.create({
+        accountType: "individual",
+        email,
+        phone,
+        password: hashedPassword,
+        name,
+        address,
+        roles: ["driver"],
+        status: "active",
+      });
+
+      // Generate JWT token
+      const token = jwtUtils.generateToken({
+        userId: user._id.toString(),
+        email: user.auth.email,
+        roles: user.roles,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Driver account created successfully",
+        token,
+        user: {
+          uuid: user.uuid,
+          email: user.auth.email,
+          phone: user.auth.phone,
+          name: user.profile.name,
+          address: user.profile.address,
+          roles: user.roles,
+          status: user.status,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };
