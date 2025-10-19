@@ -8,7 +8,9 @@ export class DriverController {
    */
   static async getDashboard(req: Request, res: Response, next: NextFunction) {
     try {
-      const driverId = Types.ObjectId.createFromHexString(req.user?.userId);
+      const driverId = Types.ObjectId.createFromHexString(
+        req.params.driverId || req.user?.userId
+      );
 
       const [profile, stats, activeOrders] = await Promise.all([
         DriverService.getDriverProfile(driverId),
@@ -60,7 +62,9 @@ export class DriverController {
    */
   static async getMyOrders(req: Request, res: Response, next: NextFunction) {
     try {
-      const driverId = Types.ObjectId.createFromHexString(req.user?.userId);
+      const driverId = Types.ObjectId.createFromHexString(
+        req.params.driverId || req.user?.userId
+      );
       const status = req.query.status as string;
       const limit = parseInt(req.query.limit as string) || 20;
       const skip = parseInt(req.query.skip as string) || 0;
@@ -86,7 +90,9 @@ export class DriverController {
   static async acceptOrder(req: Request, res: Response, next: NextFunction) {
     try {
       const { orderId } = req.params;
-      const driverId = Types.ObjectId.createFromHexString(req.user?.userId);
+      const driverId = Types.ObjectId.createFromHexString(
+        req.body.driverId || req.user?.userId
+      );
 
       const order = await DriverService.acceptOrder(orderId, driverId);
 
@@ -110,8 +116,10 @@ export class DriverController {
   ) {
     try {
       const { orderId } = req.params;
-      const { status } = req.body;
-      const driverId = Types.ObjectId.createFromHexString(req.user?.userId);
+      const { status, driverId: bodyDriverId } = req.body;
+      const driverId = Types.ObjectId.createFromHexString(
+        bodyDriverId || req.user?.userId
+      );
 
       if (!status) {
         return res.status(400).json({
@@ -149,7 +157,9 @@ export class DriverController {
    */
   static async getStats(req: Request, res: Response, next: NextFunction) {
     try {
-      const driverId = Types.ObjectId.createFromHexString(req.user?.userId);
+      const driverId = Types.ObjectId.createFromHexString(
+        req.params.driverId || req.user?.userId
+      );
 
       const stats = await DriverService.getDriverStats(driverId);
 
