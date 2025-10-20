@@ -9,6 +9,10 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
   pickup: {
     address: string;
     coordinates: { lat: number; lng: number };
+    location?: {
+      type: string;
+      coordinates: [number, number]; // [lng, lat] for GeoJSON
+    };
     contactName?: string;
     contactPhone?: string;
     notes?: string;
@@ -19,6 +23,10 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
   dropoff: {
     address: string;
     coordinates: { lat: number; lng: number };
+    location?: {
+      type: string;
+      coordinates: [number, number]; // [lng, lat] for GeoJSON
+    };
     contactName?: string;
     contactPhone?: string;
     notes?: string;
@@ -94,6 +102,10 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
         lat: { type: Number, required: true },
         lng: { type: Number, required: true }
       },
+      location: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], index: "2dsphere" } // [lng, lat]
+      },
       contactName: String,
       contactPhone: String,
       notes: String,
@@ -106,6 +118,10 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       coordinates: {
         lat: { type: Number, required: true },
         lng: { type: Number, required: true }
+      },
+      location: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], index: "2dsphere" } // [lng, lat]
       },
       contactName: String,
       contactPhone: String,

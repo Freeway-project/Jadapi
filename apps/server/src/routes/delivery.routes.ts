@@ -201,6 +201,10 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       pickup: {
         address: pickup.address,
         coordinates: pickup.coordinates,
+        location: {
+          type: "Point",
+          coordinates: [pickup.coordinates.lng, pickup.coordinates.lat] // GeoJSON: [lng, lat]
+        },
         contactName: pickup.contactName,
         contactPhone: pickup.contactPhone,
         notes: pickup.notes,
@@ -209,6 +213,10 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       dropoff: {
         address: dropoff.address,
         coordinates: dropoff.coordinates,
+        location: {
+          type: "Point",
+          coordinates: [dropoff.coordinates.lng, dropoff.coordinates.lat] // GeoJSON: [lng, lat]
+        },
         contactName: dropoff.contactName,
         contactPhone: dropoff.contactPhone,
         notes: dropoff.notes,

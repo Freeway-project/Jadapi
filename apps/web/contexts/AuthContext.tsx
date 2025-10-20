@@ -66,7 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('AuthContext: Attempting login...');
       const response = await authAPI.login(email, password);
+      console.log('AuthContext: Login response received', { hasToken: !!response.token, hasUser: !!response.user });
 
       // Token is already stored in localStorage by authAPI.login
       // Now update the state
@@ -79,7 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         status: response.user.status || 'active',
         accountType: response.user.accountType || 'individual',
       });
+      console.log('AuthContext: State updated successfully');
     } catch (error: any) {
+      console.error('AuthContext: Login error', error);
       throw new Error(error.message || 'Login failed');
     }
   };
