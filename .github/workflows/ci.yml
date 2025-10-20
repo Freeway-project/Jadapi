@@ -110,32 +110,40 @@ jobs:
       - name: Load Server Docker Image
         run: docker load --input /tmp/server-image.tar
 
-      - name: Create .env file for testing
-        run: |
-          cat > apps/server/.env << EOF
-          NODE_ENV=test
-          PORT=4001
-          MONGODB_URI=mongodb://localhost:27017/jadapi-test
-          REDIS_URL=redis://localhost:6379
-          JWT_SECRET=test-secret-key-for-ci-cd-pipeline
-          STRIPE_SECRET_KEY=sk_test_mock
-          STRIPE_WEBHOOK_SECRET=whsec_mock
-          GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY || 'test-key' }}
-          EOF
-
       - name: Run Server Container
         run: |
           docker run -d \
             --name jadapi-server \
             --network host \
-            --env-file apps/server/.env \
+            -e NODE_ENV=test \
+            -e PORT=4001 \
+            -e MONGO_URI=mongodb://localhost:27017/jadapi-test \
+            -e MONGODB_URI=mongodb://localhost:27017/jadapi-test \
+            -e REDIS_URL=redis://localhost:6379 \
+            -e JWT_SECRET=test-secret-key-for-ci-cd-pipeline \
+            -e STRIPE_SECRET_KEY=sk_test_mock \
+            -e STRIPE_WEBHOOK_SECRET=whsec_mock \
+            -e GOOGLE_MAPS_API_KEY=test-key \
+            -e SMTP_HOST=smtp.gmail.com \
+            -e SMTP_PORT=587 \
+            -e SMTP_SECURE=false \
+            -e SMTP_USER=test@example.com \
+            -e SMTP_PASS=test-pass \
+            -e SMTP_FROM_EMAIL=test@example.com \
+            -e SMTP_FROM_NAME=Test \
             jadapi-server:${{ github.sha }}
+
+      - name: Verify Environment Variables
+        run: |
+          echo "Checking environment variables in container..."
+          docker exec jadapi-server sh -c 'echo "MONGO_URI=$MONGO_URI"'
+          docker exec jadapi-server sh -c 'echo "PORT=$PORT"'
 
       - name: Wait for Server to Start
         run: |
           echo "Waiting for server to be healthy..."
           for i in {1..30}; do
-            if docker exec jadapi-server wget -q --spider http://localhost:4001/health; then
+            if curl -s http://localhost:4001/health > /dev/null 2>&1; then
               echo "✅ Server is healthy!"
               exit 0
             fi
@@ -143,6 +151,7 @@ jobs:
             sleep 2
           done
           echo "❌ Server failed to become healthy"
+          echo "Container logs:"
           docker logs jadapi-server
           exit 1
 
