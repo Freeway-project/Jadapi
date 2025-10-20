@@ -22,7 +22,7 @@ build/
 out/
 **/out/
 
-**/lib/
+
 .next/
 **/.next/
 .cache/
