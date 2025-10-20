@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { loadGoogleMaps } from '@/lib/utils/googleMaps';
+import { loadGoogleMaps } from '../../lib/utils/googleMaps';
 
 interface GoogleMapsContextType {
   isLoaded: boolean;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { adminAPI } from '@/lib/api/admin';
+import { adminAPI } from '../../../lib/api/admin';
 import { Button } from '@workspace/ui/components/button';
 
 import { Phone, Mail, MapPin, Calendar, Loader2, Badge } from 'lucide-react';

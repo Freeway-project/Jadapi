@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import BookingFlow from '@/components/booking/BookingFlow';
-import EarlyAccessForm from '@/components/booking/EarlyAccessForm';
-import { appConfigAPI } from '@/lib/api/appConfig';
+import BookingFlow from '../../components/booking/BookingFlow';
+import EarlyAccessForm from '../../components/booking/EarlyAccessForm';
+import { appConfigAPI } from '../../lib/api/appConfig';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

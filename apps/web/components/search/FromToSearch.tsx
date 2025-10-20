@@ -6,8 +6,8 @@ import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import AddressAutocomplete from '../auth/AddressAutocomplete';
-import { deliveryAPI, FareEstimateResponse } from '@/lib/api/delivery';
-import { useSearchStore } from '@/lib/stores/searchStore';
+import { deliveryAPI, FareEstimateResponse } from '../../lib/api/delivery';
+import { useSearchStore } from '../../lib/stores/searchStore';
 import { FareEstimateModal } from '../booking/FareEstimateModal';
 import toast from 'react-hot-toast';
 

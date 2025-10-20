@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Truck, Users, Building2 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useAuthStore } from '../../lib/stores/authStore';
 
 export default function Header() {
   const { user } = useAuthStore();

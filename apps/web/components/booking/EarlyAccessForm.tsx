@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { appConfigAPI } from '@/lib/api/appConfig';
+import { appConfigAPI } from '../../lib/api/appConfig';
 import toast from 'react-hot-toast';
 import { Mail, Phone, User, MapPin, Check, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';

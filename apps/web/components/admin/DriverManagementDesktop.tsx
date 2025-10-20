@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { adminAPI, Driver, CreateDriverData } from '@/lib/api/admin';
+import { adminAPI, Driver, CreateDriverData } from '../../lib/api/admin';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';

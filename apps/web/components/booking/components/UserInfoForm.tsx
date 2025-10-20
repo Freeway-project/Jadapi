@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { LucideIcon, Loader2 } from 'lucide-react';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { userAPI, UserData } from '@/lib/api/user';
-import { useDebounce } from '@/hooks/useDebounce';
-import AddressAutocomplete from '@/components/auth/AddressAutocomplete';
+import { userAPI, UserData } from '../../../lib/api/user';
+import { useDebounce } from '../../../hooks/useDebounce';
+import AddressAutocomplete from '../../auth/AddressAutocomplete';
 
 export interface UserDetails {
   name: string;

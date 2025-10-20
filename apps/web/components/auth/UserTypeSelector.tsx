@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { UserType } from '@/lib/types/auth';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { UserType } from '../../lib/types/auth';
+import { useAuthStore } from '../../lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { User, Building2 } from 'lucide-react';
