@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuthStore } from '@/lib/stores/authStore';
-import { individualSignupSchema, IndividualSignupFormData } from '@/lib/utils/validation';
+import { useAuthStore } from '../../lib/stores/authStore';
+import { individualSignupSchema, IndividualSignupFormData } from '../../lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -43,7 +43,7 @@ export default function IndividualSignupForm() {
 
     try {
       // Import authAPI dynamically to avoid SSR issues
-      const { authAPI } = await import('@/lib/api/auth');
+      const { authAPI } = await import('../../lib/api/auth');
 
       // Step 1: Verify OTP
       const identifier = data.email || data.phoneNumber;
@@ -85,7 +85,7 @@ export default function IndividualSignupForm() {
 
   const handleResendOTP = async (method: 'email' | 'sms' = 'sms') => {
     try {
-      const { authAPI } = await import('@/lib/api/auth');
+      const { authAPI } = await import('../../lib/api/auth');
 
       const otpData = {
         email: method === 'email' ? email : undefined,

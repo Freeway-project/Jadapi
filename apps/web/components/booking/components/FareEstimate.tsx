@@ -1,4 +1,4 @@
-import { FareEstimateResponse } from '@/lib/api/delivery';
+import { FareEstimateResponse } from '../../../lib/api/delivery';
 
 interface FareEstimateProps {
   estimate: FareEstimateResponse;

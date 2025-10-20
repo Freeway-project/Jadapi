@@ -3,15 +3,15 @@
 import { useState, useEffect } from 'react';
 import { User, MapPin, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
-import { FareEstimateResponse, deliveryAPI } from '@/lib/api/delivery';
-import { useAuthStore } from '@/lib/stores/authStore';
-import { geocodeAddress } from '@/lib/utils/geocoding';
+import { FareEstimateResponse, deliveryAPI } from '../../lib/api/delivery';
+import { useAuthStore } from '../../lib/stores/authStore';
+import { geocodeAddress } from '../../lib/utils/geocoding';
 import ProgressSteps, { BookingStep } from './components/ProgressSteps';
 import FareEstimate from './components/FareEstimate';
 import UserInfoForm, { UserDetails } from './components/UserInfoForm';
 import ReviewOrder from './components/ReviewOrder';
 import PaymentSection from './components/PaymentSection';
-import MapView from '@/components/map/MapView';
+import MapView from '../map/MapView';
 import toast from 'react-hot-toast';
 
 interface BookingFlowProps {

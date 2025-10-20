@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuthStore } from '@/lib/stores/authStore';
-import { businessSignupSchema, BusinessSignupFormData } from '@/lib/utils/validation';
+import { useAuthStore } from '../../lib/stores/authStore';
+import { businessSignupSchema, BusinessSignupFormData } from '../../lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -44,7 +44,7 @@ export default function BusinessSignupForm() {
 
     try {
       // Import authAPI dynamically to avoid SSR issues
-      const { authAPI } = await import('@/lib/api/auth');
+      const { authAPI } = await import('../../lib/api/auth');
 
       // Step 1: Verify both email and phone OTPs
       await authAPI.verifyOTP({
@@ -92,7 +92,7 @@ export default function BusinessSignupForm() {
 
   const handleResendOTP = async (method: 'email' | 'sms' = 'email') => {
     try {
-      const { authAPI } = await import('@/lib/api/auth');
+      const { authAPI } = await import('../../lib/api/auth');
 
       if (method === 'email') {
         await authAPI.requestOTP({

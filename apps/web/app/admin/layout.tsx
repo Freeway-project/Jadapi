@@ -1,6 +1,6 @@
-import { AuthProvider } from '@/contexts/AuthContext';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import AdminLayout from '@/components/admin/AdminLayout';
+import { AuthProvider } from '../../contexts/AuthContext';
+import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import AdminLayout from '../../components/admin/AdminLayout';
 
 export default function AdminRootLayout({
   children,

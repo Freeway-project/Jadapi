@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/lib/stores/authStore'
+import { useAuthStore } from '../../lib/stores/authStore'
 import { Button } from '@workspace/ui/components/button'
 import {
   Dialog,

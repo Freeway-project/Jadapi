@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { Package, Tag, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { FareEstimateResponse } from '@/lib/api/delivery';
+import { FareEstimateResponse } from '../../../lib/api/delivery';
 import { UserDetails } from './UserInfoForm';
-import { couponAPI } from '@/lib/api/coupon';
+import { couponAPI } from '../../../lib/api/coupon';
 import { Input } from '@workspace/ui/components/input';
 import { Button } from '@workspace/ui/components/button';
 

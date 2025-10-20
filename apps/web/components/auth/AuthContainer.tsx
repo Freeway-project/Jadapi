@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuthStore } from '@/lib/stores/authStore';
-import Header from '@/components/layout/Header';
+import { useAuthStore } from '../../lib/stores/authStore';
+import Header from '../layout/Header';
 import UserTypeSelector from './UserTypeSelector';
 import EmailStep from './EmailStep';
 import VerificationStep from './VerificationStep';

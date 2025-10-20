@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuthStore } from '@/lib/stores/authStore';
-import { signinSchema, SigninFormData } from '@/lib/utils/validation';
-import { authAPI } from '@/lib/api/auth';
+import { useAuthStore } from '../../lib/stores/authStore';
+import { signinSchema, SigninFormData } from '../../lib/utils/validation';
+import { authAPI } from '../../lib/api/auth';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';

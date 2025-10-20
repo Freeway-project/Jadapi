@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useAuthStore } from '../../lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { ArrowLeft, User, Building2 } from 'lucide-react';

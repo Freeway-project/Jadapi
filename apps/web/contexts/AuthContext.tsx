@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI, tokenManager } from '@/lib/api/auth';
+import { authAPI, tokenManager } from '../lib/api/auth';
 import { useRouter } from 'next/navigation';
 
 interface User {

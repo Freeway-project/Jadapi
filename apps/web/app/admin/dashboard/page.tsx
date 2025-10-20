@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminAPI, DashboardStats, Activity, Order, SystemMetrics } from '@/lib/api/admin';
+import { adminAPI, DashboardStats, Activity, Order, SystemMetrics } from '../../../lib/api/admin';
 import { Package, Users, DollarSign, Activity as ActivityIcon, TrendingUp, Clock } from 'lucide-react';
 
 export default function AdminDashboard() {

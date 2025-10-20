@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Package, CreditCard, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { FareEstimateResponse } from '@/lib/api/delivery';
-import { paymentAPI } from '@/lib/api/payment';
+import { FareEstimateResponse } from '../../../lib/api/delivery';
+import { paymentAPI } from '../../../lib/api/payment';
 import { Button } from '@workspace/ui/components/button';
 import toast from 'react-hot-toast';
 

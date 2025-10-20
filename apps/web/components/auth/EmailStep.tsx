@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuthStore } from '@/lib/stores/authStore';
-import { emailPhoneSchema, EmailPhoneFormData } from '@/lib/utils/validation';
+import { useAuthStore } from '../../lib/stores/authStore';
+import { emailPhoneSchema, EmailPhoneFormData } from '../../lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -30,7 +30,7 @@ export default function EmailStep() {
 
     try {
       // Import authAPI dynamically to avoid SSR issues
-      const { authAPI } = await import('@/lib/api/auth');
+      const { authAPI } = await import('../../lib/api/auth');
 
       // For business users, send separate different OTPs to email and phone
       if (userType === 'business') {

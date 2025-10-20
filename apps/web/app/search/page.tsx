@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import FromToSearch from '@/components/search/FromToSearch';
-import Header from '@/components/layout/Header';
-import MapView from '@/components/map/MapView';
-import { FareEstimateResponse } from '@/lib/api/delivery';
-import { BaseAnimation } from '@/components/animations';
+import FromToSearch from '../../components/search/FromToSearch';
+import Header from '../../components/layout/Header';
+import MapView from '../../components/map/MapView';
+import { FareEstimateResponse } from '../../lib/api/delivery';
+import { BaseAnimation } from '../../components/animations';
 
 interface Location {
   lat: number;

@@ -5,7 +5,7 @@ import { FareEstimateModal } from './FareEstimateModal'
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
 import { MapPin, ArrowRight } from 'lucide-react'
-import { deliveryAPI } from '@/lib/api/delivery'
+import { deliveryAPI } from '../../lib/api/delivery'
 import toast from 'react-hot-toast'
 
 export function SearchQuote() {
