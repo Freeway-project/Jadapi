@@ -8,11 +8,13 @@ import couponRoutes from "./coupon.routes";
 import driverRoutes from "./driver.routes";
 import paymentRoutes from "./payment.routes";
 import webhookRoutes from "./webhook.routes";
+import smsRoutes from "./sms.routes";
 import { AppConfigService } from "../services/appConfig.service";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 import { ApiError } from "../utils/ApiError";
 import { EmailService } from "../services/email.service";
 import { ENV } from "../config/env";
+import { logger } from "../utils/logger";
 
 const router = Router();
 
@@ -122,7 +124,7 @@ Request ID: ${request._id}`,
         });
       } catch (emailError) {
         // Log error but don't fail the request
-        console.error('Failed to send admin notification email:', emailError);
+        logger.error({ error: emailError }, 'Failed to send admin notification email');
       }
     }
 
@@ -162,5 +164,8 @@ router.use("/payment", paymentRoutes);
 
 // Webhook routes
 router.use("/webhooks", webhookRoutes);
+
+// SMS routes (admin)
+router.use("/sms", smsRoutes);
 
 export default router;

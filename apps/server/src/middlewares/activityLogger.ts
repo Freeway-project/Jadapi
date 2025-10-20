@@ -12,12 +12,11 @@ export const activityLogger = async (
 ) => {
   const startTime = Date.now();
 
-  // Capture response
+  // Capture response (for potential future use)
   const originalSend = res.send;
-  let responseBody: any;
 
   res.send = function (body: any) {
-    responseBody = body;
+    // responseBody could be used for detailed logging if needed
     return originalSend.call(this, body);
   };
 

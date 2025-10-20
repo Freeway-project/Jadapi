@@ -1,5 +1,7 @@
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 import { logger } from "./logger";
+import { SmsRateLimitService } from "../services/smsRateLimit.service";
+import { ApiError } from "./ApiError";
 
 const sns = new SNSClient({ region: "ca-central-1" });
 
@@ -10,20 +12,32 @@ interface SmsOptions {
   message: string;
   type?: SmsType;
   senderId?: string;
+  skipRateLimit?: boolean; // Emergency bypass (use with caution)
 }
 
 /**
- * Generic SMS sender for all types of messages
+ * Generic SMS sender for all types of messages with rate limiting and cost control
  */
 export async function sendSms(options: SmsOptions): Promise<void> {
-  const { phoneE164, message, type = "transactional", senderId = "jadapi" } = options;
+  const { phoneE164, message, type = "transactional", senderId = "jadapi", skipRateLimit = false } = options;
 
-  logger.info(`Sending SMS to ${phoneE164} (type: ${type})`);
+  logger.info({ phoneE164, type, messageLength: message.length }, `Attempting to send SMS`);
 
-  
+  // Check rate limits (unless emergency bypass)
+  if (!skipRateLimit) {
+    const rateLimitCheck = await SmsRateLimitService.canSendSms(phoneE164, type, message);
+
+    if (!rateLimitCheck.allowed) {
+      logger.warn({ phoneE164, type, reason: rateLimitCheck.reason }, "SMS blocked by rate limit");
+      throw new ApiError(429, rateLimitCheck.reason || "SMS rate limit exceeded", {
+        retryAfter: rateLimitCheck.retryAfter,
+      });
+    }
+  }
+
   // Determine SMS type for AWS SNS
   const smsType = type === "promotional" ? "Promotional" : "Transactional";
-  
+
   const cmd = new PublishCommand({
     PhoneNumber: phoneE164,
     Message: message,
@@ -32,12 +46,19 @@ export async function sendSms(options: SmsOptions): Promise<void> {
       "AWS.SNS.SMS.SenderID": { DataType: "String", StringValue: senderId },
     }
   });
-  
+
   try {
     await sns.send(cmd);
-    console.log(`SMS sent successfully to ${phoneE164} (type: ${type})`);
+    logger.info({ phoneE164, type }, `SMS sent successfully to ${phoneE164} (type: ${type})`);
+
+    // Record successful send for rate limiting
+    await SmsRateLimitService.recordSmsSent(phoneE164, type, message);
   } catch (error) {
-    console.error(`Failed to send SMS to ${phoneE164}:`, error);
+    logger.error({ error, phoneE164, type }, `Failed to send SMS to ${phoneE164}`);
+
+    // Record failure for cooldown
+    await SmsRateLimitService.recordSmsFailure(phoneE164, type);
+
     throw error;
   }
 }
