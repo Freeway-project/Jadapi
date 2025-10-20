@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { PricingConfig } from '../types/pricing.types';
+import defaultConfig from '../config/app.config';
 
 /**
  * Configuration service for loading and managing pricing configuration
@@ -8,7 +9,7 @@ import { PricingConfig } from '../types/pricing.types';
  */
 export class ConfigService {
   private static cachedConfig: AppConfig | null = null;
-  private static configPath = path.join(__dirname, '../config/app.config.ts');
+  private static configPath = path.join(__dirname, '../config/app.config.js');
 
   /**
    * Get the active pricing configuration
@@ -26,14 +27,9 @@ export class ConfigService {
    */
   static async loadConfig(): Promise<AppConfig> {
     try {
-      // Read the config file
-      const configContent = await fs.readFile(this.configPath, 'utf-8');
-
-      // Parse the TypeScript object (simplified - in production use proper TS parser)
-      const config = this.parseConfigFile(configContent);
-
-      this.cachedConfig = config;
-      return config;
+      // Use imported default config (works in both dev and production)
+      this.cachedConfig = defaultConfig as AppConfig;
+      return this.cachedConfig;
     } catch (error) {
       console.error('Failed to load config:', error);
       throw new Error('Configuration file not found or invalid');
@@ -41,26 +37,9 @@ export class ConfigService {
   }
 
   /**
-   * Parse configuration file content
-   * In production, consider using a proper TypeScript parser or convert to JSON
-   */
-  private static parseConfigFile(content: string): AppConfig {
-    // Remove TypeScript syntax and parse as JSON
-    // This is a simplified implementation - consider using ts-node or converting to JSON
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Invalid config file format');
-    }
-
-    // Use Function constructor to safely evaluate the object literal
-    // In production, prefer storing config as JSON or use a proper parser
-    const configObj = eval(`(${jsonMatch[0]})`);
-
-    return configObj as AppConfig;
-  }
-
-  /**
    * Reload configuration from disk
+   * Note: In production with imported config, this will not reload file changes
+   * Consider using database or environment variables for dynamic config
    */
   static async reloadConfig(): Promise<AppConfig> {
     this.cachedConfig = null;
@@ -93,7 +72,8 @@ export class ConfigService {
 
   /**
    * Update configuration (write to file)
-   * In production, consider database storage for versioning
+   * Note: This will write to the compiled .js file
+   * For dynamic config updates, consider using database storage
    */
   static async updateConfig(newConfig: Partial<PricingConfig>): Promise<void> {
     const current = await this.getActiveConfig();
@@ -108,12 +88,17 @@ export class ConfigService {
       created_at: new Date().toISOString()
     };
 
-    // Write updated config to file
-    const configString = `export default ${JSON.stringify(updated, null, 2)};\n`;
-    await fs.writeFile(this.configPath, configString, 'utf-8');
+    try {
+      // Write updated config to file (will update the compiled .js file)
+      const configString = `export default ${JSON.stringify(updated, null, 2)};\n`;
+      await fs.writeFile(this.configPath, configString, 'utf-8');
 
-    // Reload cache
-    await this.reloadConfig();
+      // Reload cache
+      await this.reloadConfig();
+    } catch (error) {
+      console.error('Failed to update config:', error);
+      throw new Error('Failed to write configuration file');
+    }
   }
 
   /**

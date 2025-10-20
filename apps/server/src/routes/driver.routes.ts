@@ -1,50 +1,83 @@
-import { Router } from "express";
-import { DriverController } from "../controllers/driver.controller";
-import { authenticate } from "../middlewares/auth";
-import { driverAuth } from "../middlewares/driverAuth";
+import { Router } from 'express';
+import { DriverController } from '../controllers/driver.controller';
+import { DriverLocationController } from '../controllers/driverLocation.controller';
 
 const router = Router();
 
-// All routes require authentication and driver role
-router.use(authenticate);
-router.use(driverAuth);
+// ===========================
+// Driver Location Routes (No Auth)
+// Real-time location tracking for drivers
+// ===========================
 
 /**
- * GET /api/driver/dashboard
- * Get driver dashboard with profile, stats, and active orders
+ * Update driver location
+ * POST /api/driver/location
+ * Body: { driverId, lat, lng, heading?, speed? }
  */
-router.get("/dashboard", DriverController.getDashboard);
+router.post('/location', DriverLocationController.updateLocation);
 
 /**
- * GET /api/driver/stats
- * Get driver statistics (total deliveries, earnings, etc.)
+ * Get all active drivers
+ * GET /api/driver/locations
+ * Query: ?north=&south=&east=&west=&limit=
  */
-router.get("/stats", DriverController.getStats);
+router.get('/locations', DriverLocationController.getActiveDrivers);
 
 /**
- * GET /api/driver/orders/available
+ * Get single driver location
+ * GET /api/driver/location/:driverId
+ */
+router.get('/location/:driverId', DriverLocationController.getDriverLocation);
+
+/**
+ * Remove driver from active list (going offline)
+ * DELETE /api/driver/location/:driverId
+ */
+router.delete('/location/:driverId', DriverLocationController.removeDriver);
+
+// ===========================
+// Driver Management Routes (No Auth)
+// Dashboard, orders, and statistics
+// ===========================
+
+/**
+ * Get driver dashboard
+ * GET /api/driver/dashboard/:driverId
+ */
+router.get('/dashboard/:driverId', DriverController.getDashboard);
+
+/**
+ * Get driver statistics
+ * GET /api/driver/stats/:driverId
+ */
+router.get('/stats/:driverId', DriverController.getStats);
+
+/**
  * Get available orders for drivers to accept
+ * GET /api/driver/orders/available
+ * Query: ?limit=&skip=
  */
-router.get("/orders/available", DriverController.getAvailableOrders);
+router.get('/orders/available', DriverController.getAvailableOrders);
 
 /**
- * GET /api/driver/orders
  * Get driver's assigned orders
- * Query params: status, limit, skip
+ * GET /api/driver/orders/:driverId
+ * Query: ?status=&limit=&skip=
  */
-router.get("/orders", DriverController.getMyOrders);
+router.get('/orders/:driverId', DriverController.getMyOrders);
 
 /**
- * POST /api/driver/orders/:orderId/accept
  * Accept an available order
+ * POST /api/driver/orders/:orderId/accept
+ * Body: { driverId }
  */
-router.post("/orders/:orderId/accept", DriverController.acceptOrder);
+router.post('/orders/:orderId/accept', DriverController.acceptOrder);
 
 /**
+ * Update order status
  * PATCH /api/driver/orders/:orderId/status
- * Update order status (picked_up, in_transit, delivered, cancelled)
- * Body: { status: string }
+ * Body: { driverId, status }
  */
-router.patch("/orders/:orderId/status", DriverController.updateOrderStatus);
+router.patch('/orders/:orderId/status', DriverController.updateOrderStatus);
 
 export default router;

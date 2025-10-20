@@ -23,8 +23,12 @@ export default function AdminLoginPage() {
 
     try {
       await login(email, password);
-      router.push('/admin/dashboard');
+      console.log('Login successful, redirecting to dashboard...');
+
+      // Use router.replace instead of push to prevent going back to login
+      router.replace('/admin/dashboard');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);

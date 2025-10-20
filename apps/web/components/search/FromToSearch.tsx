@@ -8,6 +8,7 @@ import { Label } from '@workspace/ui/components/label';
 import AddressAutocomplete from '../auth/AddressAutocomplete';
 import { deliveryAPI, FareEstimateResponse } from '@/lib/api/delivery';
 import { useSearchStore } from '@/lib/stores/searchStore';
+import { FareEstimateModal } from '../booking/FareEstimateModal';
 import toast from 'react-hot-toast';
 
 interface Location {
@@ -58,6 +59,19 @@ export default function FromToSearch({
     type: 'small'
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showEstimateModal, setShowEstimateModal] = useState(false);
+  const [currentEstimate, setCurrentEstimate] = useState<{
+    estimate: FareEstimateResponse,
+    details: {
+      pickupAddress: string;
+      dropoffAddress: string;
+      pickupLat: number;
+      pickupLng: number;
+      dropoffLat: number;
+      dropoffLng: number;
+      packageSize: string;
+    }
+  } | null>(null);
 
   // Prefill from last search if enabled
   useEffect(() => {
@@ -131,10 +145,8 @@ export default function FromToSearch({
         estimatedFare: estimate?.data?.fare?.total
       });
 
-      // Pass addresses and coordinates to parent component
-      onAddressChange?.(fromAddress, toAddress, pickupCoords, dropoffCoords);
-
-      onEstimate?.(estimate, {
+      // Store the current estimate and show modal
+      const estimateDetails = {
         pickupAddress: fromAddress,
         dropoffAddress: toAddress,
         pickupLat: pickupCoords.lat,
@@ -142,7 +154,18 @@ export default function FromToSearch({
         dropoffLat: dropoffCoords.lat,
         dropoffLng: dropoffCoords.lng,
         packageSize: packageSize,
+      };
+
+      setCurrentEstimate({
+        estimate,
+        details: estimateDetails
       });
+
+      // Pass addresses and coordinates to parent component
+      onAddressChange?.(fromAddress, toAddress, pickupCoords, dropoffCoords);
+
+      // Show modal first (user sees fare estimate)
+      setShowEstimateModal(true);
     } catch (err: any) {
       console.error('Fare estimate error:', err);
       const errorMessage = err?.response?.data?.message || err?.message || 'Failed to get estimate. Please try again.';
@@ -272,6 +295,26 @@ export default function FromToSearch({
           <span>Get Price Estimate</span>
         )}
       </Button>
+
+      {/* Fare Estimate Modal */}
+      {currentEstimate && (
+        <FareEstimateModal
+          isOpen={showEstimateModal}
+          onClose={() => setShowEstimateModal(false)}
+          pickup={currentEstimate.details.pickupAddress}
+          dropoff={currentEstimate.details.dropoffAddress}
+          estimatedFare={{
+            total: currentEstimate.estimate.data.fare.total,
+            distance: currentEstimate.estimate.data.fare.distanceKm,
+            duration: currentEstimate.estimate.data.fare.durationMinutes,
+            currency: 'CAD'
+          }}
+          onProceedToBooking={() => {
+            // User is logged in and wants to proceed - now trigger parent callback
+            onEstimate?.(currentEstimate.estimate, currentEstimate.details);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -18,6 +18,11 @@ app.use(cors({
 
 app.use(express.json());
 
+// Health check endpoint (no auth required)
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 // JWT authentication middleware
 app.use(authenticate);
 
