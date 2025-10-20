@@ -9,6 +9,7 @@ import {
 } from '../types/pricing.types';
 import { DistanceService } from './distance.service';
 import { ConfigService } from './config.service';
+import { logger } from '../utils/logger';
 
 /**
  * Fare estimation service with configurable pricing
@@ -45,14 +46,11 @@ export class FareService {
 
     // Get current pricing configuration
     const config = await ConfigService.getActiveConfig();
-
-    console.log('🚀 ~ :34 ~ FareService ~ estimateFare ~ config::==', config)
-
+    logger.debug({ config }, 'FareService.estimateFare - config loaded');
 
     // Calculate distance and time
     const distance = await DistanceService.calculate(input.pickup, input.dropoff);
-
-    console.log('🚀 ~ :37 ~ FareService ~ estimateFare ~ distance::==', distance)
+    logger.debug({ distance }, 'FareService.estimateFare - distance calculated');
 
 
     // Calculate fare breakdown

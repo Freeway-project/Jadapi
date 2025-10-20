@@ -6,6 +6,7 @@ import { DeliveryOrder } from "../models/DeliveryOrder";
 import { authenticate } from "../middlewares/auth";
 import { CouponService } from "../services/coupon.service";
 import { checkAppActive } from "../middlewares/appActive";
+import { logger } from "../utils/logger";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.post("/check-address", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Check address error:", error);
+    logger.error({ error }, "delivery.routes - Check address error");
     res.status(500).json({
       success: false,
       message: "Failed to check delivery availability"
@@ -84,7 +85,7 @@ router.post("/validate-order-address", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Validate order address error:", error);
+    logger.error({ error }, "delivery.routes - Validate order address error");
     res.status(500).json({
       success: false,
       message: "Failed to validate address"
@@ -108,7 +109,7 @@ router.get("/service-areas", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Get service areas error:", error);
+    logger.error({ error }, "delivery.routes - Get service areas error");
     res.status(500).json({
       success: false,
       message: "Failed to fetch service areas"
@@ -244,7 +245,7 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       message: couponCode ? "Order created successfully with coupon applied" : "Order created successfully"
     });
   } catch (error: any) {
-    console.error("Create order error:", error);
+    logger.error({ error, userId: (req as any).user?._id }, "delivery.routes - Create order error");
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Failed to create order"
@@ -280,7 +281,7 @@ router.post("/admin/service-areas", async (req: Request, res: Response) => {
       message: `Service area '${name}' created successfully`
     });
   } catch (error: any) {
-    console.error("Create service area error:", error);
+    logger.error({ error }, "delivery.routes - Create service area error");
     if (error.code === 11000) {
       res.status(409).json({
         success: false,
@@ -320,7 +321,7 @@ router.get("/admin/service-areas", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Get admin service areas error:", error);
+    logger.error({ error }, "delivery.routes - Get admin service areas error");
     res.status(500).json({
       success: false,
       message: "Failed to fetch service areas"
@@ -349,7 +350,7 @@ router.put("/admin/service-areas/:id", async (req: Request, res: Response) => {
       message: "Service area updated successfully"
     });
   } catch (error) {
-    console.error("Update service area error:", error);
+    logger.error({ error, id: req.params.id }, "delivery.routes - Update service area error");
     res.status(500).json({
       success: false,
       message: "Failed to update service area"
@@ -378,7 +379,7 @@ router.put("/admin/service-areas/:id/toggle", async (req: Request, res: Response
       message: `Service area ${isActive ? 'activated' : 'deactivated'} successfully`
     });
   } catch (error) {
-    console.error("Toggle service area error:", error);
+    logger.error({ error, id: req.params.id }, "delivery.routes - Toggle service area error");
     res.status(500).json({
       success: false,
       message: "Failed to toggle service area"

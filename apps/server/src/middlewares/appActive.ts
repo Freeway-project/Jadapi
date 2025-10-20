@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppConfigService } from '../services/appConfig.service';
 import { ApiError } from '../utils/ApiError';
+import { logger } from '../utils/logger';
 
 /**
  * Middleware to check if the app is active
@@ -28,7 +29,7 @@ export const checkAppActive = async (
       next(error);
     } else {
       // For other errors, log and allow request to proceed (fail open)
-      console.error('Error checking app active status:', error);
+      logger.error({ error }, 'checkAppActive middleware - Error checking app active status');
       next();
     }
   }

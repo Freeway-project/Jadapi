@@ -22,18 +22,18 @@ export class NotificationService {
 
     
     try {
-      console.log('🚀 ~ :22 ~ NotificationService ~ sendVerificationOtp ~ phoneNumber::==', phoneNumber)
+      logger.info({ phoneNumber }, 'NotificationService.sendVerificationOtp - initiating');
       // Option 1: Using the helper function (recommended)
       logger.info(`Sending OTP ${otpCode} to ${phoneNumber}`);
       const phoneE164 = phoneNumber.startsWith("+") ? phoneNumber : `+1${phoneNumber}`;
       await SmsHelpers.sendOtpCode(phoneE164, otpCode, 5);
-      
+
       // Option 2: Using the direct function
       // await sendOtpSms(phoneNumber, SmsTemplates.otp(otpCode, 5));
-      
-      console.log(`OTP sent successfully to ${phoneNumber}`);
+
+      logger.info({ phoneNumber }, `OTP sent successfully to ${phoneNumber}`);
     } catch (error) {
-      console.error(`Failed to send OTP to ${phoneNumber}:`, error);
+      logger.error({ error, phoneNumber }, `Failed to send OTP to ${phoneNumber}`);
       throw new Error("Failed to send verification code");
     }
   }
@@ -48,9 +48,9 @@ export class NotificationService {
   ): Promise<void> {
     try {
       await SmsHelpers.notifyDeliveryStarted(customerPhone, orderId, driverName);
-      console.log(`Delivery started notification sent for order ${orderId}`);
+      logger.info({ orderId, customerPhone }, `Delivery started notification sent for order ${orderId}`);
     } catch (error) {
-      console.error(`Failed to send delivery notification for order ${orderId}:`, error);
+      logger.error({ error, orderId }, `Failed to send delivery notification for order ${orderId}`);
     }
   }
 
@@ -63,9 +63,9 @@ export class NotificationService {
   ): Promise<void> {
     try {
       await SmsHelpers.notifyDeliveryCompleted(customerPhone, orderId);
-      console.log(`Delivery completion notification sent for order ${orderId}`);
+      logger.info({ orderId, customerPhone }, `Delivery completion notification sent for order ${orderId}`);
     } catch (error) {
-      console.error(`Failed to send delivery completion notification:`, error);
+      logger.error({ error, orderId }, `Failed to send delivery completion notification`);
     }
   }
 
@@ -79,9 +79,9 @@ export class NotificationService {
   ): Promise<void> {
     try {
       await SmsHelpers.confirmBooking(customerPhone, orderId, pickupTime);
-      console.log(`Booking confirmation sent for order ${orderId}`);
+      logger.info({ orderId, customerPhone }, `Booking confirmation sent for order ${orderId}`);
     } catch (error) {
-      console.error(`Failed to send booking confirmation:`, error);
+      logger.error({ error, orderId }, `Failed to send booking confirmation`);
     }
   }
 
@@ -100,9 +100,9 @@ export class NotificationService {
         type,
         senderId: "Jadapi"
       });
-      console.log(`Custom message sent to ${phoneNumber}`);
+      logger.info({ phoneNumber, type }, `Custom message sent to ${phoneNumber}`);
     } catch (error) {
-      console.error(`Failed to send custom message:`, error);
+      logger.error({ error, phoneNumber }, `Failed to send custom message`);
     }
   }
 
@@ -116,9 +116,9 @@ export class NotificationService {
   ): Promise<void> {
     try {
       await SmsHelpers.notifyDeliveryException(customerPhone, orderId, reason);
-      console.log(`Delivery exception notification sent for order ${orderId}`);
+      logger.info({ orderId, customerPhone, reason }, `Delivery exception notification sent for order ${orderId}`);
     } catch (error) {
-      console.error(`Failed to send delivery exception notification:`, error);
+      logger.error({ error, orderId }, `Failed to send delivery exception notification`);
     }
   }
 
@@ -141,14 +141,14 @@ export class NotificationService {
         });
         success++;
       } catch (error) {
-        console.error(`Failed to send to ${phone}:`, error);
+        logger.error({ error, phone }, `Failed to send to ${phone}`);
         failed++;
       }
     });
 
     await Promise.allSettled(promises);
-    
-    console.log(`Bulk SMS completed: ${success} successful, ${failed} failed`);
+
+    logger.info({ success, failed }, `Bulk SMS completed: ${success} successful, ${failed} failed`);
     return { success, failed };
   }
 }

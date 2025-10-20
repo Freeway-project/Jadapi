@@ -1,5 +1,6 @@
 import { ApiError } from "../utils/ApiError";
 import { getRedisClient } from "../config/redis";
+import { logger } from "../utils/logger";
 
 export interface DriverLocation {
   driverId: string;
@@ -68,7 +69,7 @@ export class DriverLocationService {
       this.useRedis = true;
       return client;
     } catch (error) {
-      console.warn("Redis unavailable, using in-memory storage for driver locations");
+      logger.warn("Redis unavailable, using in-memory storage for driver locations");
       this.useRedis = false;
       return null;
     }

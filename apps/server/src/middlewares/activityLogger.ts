@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ActivityLog } from "../models/ActivityLog";
+import { logger } from "../utils/logger";
 
 /**
  * Middleware to log API activity
@@ -54,7 +55,7 @@ export const activityLogger = async (
         },
       });
     } catch (error) {
-      console.error("Failed to log activity:", error);
+      logger.error({ error }, "activityLogger middleware - Failed to log activity");
     }
   });
 
@@ -80,6 +81,6 @@ export const logAdminAction = async (
       metadata,
     });
   } catch (error) {
-    console.error("Failed to log admin action:", error);
+    logger.error({ error, userId, action, resource }, "logAdminAction - Failed to log admin action");
   }
 };

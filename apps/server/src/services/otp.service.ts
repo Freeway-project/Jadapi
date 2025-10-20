@@ -1,5 +1,6 @@
 import { Otp, OtpDoc } from "../models/Otp";
 import { ApiError } from "../utils/ApiError";
+import { logger } from "../utils/logger";
 
 export interface GenerateOtpData {
   email?: string;
@@ -19,7 +20,7 @@ export const OtpService = {
     const { email, phoneNumber, type = "signup", deliveryMethod = "both" } = data;
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ generateOtp ~ input data:', { email, phoneNumber, type, deliveryMethod });
+      logger.debug({ email, phoneNumber, type, deliveryMethod }, 'OtpService.generateOtp - input data');
     }
 
     if (!email && !phoneNumber) {
@@ -35,7 +36,7 @@ export const OtpService = {
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ generateOtp ~ identifier created:', identifier);
+      logger.debug({ identifier }, 'OtpService.generateOtp - identifier created');
     }
 
     // Invalidate any existing unverified OTPs for this identifier and type
@@ -48,7 +49,7 @@ export const OtpService = {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ generateOtp ~ generated code:', code.slice(0,2) + '****');
+      logger.debug({ code: code.slice(0,2) + '****' }, 'OtpService.generateOtp - generated code');
     }
 
     // Create new OTP
@@ -65,18 +66,18 @@ export const OtpService = {
     };
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ generateOtp ~ creating OTP with data:', { ...otpData, code: code.slice(0,2) + '****' });
+      logger.debug({ otpData: { ...otpData, code: code.slice(0,2) + '****' } }, 'OtpService.generateOtp - creating OTP');
     }
 
     const otp = await Otp.create(otpData);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ ~ generateOtp ~ OTP created successfully:', {
+      logger.info({
         id: otp._id,
         identifier: otp.identifier,
         code: otp.code.slice(0,2) + '****',
         expiresAt: otp.expiresAt
-      });
+      }, '✅ OtpService.generateOtp - OTP created successfully');
     }
 
     return otp;
@@ -86,7 +87,7 @@ export const OtpService = {
     const { identifier, code, type = "signup" } = data;
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ verifyOtp ~ input data:', { identifier, code: code?.length ? `${code.slice(0,2)}****` : 'empty', type });
+      logger.debug({ identifier, code: code?.length ? `${code.slice(0,2)}****` : 'empty', type }, 'OtpService.verifyOtp - input data');
     }
 
     // Find the latest unverified OTP for this identifier and type
@@ -107,13 +108,13 @@ export const OtpService = {
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ verifyOtp ~ query:', JSON.stringify(query, null, 2));
+      logger.debug({ query }, 'OtpService.verifyOtp - query');
     }
 
     const otp = await Otp.findOne(query).sort({ createdAt: -1 });
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ verifyOtp ~ found OTP:', otp ? {
+      logger.debug({ otp: otp ? {
         id: otp._id,
         identifier: otp.identifier,
         email: otp.email,
@@ -124,7 +125,7 @@ export const OtpService = {
         attempts: otp.attempts,
         expiresAt: otp.expiresAt,
         createdAt: otp.createdAt
-      } : 'null');
+      } : null }, 'OtpService.verifyOtp - found OTP');
     }
 
     if (!otp) {
@@ -142,12 +143,12 @@ export const OtpService = {
 
     // Verify code
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ verifyOtp ~ code comparison:', { provided: code, stored: otp.code, match: otp.code === code });
+      logger.debug({ provided: code, stored: otp.code, match: otp.code === code }, 'OtpService.verifyOtp - code comparison');
     }
 
     if (otp.code !== code) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('❌ ~ verifyOtp ~ code mismatch - throwing error');
+        logger.warn('❌ OtpService.verifyOtp - code mismatch - throwing error');
       }
       throw new ApiError(400, "Invalid OTP code");
     }
@@ -157,14 +158,14 @@ export const OtpService = {
     await otp.save();
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ ~ verifyOtp ~ success - OTP verified');
+      logger.info('✅ OtpService.verifyOtp - success - OTP verified');
     }
     return { success: true, otpId: otp._id.toString() };
   },
 
   async isIdentifierVerified(identifier: string, type: "signup" | "login" | "password_reset" = "signup"): Promise<boolean> {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ isIdentifierVerified ~ checking:', { identifier, type });
+      logger.debug({ identifier, type }, 'OtpService.isIdentifierVerified - checking');
     }
 
     const query = {
@@ -183,20 +184,20 @@ export const OtpService = {
     };
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ isIdentifierVerified ~ query:', JSON.stringify(query, null, 2));
+      logger.debug({ query }, 'OtpService.isIdentifierVerified - query');
     }
 
     const verifiedOtp = await Otp.findOne(query);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 ~ isIdentifierVerified ~ result:', verifiedOtp ? {
+      logger.debug({ result: verifiedOtp ? {
         id: verifiedOtp._id,
         identifier: verifiedOtp.identifier,
         email: verifiedOtp.email,
         phoneNumber: verifiedOtp.phoneNumber,
         verified: verifiedOtp.verified,
         createdAt: verifiedOtp.createdAt
-      } : 'null');
+      } : null }, 'OtpService.isIdentifierVerified - result');
     }
 
     return !!verifiedOtp;
