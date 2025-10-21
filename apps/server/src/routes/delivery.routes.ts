@@ -97,7 +97,7 @@ router.post("/validate-order-address", async (req: Request, res: Response) => {
  * GET /api/delivery/service-areas
  * Get all active delivery areas
  */
-router.get("/service-areas", async (req: Request, res: Response) => {
+router.get("/service-areas", async (_req: Request, res: Response) => {
   try {
     const areas = await DeliveryAreaValidator.getActiveDeliveryAreas();
 

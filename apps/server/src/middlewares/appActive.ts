@@ -8,8 +8,8 @@ import { logger } from '../utils/logger';
  * If app is inactive, returns 503 Service Unavailable
  */
 export const checkAppActive = async (
-  req: Request,
-  res: Response,
+  _req: Request,
+  _res: Response,
   next: NextFunction
 ) => {
   try {
