@@ -103,8 +103,8 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
         lng: { type: Number, required: true }
       },
       location: {
-        type: { type: String, enum: ["Point"], default: "Point" },
-        coordinates: { type: [Number], index: "2dsphere" } // [lng, lat]
+        type: { type: String, enum: ["Point"] },
+        coordinates: { type: [Number] } // [lng, lat] - GeoJSON format
       },
       contactName: String,
       contactPhone: String,
@@ -120,8 +120,8 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
         lng: { type: Number, required: true }
       },
       location: {
-        type: { type: String, enum: ["Point"], default: "Point" },
-        coordinates: { type: [Number], index: "2dsphere" } // [lng, lat]
+        type: { type: String, enum: ["Point"] },
+        coordinates: { type: [Number] } // [lng, lat] - GeoJSON format
       },
       contactName: String,
       contactPhone: String,
@@ -179,5 +179,8 @@ DeliveryOrderSchema.index({ status: 1, createdAt: -1 });
 DeliveryOrderSchema.index({ userId: 1, createdAt: -1 });
 DeliveryOrderSchema.index({ driverId: 1, status: 1 });
 
+// Geospatial indexes for location-based queries
+DeliveryOrderSchema.index({ "pickup.location": "2dsphere" });
+DeliveryOrderSchema.index({ "dropoff.location": "2dsphere" });
 
 export const DeliveryOrder = model<DeliveryOrderDoc>("DeliveryOrder", DeliveryOrderSchema);

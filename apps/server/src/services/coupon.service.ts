@@ -5,13 +5,12 @@ import { Types } from "mongoose";
 
 export class CouponService {
   /**
-   * Validate a coupon for a specific user and order amount
+   * Validate a coupon - Simple validation only
+   * Checks: coupon exists, is active, not expired, meets minimum order amount
    */
   static async validateCoupon(
     code: string,
-    userId: Types.ObjectId,
-    orderAmount: number,
-    accountType?: "individual" | "business"
+    orderAmount?: number
   ): Promise<{ valid: boolean; coupon?: CouponDoc; message?: string }> {
     const coupon = await Coupon.findOne({ code: code.toUpperCase() });
 
@@ -29,40 +28,8 @@ export class CouponService {
       return { valid: false, message: "This coupon has expired" };
     }
 
-    // Check total usage limit
-    if (coupon.maxUsesTotal && coupon.currentUsesTotal >= coupon.maxUsesTotal) {
-      return { valid: false, message: "This coupon has reached its usage limit" };
-    }
-
-    // Check per-user usage limit
-    if (coupon.maxUsesPerUser) {
-      const userUsageCount = await DeliveryOrder.countDocuments({
-        userId,
-        "coupon.couponId": coupon._id
-      });
-
-      if (userUsageCount >= coupon.maxUsesPerUser) {
-        return { valid: false, message: "You have already used this coupon the maximum number of times" };
-      }
-    }
-
-    // Check user restrictions
-    if (coupon.applicableToUserIds && coupon.applicableToUserIds.length > 0) {
-      const isApplicable = coupon.applicableToUserIds.some(id => id.equals(userId));
-      if (!isApplicable) {
-        return { valid: false, message: "This coupon is not applicable to your account" };
-      }
-    }
-
-    // Check account type restrictions
-    if (accountType && coupon.applicableToAccountTypes && coupon.applicableToAccountTypes.length > 0) {
-      if (!coupon.applicableToAccountTypes.includes(accountType)) {
-        return { valid: false, message: `This coupon is only for ${coupon.applicableToAccountTypes.join(" and ")} accounts` };
-      }
-    }
-
-    // Check minimum order amount
-    if (coupon.minOrderAmount && orderAmount < coupon.minOrderAmount) {
+    // Check minimum order amount (if provided)
+    if (orderAmount && coupon.minOrderAmount && orderAmount < coupon.minOrderAmount) {
       return {
         valid: false,
         message: `Minimum order amount of $${(coupon.minOrderAmount / 100).toFixed(2)} required`
@@ -100,9 +67,10 @@ export class CouponService {
   }
 
   /**
-   * Apply coupon to order (increment usage count)
+   * Track coupon usage for analytics (optional - for future use)
+   * Currently just increments the usage counter without validation
    */
-  static async applyCoupon(couponId: Types.ObjectId): Promise<void> {
+  static async recordCouponUsage(couponId: Types.ObjectId): Promise<void> {
     await Coupon.findByIdAndUpdate(
       couponId,
       { $inc: { currentUsesTotal: 1 } }

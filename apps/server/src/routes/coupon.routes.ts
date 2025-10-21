@@ -8,31 +8,22 @@ const router = Router();
 
 /**
  * POST /api/coupons/validate
- * Validate a coupon code for the current user
+ * Validate a coupon code (public endpoint - no auth required)
  */
-router.post("/validate", authenticate, async (req: Request, res: Response) => {
+router.post("/validate", async (req: Request, res: Response) => {
   try {
-    const { code, orderAmount, accountType } = req.body;
-    const user = (req as any).user;
-
-    if (!user) {
-      throw new ApiError(401, "Authentication required");
-    }
+    const { code, subtotal, baseFare } = req.body;
 
     if (!code) {
       throw new ApiError(400, "Coupon code is required");
     }
 
-    if (!orderAmount || orderAmount <= 0) {
-      throw new ApiError(400, "Valid order amount is required");
+    if (!subtotal || subtotal <= 0) {
+      throw new ApiError(400, "Valid subtotal is required");
     }
 
-    const validation = await CouponService.validateCoupon(
-      code,
-      user._id,
-      orderAmount,
-      accountType
-    );
+    // Validate coupon - simple checks only
+    const validation = await CouponService.validateCoupon(code, subtotal);
 
     if (!validation.valid) {
       return res.status(400).json({
@@ -41,12 +32,21 @@ router.post("/validate", authenticate, async (req: Request, res: Response) => {
       });
     }
 
-    // Calculate discount
+    // Calculate discount on subtotal (before tax)
     const discount = CouponService.calculateDiscount(
       validation.coupon!,
-      orderAmount,
-      req.body.baseFare || 0
+      subtotal,
+      baseFare || 0
     );
+
+    // Calculate new subtotal after discount
+    const discountedSubtotal = subtotal - discount;
+
+    // Apply taxes: 5% GST + 7% PST = 12% total
+    const gst = Math.round(discountedSubtotal * 0.05);
+    const pst = Math.round(discountedSubtotal * 0.07);
+    const totalTax = gst + pst;
+    const newTotal = discountedSubtotal + totalTax;
 
     res.json({
       success: true,
@@ -59,7 +59,11 @@ router.post("/validate", authenticate, async (req: Request, res: Response) => {
           description: validation.coupon!.description
         },
         discount,
-        newTotal: orderAmount - discount
+        discountedSubtotal,
+        gst,
+        pst,
+        totalTax,
+        newTotal
       },
       message: "Coupon is valid"
     });

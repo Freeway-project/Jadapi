@@ -4,7 +4,6 @@ export interface ValidateCouponRequest {
   code: string;
   subtotal: number;
   baseFare?: number;
-  accountType?: 'individual' | 'business';
 }
 
 export interface ValidateCouponResponse {
