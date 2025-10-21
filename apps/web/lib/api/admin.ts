@@ -72,6 +72,39 @@ export interface SystemMetrics {
   };
 }
 
+export interface SmsUsageStats {
+  usage: {
+    hourly: number;
+    daily: number;
+    monthly: number;
+    costDaily: number;
+    costMonthly: number;
+    limits: {
+      perPhone: any;
+      global: {
+        hourly: number;
+        daily: number;
+        monthly: number;
+      };
+      costs: {
+        dailyLimit: number;
+        monthlyLimit: number;
+        perSmsCost: number;
+      };
+      cooldown: any;
+    };
+  };
+  percentages: {
+    hourly: number;
+    daily: number;
+    monthly: number;
+    costDaily: number;
+    costMonthly: number;
+  };
+  warnings: string[];
+  status: 'healthy' | 'warning';
+}
+
 export interface Driver {
   _id: string;
   uuid: string;
@@ -231,5 +264,10 @@ export const adminAPI = {
   async updateEarlyAccessRequestStatus(requestId: string, status: string): Promise<any> {
     const res = await apiClient.put(`/admin/early-access-requests/${requestId}/status`, { status });
     return res.data;
+  },
+
+  async getSmsUsage(): Promise<SmsUsageStats> {
+    const res = await apiClient.get('/admin/sms/usage');
+    return res.data.data;
   },
 };

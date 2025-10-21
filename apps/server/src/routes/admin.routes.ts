@@ -21,6 +21,13 @@ router.get(
   AdminController.getSystemMetrics
 );
 
+// SMS usage routes
+router.get(
+  "/sms/usage",
+  activityLogger,
+  AdminController.getSmsUsage
+);
+
 // Admin routes
 router.get(
   "/activity",

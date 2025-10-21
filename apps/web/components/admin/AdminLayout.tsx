@@ -17,7 +17,8 @@ import {
   Truck,
   Tag,
   Power,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 import { adminAPI } from '../../lib/api/admin';
 import toast from 'react-hot-toast';
@@ -41,6 +42,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/users', name: 'Users', icon: Users },
     { href: '/admin/coupons', name: 'Coupons', icon: Tag },
     { href: '/admin/early-access', name: 'Early Access', icon: Users },
+    { href: '/admin/sms-usage', name: 'SMS Usage', icon: MessageSquare },
     { href: '/admin/analytics', name: 'Analytics', icon: BarChart3 },
   ];
 
