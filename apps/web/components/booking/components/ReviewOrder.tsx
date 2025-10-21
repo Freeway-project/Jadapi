@@ -39,7 +39,8 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
     try {
       const response = await couponAPI.validateCoupon({
         code: couponCode.trim(),
-        orderAmount: estimate?.data?.fare?.total || 0,
+        subtotal: estimate?.data?.fare?.subtotal || 0,
+        baseFare: estimate?.data?.fare?.baseFare || 0,
       });
 
       if (response.success && response.data) {

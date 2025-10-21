@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../lib/stores/authStore';
 import { otpSchema, OTPFormData } from '../../lib/utils/validation';
-import { authAPI } from '../../lib/api/auth';
+import { authAPI, tokenManager } from '../../lib/api/auth';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -21,7 +21,6 @@ export default function SigninOtpForm() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const {
-    handleSubmit,
     formState: { errors },
     setError,
     clearErrors,
@@ -99,35 +98,23 @@ export default function SigninOtpForm() {
         throw new Error('OTP verification failed');
       }
 
-      // Fetch user data by identifier (email or phone)
-      // For now, we'll search by the identifier to find the user
-      const userResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api'}/users/search?identifier=${encodeURIComponent(identifier!)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!userResponse.ok) {
-        throw new Error('Failed to fetch user data');
+      // Check if we got token and user from OTP verification
+      if (!verifyResult?.token || !verifyResult?.user) {
+        throw new Error('Authentication failed - no token received');
       }
 
-      const { user } = await userResponse.json();
+      // Store JWT token in localStorage
+      tokenManager.setToken(verifyResult.token);
 
-      if (!user) {
-        throw new Error('User not found');
-      }
+      const user = verifyResult.user;
 
       // Set user data in store with all relevant details
       setUser({
         id: user._id || user.id,
         uuid: user.uuid,
         email: user.email || user.auth?.email,
-        phoneNumber: user.phone || user.phoneNumber,
-        name: user.profile?.name || user.name || 'User',
+        phoneNumber: user.phone || user.phoneNumber || user.auth?.phone,
+        name: user.profile?.displayName || user.profile?.name || user.name || 'User',
         accountType: user.accountType || 'individual',
         userType: user.accountType || 'individual',
         profile: user.profile,
@@ -198,7 +185,7 @@ export default function SigninOtpForm() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
+          <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5 sm:space-y-6">
             <div className="space-y-3">
               <Label className="text-base sm:text-[1rem] font-semibold text-slate-900 text-center block">
                 Verification Code

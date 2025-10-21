@@ -134,6 +134,11 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
 
     const user = (req as any).user;
 
+    // Require authentication
+    if (!user) {
+      throw new ApiError(401, "Authentication required");
+    }
+
     // Validate required fields
     if (!pickup?.address || !pickup?.coordinates || !pickup?.contactName || !pickup?.contactPhone) {
       throw new ApiError(400, "Pickup address, coordinates, contact name and phone are required");
@@ -160,7 +165,7 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
         couponCode,
         user._id,
         pricing.total,
-        user.accountType
+        user?.accountType
       );
 
       if (!validation.valid) {

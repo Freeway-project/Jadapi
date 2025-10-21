@@ -2,19 +2,26 @@ import { apiClient } from './client';
 
 export interface ValidateCouponRequest {
   code: string;
-  orderAmount: number;
+  subtotal: number;
+  baseFare?: number;
+  accountType?: 'individual' | 'business';
 }
 
 export interface ValidateCouponResponse {
   success: boolean;
   data?: {
+    valid: boolean;
     coupon: {
-      id: string;
       code: string;
-      discountType: 'percentage' | 'fixed';
-      discountValue: number;
+      discountType: 'eliminate_fee' | 'fixed_discount' | 'percentage_discount';
+      discountValue?: number;
+      description?: string;
     };
     discount: number;
+    discountedSubtotal: number;
+    gst: number;
+    pst: number;
+    totalTax: number;
     newTotal: number;
   };
   message?: string;
@@ -23,7 +30,7 @@ export interface ValidateCouponResponse {
 export const couponAPI = {
   validateCoupon: async (data: ValidateCouponRequest): Promise<ValidateCouponResponse> => {
     try {
-      const response = await apiClient.post('/coupon/validate', data);
+      const response = await apiClient.post('/coupons/validate', data);
       return response.data;
     } catch (error: any) {
       return {

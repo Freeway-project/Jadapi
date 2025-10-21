@@ -34,7 +34,7 @@ export interface EarlyAccessResponse {
 export const appConfigAPI = {
   checkAppStatus: async (): Promise<AppStatusResponse | null> => {
     try {
-      const response = await apiClient.get('/app-config/status');
+      const response = await apiClient.get('/status');
       return response.data;
     } catch (error) {
       console.error('Failed to check app status:', error);
