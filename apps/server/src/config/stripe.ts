@@ -20,6 +20,9 @@ export const stripeConfig = {
   // Payment capture method: 'automatic' or 'manual'
   // Using 'automatic' means Stripe captures payment immediately when confirmed
   captureMethod: 'automatic' as const,
+  // Optional: allow configuring allowed payment method types via env var (comma separated)
+  // Example: STRIPE_PAYMENT_METHODS=card,us_bank_account
+  paymentMethodTypes:['card']
 };
 
 logger.info('✅ Stripe initialized');

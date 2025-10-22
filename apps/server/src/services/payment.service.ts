@@ -30,19 +30,29 @@ export const PaymentService = {
       }
 
       // Create PaymentIntent on Stripe
-      const paymentIntent = await stripe.paymentIntents.create({
+      // Build PaymentIntent params. If explicit payment method types are configured
+      // via environment (stripeConfig.paymentMethodTypes), prefer those. Otherwise
+      // fall back to automatic payment methods.
+      const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
         amount: Math.round(amount), // Ensure integer
         currency: currency.toLowerCase(),
-        automatic_payment_methods: {
-          enabled: true,
-        },
         metadata: {
           orderId,
           userId,
           ...metadata,
         },
         capture_method: stripeConfig.captureMethod,
-      });
+      };
+
+      if (stripeConfig.paymentMethodTypes && stripeConfig.paymentMethodTypes.length > 0) {
+        // Use explicit payment_method_types (e.g., ['card'])
+        paymentIntentParams.payment_method_types = stripeConfig.paymentMethodTypes as any;
+      } else {
+        // Let Stripe decide available payment methods automatically
+        (paymentIntentParams as any).automatic_payment_methods = { enabled: true };
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
       // Create payment record in database
       const payment = await Payment.create({

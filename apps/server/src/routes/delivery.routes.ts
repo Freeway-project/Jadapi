@@ -3,7 +3,7 @@ import { DeliveryAreaValidator } from "../utils/cityDeliveryValidator";
 import { CityServiceAreaService } from "../services/cityServiceArea.service";
 import { ApiError } from "../utils/ApiError";
 import { DeliveryOrder } from "../models/DeliveryOrder";
-import { authenticate } from "../middlewares/auth";
+import { requireAuth } from "../middlewares/auth";
 import { CouponService } from "../services/coupon.service";
 import { checkAppActive } from "../middlewares/appActive";
 import { logger } from "../utils/logger";
@@ -121,7 +121,7 @@ router.get("/service-areas", async (_req: Request, res: Response) => {
  * POST /api/delivery/create-order
  * Create a new delivery order (with optional coupon)
  */
-router.post("/create-order", authenticate, async (req: Request, res: Response) => {
+router.post("/create-order", requireAuth, async (req: Request, res: Response) => {
   try {
     const {
       pickup,
@@ -134,11 +134,6 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
     } = req.body;
 
     const user = (req as any).user;
-
-    // Require authentication
-    if (!user) {
-      throw new ApiError(401, "Authentication required");
-    }
 
     // Validate required fields
     if (!pickup?.address || !pickup?.coordinates || !pickup?.contactName || !pickup?.contactPhone) {

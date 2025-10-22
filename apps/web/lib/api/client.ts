@@ -20,7 +20,7 @@ export const tokenManager = {
   },
   removeToken: () => {
     if (typeof window !== 'undefined') {
-      console.log('[Token Manager] Removing token');
+      console.warn('[Token Manager] Removing token - Stack trace:', new Error().stack);
       localStorage.removeItem('authToken');
     }
   },
@@ -59,9 +59,19 @@ apiClient.interceptors.response.use(
                         error.message ||
                         'Unknown error';
 
-    // If 401, clear token
+    // Only clear token on 401 if it's an "Invalid token" or "Token expired" error
+    // Don't clear on "Authentication required" (missing auth middleware issue)
     if (error.response?.status === 401) {
-      tokenManager.removeToken();
+      const isTokenInvalid = errorMessage.toLowerCase().includes('invalid token') ||
+                            errorMessage.toLowerCase().includes('token expired') ||
+                            errorMessage.toLowerCase().includes('jwt');
+
+      if (isTokenInvalid) {
+        console.warn('[API Client] Invalid/expired token detected, removing token');
+        tokenManager.removeToken();
+      } else {
+        console.warn('[API Client] 401 error but token may still be valid:', errorMessage);
+      }
     }
 
     throw new APIError(errorMessage, error.response?.status);
