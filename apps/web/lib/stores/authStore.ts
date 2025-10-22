@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AuthState, UserType } from '../types/auth';
+import { tokenManager } from '../api/client';
 
 interface AuthStore extends AuthState {
   setStep: (step: AuthState['step']) => void;
@@ -13,6 +14,7 @@ interface AuthStore extends AuthState {
   setUser: (user: any) => void;
   reset: () => void;
   logout: () => void;
+  isAuthenticated: () => boolean;
 }
 
 const initialState: AuthState = {
@@ -56,9 +58,23 @@ export const useAuthStore = create<AuthStore>()(
       reset: () => set(initialState),
 
       logout: () => {
+        // Remove token from localStorage
+        tokenManager.removeToken();
+        // Remove user data from localStorage
         localStorage.removeItem('user');
         localStorage.removeItem('auth-storage');
+        // Reset store state
         set({ ...initialState, user: null });
+      },
+
+      isAuthenticated: function(): boolean {
+        const hasToken = !!tokenManager.getToken();
+        // If no token, definitely not authenticated
+        if (!hasToken) return false;
+
+        // Check if user exists in current state
+        const state: AuthStore = useAuthStore.getState();
+        return !!state?.user;
       },
     }),
     {

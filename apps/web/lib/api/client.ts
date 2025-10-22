@@ -6,17 +6,21 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 export const tokenManager = {
   getToken: () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken');
+      const token = localStorage.getItem('authToken');
+      console.log('[Token Manager] Getting token:', token ? `${token.substring(0, 20)}...` : 'null');
+      return token;
     }
     return null;
   },
   setToken: (token: string) => {
     if (typeof window !== 'undefined') {
+      console.log('[Token Manager] Setting token:', token ? `${token.substring(0, 20)}...` : 'null');
       localStorage.setItem('authToken', token);
     }
   },
   removeToken: () => {
     if (typeof window !== 'undefined') {
+      console.log('[Token Manager] Removing token');
       localStorage.removeItem('authToken');
     }
   },
@@ -37,6 +41,9 @@ apiClient.interceptors.request.use(
     const token = tokenManager.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('[API Client] Token attached to request:', config.url);
+    } else {
+      console.warn('[API Client] No token found for request:', config.url);
     }
     return config;
   },

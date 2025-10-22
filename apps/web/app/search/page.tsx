@@ -29,7 +29,14 @@ export default function SearchPage() {
   }) => {
     if (!additionalData) return;
 
-    // Navigate to booking page with all required data
+    // This callback is only triggered from the FareEstimateModal's "Proceed to Booking" button
+    // which already handles authentication check, so we can proceed directly
+    navigateToBooking(estimateData, additionalData);
+  };
+
+  const navigateToBooking = (estimateData: FareEstimateResponse, additionalData: any) => {
+    // Navigate to booking page with required data
+    const fare = estimateData.data.fare;
     const params = new URLSearchParams({
       pickupAddress: additionalData.pickupAddress,
       dropoffAddress: additionalData.dropoffAddress,
@@ -40,7 +47,10 @@ export default function SearchPage() {
       packageSize: additionalData.packageSize,
       distance: estimateData.data.distance?.distanceKm?.toString() || '0',
       duration: estimateData.data.distance?.durationMinutes?.toString() || '0',
-      total: estimateData.data.fare?.total?.toString() || '0',
+      // Only base fare and tax
+      subtotal: fare?.subtotal?.toString() || '0',
+      tax: fare?.tax?.toString() || '0',
+      total: fare?.total?.toString() || '0',
     });
 
     router.push(`/booking?${params.toString()}`);

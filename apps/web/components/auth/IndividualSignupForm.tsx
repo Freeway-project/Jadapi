@@ -42,8 +42,8 @@ export default function IndividualSignupForm() {
     setLoading(true);
 
     try {
-      // Import authAPI dynamically to avoid SSR issues
-      const { authAPI } = await import('../../lib/api/auth');
+      // Import authAPI and tokenManager dynamically to avoid SSR issues
+      const { authAPI, tokenManager } = await import('../../lib/api/auth');
 
       // Step 1: Verify OTP
       const identifier = data.email || data.phoneNumber;
@@ -62,8 +62,15 @@ export default function IndividualSignupForm() {
         address: data.address,
       };
 
-      const user = await authAPI.signup(signupData);
+      const response = await authAPI.signup(signupData);
 
+      // Store JWT token if provided
+      if (response?.token) {
+        tokenManager.setToken(response.token);
+      }
+
+      // Set user data in store
+      const user = response?.user || response;
       setUser(user);
       setStep('success');
       toast.success('Account created successfully!');
