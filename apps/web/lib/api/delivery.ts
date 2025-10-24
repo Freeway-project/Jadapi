@@ -15,7 +15,6 @@ export interface FareEstimateRequest {
 export interface FareBreakdown {
   baseFare: number;
   distanceFare: number;
-  timeFare: number;
   bandMultiplier: number;
   bandLabel: string;
   sizeMultiplier: number;

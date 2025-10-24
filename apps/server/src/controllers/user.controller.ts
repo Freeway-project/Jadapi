@@ -266,6 +266,37 @@ export const UserController = {
     }
   },
 
+  async getProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = (req as any).user;
+      if (!user || !user._id) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      // Return user profile without sensitive data
+      const profile = {
+        _id: user._id,
+        uuid: user.uuid,
+        accountType: user.accountType,
+        email: user.auth?.email,
+        phone: user.auth?.phone,
+        profile: user.profile,
+        businessProfile: user.businessProfile,
+        roles: user.roles,
+        status: user.status,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      };
+
+      res.json({
+        success: true,
+        data: profile
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async getDashboard(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user?._id || req.user?.id;

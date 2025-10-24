@@ -116,7 +116,6 @@ export default function BookingFlow({
       fare: {
         baseFare: 0,
         distanceFare: 0,
-        timeFare: 0,
         bandMultiplier: 1,
         bandLabel: '',
         sizeMultiplier: 1,

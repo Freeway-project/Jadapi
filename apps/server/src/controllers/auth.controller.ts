@@ -185,4 +185,73 @@ export const AuthController = {
       next(err);
     }
   },
+
+  /**
+   * Driver login with phone and password
+   * POST /api/auth/driver-login
+   */
+  async driverLogin(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { phone, password } = req.body;
+
+      if (!phone || !password) {
+        throw new ApiError(400, "Phone and password are required");
+      }
+
+      // Find user by phone (need to select password explicitly since it's excluded by default)
+      const user = await UserRepository.findByPhoneWithPassword(phone);
+      if (!user) {
+        throw new ApiError(401, "Invalid phone or password");
+      }
+
+      // Check if user has driver role
+      if (!user.roles.includes("driver")) {
+        throw new ApiError(403, "This account is not a driver account");
+      }
+
+      // Check if user has password set
+      if (!user.auth.password) {
+        throw new ApiError(401, "Invalid phone or password");
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.auth.password);
+      if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid phone or password");
+      }
+
+      // Check if user is active
+      if (user.status !== "active") {
+        throw new ApiError(403, "Driver account is not active");
+      }
+
+      // Update last login
+      await UserRepository.updateLastLogin(user._id);
+
+      // Generate JWT token
+      const token = jwtUtils.generateToken({
+        userId: user._id.toString(),
+        phone: user.auth.phone,
+        roles: user.roles,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Login successful",
+        token,
+        user: {
+          id: user._id.toString(),
+          uuid: user.uuid,
+          phone: user.auth.phone,
+          email: user.auth?.email,
+          name: user.profile?.name,
+          address: user.profile?.address,
+          roles: user.roles,
+          status: user.status,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

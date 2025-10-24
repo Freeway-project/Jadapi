@@ -20,6 +20,8 @@ export interface UserData {
   };
   roles: string[];
   status: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SearchUserResponse {
@@ -37,6 +39,7 @@ export interface RecentOrder {
   _id: string;
   orderId: string;
   status: string;
+  paymentStatus: 'unpaid' | 'paid' | 'refunded';
   pickup: {
     address: string;
   };
@@ -44,6 +47,10 @@ export interface RecentOrder {
     address: string;
   };
   pricing: {
+    baseFare: number;
+    subtotal: number;
+    tax: number;
+    couponDiscount?: number;
     total: number;
     currency: string;
   };
@@ -90,6 +97,22 @@ export const userAPI = {
    */
   getDashboard: async (): Promise<DashboardResponse> => {
     const response = await apiClient.get('/users/dashboard');
+    return response.data;
+  },
+
+  /**
+   * Get user profile
+   */
+  getProfile: async (): Promise<UserData> => {
+    const response = await apiClient.get('/users/profile');
+    return response.data.data;
+  },
+
+  /**
+   * Update user profile
+   */
+  updateProfile: async (data: any) => {
+    const response = await apiClient.patch('/users/profile', data);
     return response.data;
   },
 };

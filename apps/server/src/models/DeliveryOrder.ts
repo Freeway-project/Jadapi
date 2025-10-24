@@ -43,7 +43,6 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
   pricing: {
     baseFare: number;
     distanceFare: number;
-    timeFare: number;
     subtotal: number;
     tax: number;
     couponDiscount?: number;
@@ -139,8 +138,7 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
 
     pricing: {
       baseFare: { type: Number, required: true },
-      distanceFare: { type: Number, required: true },
-      timeFare: { type: Number, required: true },
+
       subtotal: { type: Number, required: true },
       tax: { type: Number, required: true },
       couponDiscount: { type: Number, default: 0 },
