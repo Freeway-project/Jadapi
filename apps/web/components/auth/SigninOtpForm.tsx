@@ -114,7 +114,7 @@ export default function SigninOtpForm() {
         uuid: user.uuid,
         email: user.email || user.auth?.email,
         phoneNumber: user.phone || user.phoneNumber || user.auth?.phone,
-        name: user.profile?.displayName || user.profile?.name || user.name || 'User',
+        name: user.profile?.name || user.name || 'User',
         accountType: user.accountType || 'individual',
         userType: user.accountType || 'individual',
         profile: user.profile,

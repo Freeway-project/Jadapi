@@ -15,7 +15,8 @@ export default function DriverManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('');
 
   const [formData, setFormData] = useState<CreateDriverData>({
-    displayName: '',
+    name: '',
+    address: '',
     email: '',
     phone: '',
     vehicleType: '',
@@ -50,8 +51,13 @@ export default function DriverManagement() {
     setFormError(null);
     setFormSuccess(null);
 
-    if (!formData.displayName) {
+    if (!formData.name) {
       setFormError('Driver name is required');
+      return;
+    }
+
+    if (!formData.address) {
+      setFormError('Driver address is required');
       return;
     }
 
@@ -64,7 +70,8 @@ export default function DriverManagement() {
       await adminAPI.createDriver(formData);
       setFormSuccess('Driver created successfully!');
       setFormData({
-        displayName: '',
+        name: '',
+        address: '',
         email: '',
         phone: '',
         vehicleType: '',
@@ -131,13 +138,25 @@ export default function DriverManagement() {
           <form onSubmit={handleCreateDriver} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <Label htmlFor="displayName" className="text-sm font-medium text-gray-700">Driver Name *</Label>
+                <Label htmlFor="name" className="text-sm font-medium text-gray-700">Driver Name *</Label>
                 <Input
-                  id="displayName"
+                  id="name"
                   type="text"
                   placeholder="John Doe"
-                  value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="mt-1 h-10 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="address" className="text-sm font-medium text-gray-700">Address *</Label>
+                <Input
+                  id="address"
+                  type="text"
+                  placeholder="123 Main St, City"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="mt-1 h-10 text-sm"
                   required
                 />
@@ -267,7 +286,7 @@ export default function DriverManagement() {
                 {drivers.map((driver) => (
                   <tr key={driver._id} className="hover:bg-gray-50">
                     <td className="px-4 sm:px-6 py-3 sm:py-4">
-                      <div className="text-sm font-medium text-gray-900">{driver.profile.displayName}</div>
+                      <div className="text-sm font-medium text-gray-900">{driver.profile?.name}</div>
                       <div className="text-xs text-gray-500 sm:hidden">{driver.auth.email || driver.auth.phone}</div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">

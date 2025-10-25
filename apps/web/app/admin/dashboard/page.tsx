@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                         {activity.action} {activity.resource}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {activity.userId?.profile.displayName || 'System'}
+                        {activity.userId?.profile?.name || 'System'}
                       </p>
                     </div>
                     <div className="text-xs text-gray-400 flex items-center">
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="text-sm font-medium text-gray-900">#{order.orderId}</p>
-                      <p className="text-xs text-gray-500">{order.userId?.profile.displayName}</p>
+                      <p className="text-xs text-gray-500">{order.userId?.profile?.name}</p>
                     </div>
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                       order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
