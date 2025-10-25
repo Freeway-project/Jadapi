@@ -301,7 +301,9 @@ export class AdminService {
   static async createDriver(driverData: {
     email?: string;
     phone?: string;
+    password?: string;
     name: string;
+    address?: string;
     vehicleType?: string;
     licenseNumber?: string;
   }) {
@@ -311,7 +313,11 @@ export class AdminService {
     }
 
     if (!driverData.name) {
-      throw new Error('Display name is required');
+      throw new Error('Name is required');
+    }
+
+    if (!driverData.address) {
+      throw new Error('Address is required');
     }
 
     // Check if driver already exists
@@ -326,6 +332,13 @@ export class AdminService {
       throw new Error('User with this email or phone already exists');
     }
 
+    // Hash password if provided
+    let hashedPassword: string | undefined;
+    if (driverData.password) {
+      const bcrypt = require('bcrypt');
+      hashedPassword = await bcrypt.hash(driverData.password, 10);
+    }
+
     // Create driver account
     const driver = await User.create({
       accountType: 'individual',
@@ -334,11 +347,13 @@ export class AdminService {
       auth: {
         email: driverData.email?.toLowerCase(),
         phone: driverData.phone,
+        password: hashedPassword,
         emailVerifiedAt: driverData.email ? new Date() : null,
         phoneVerifiedAt: driverData.phone ? new Date() : null,
       },
       profile: {
         name: driverData.name,
+        address: driverData.address,
       },
     });
 

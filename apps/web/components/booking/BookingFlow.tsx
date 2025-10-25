@@ -391,7 +391,7 @@ export default function BookingFlow({
                   (currentStep === 'review' && isCreatingOrder) ||
                   currentStep === 'payment'
                 }
-                className="flex-1 h-14 bg-black hover:bg-gray-900 text-white font-bold text-base rounded-full disabled:bg-gray-300 disabled:text-gray-500 shadow-lg transition-all"
+                className="flex-1 h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base rounded-full disabled:bg-gray-300 disabled:text-gray-500 shadow-lg transition-all"
               >
                 {currentStep === 'review' && isCreatingOrder
                   ? 'Creating Order...'

@@ -15,9 +15,10 @@ export default function DriverManagementDesktop() {
   const [statusFilter, setStatusFilter] = useState<string>('');
 
   const [formData, setFormData] = useState<CreateDriverData>({
-    displayName: '',
+    name: '',
     email: '',
     phone: '',
+    address: '',
     vehicleType: '',
     licenseNumber: '',
     password: '',
@@ -54,8 +55,14 @@ export default function DriverManagementDesktop() {
     setFormSuccess(null);
     setIsSubmitting(true);
 
-    if (!formData.displayName) {
+    if (!formData.name) {
       setFormError('Driver name is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.address) {
+      setFormError('Address is required');
       setIsSubmitting(false);
       return;
     }
@@ -88,9 +95,10 @@ export default function DriverManagementDesktop() {
       await adminAPI.createDriver(formData);
       setFormSuccess('Driver created successfully!');
       setFormData({
-        displayName: '',
+        name: '',
         email: '',
         phone: '',
+        address: '',
         vehicleType: '',
         licenseNumber: '',
         password: '',
@@ -284,24 +292,24 @@ export default function DriverManagementDesktop() {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                         <span className="text-white font-medium text-sm">
-                          {driver.profile.displayName.charAt(0).toUpperCase()}
+                          {driver.profile?.name?.charAt(0)?.toUpperCase() || 'D'}
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{driver.profile.displayName}</div>
-                        <div className="text-xs text-gray-500">ID: {driver.uuid.slice(0, 8)}</div>
+                        <div className="text-sm font-medium text-gray-900">{driver.profile?.name || 'No Name'}</div>
+                        <div className="text-xs text-gray-500">ID: {driver.uuid?.slice(0, 8) || 'N/A'}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="space-y-1">
-                      {driver.auth.email && (
+                      {driver.auth?.email && (
                         <div className="flex items-center text-sm text-gray-900">
                           <Mail className="w-4 h-4 mr-2 text-gray-400" />
                           {driver.auth.email}
                         </div>
                       )}
-                      {driver.auth.phone && (
+                      {driver.auth?.phone && (
                         <div className="flex items-center text-sm text-gray-600">
                           <Phone className="w-4 h-4 mr-2 text-gray-400" />
                           {driver.auth.phone}
@@ -373,15 +381,15 @@ export default function DriverManagementDesktop() {
             <form onSubmit={handleCreateDriver} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2">
-                  <Label htmlFor="displayName" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
                     Full Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="displayName"
+                    id="name"
                     type="text"
                     placeholder="John Doe"
-                    value={formData.displayName}
-                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="mt-2 h-12"
                     required
                   />
@@ -410,6 +418,20 @@ export default function DriverManagementDesktop() {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="mt-2 h-12"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                    Address <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="address"
+                    type="text"
+                    placeholder="123 Main Street, City"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="mt-2 h-12"
+                    required
                   />
                 </div>
                 <div>

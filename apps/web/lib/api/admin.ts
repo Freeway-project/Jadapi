@@ -26,7 +26,7 @@ export interface Activity {
   _id: string;
   userId?: {
     _id: string;
-    profile: { displayName: string };
+    profile: { name: string };
     auth: { email?: string };
   };
   action: string;
@@ -44,7 +44,7 @@ export interface Order {
   status: string;
   userId: {
     _id: string;
-    profile: { displayName: string };
+    profile: { name: string };
     auth: { phone?: string };
   };
   pickup: {
@@ -109,7 +109,7 @@ export interface Driver {
   _id: string;
   uuid: string;
   profile: {
-    displayName: string;
+    name: string;
   };
   auth: {
     email?: string;
@@ -127,7 +127,8 @@ export interface CreateDriverData {
   email?: string;
   phone?: string;
   password?: string;
-  displayName: string;
+  name: string;
+  address: string;
   vehicleType?: string;
   licenseNumber?: string;
 }

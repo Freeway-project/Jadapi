@@ -1,0 +1,41 @@
+INVOICE {{invoiceNumber}}
+========================================
+
+Order ID: {{orderId}}
+Invoice Date: {{invoiceDate}}
+Status: PAID
+
+BILL TO:
+{{customerName}}
+{{#customerBusinessName}}{{customerBusinessName}}
+{{/customerBusinessName}}{{#customerEmail}}Email: {{customerEmail}}
+{{/customerEmail}}{{#customerPhone}}Phone: {{customerPhone}}
+{{/customerPhone}}{{#customerAddress}}Address: {{customerAddress}}
+{{/customerAddress}}
+
+DELIVERY DETAILS:
+Pickup: {{pickupAddress}}
+{{#pickupContactName}}Contact: {{pickupContactName}}{{/pickupContactName}}
+Dropoff: {{dropoffAddress}}
+{{#dropoffContactName}}Contact: {{dropoffContactName}}{{/dropoffContactName}}
+Package Size: {{packageSize}}
+Distance: {{distance}} km
+
+PRICING BREAKDOWN:
+Base Fare                    {{baseFare}}
+Distance Charge              {{distanceFare}}
+Subtotal                     {{subtotal}}
+Tax ({{taxRate}}%)                  {{tax}}
+{{#hasDiscount}}Discount                     -{{discount}}
+{{/hasDiscount}}----------------------------------------
+TOTAL PAID                   {{total}}
+
+PAYMENT INFORMATION:
+Method: {{paymentMethod}}
+Status: {{paymentStatus}}
+{{#transactionId}}Transaction ID: {{transactionId}}
+{{/transactionId}}Payment Date: {{paymentDate}}
+
+Thank you for your business!
+
+JadAPI Delivery Service

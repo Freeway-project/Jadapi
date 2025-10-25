@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { DriverController } from '../controllers/driver.controller';
 import { DriverLocationController } from '../controllers/driverLocation.controller';
+import { requireAuth } from '../middlewares/auth';
+import { driverAuth } from '../middlewares/driverAuth';
 
 const router = Router();
 
@@ -36,48 +38,53 @@ router.get('/location/:driverId', DriverLocationController.getDriverLocation);
 router.delete('/location/:driverId', DriverLocationController.removeDriver);
 
 // ===========================
-// Driver Management Routes (No Auth)
+// Driver Management Routes (Auth Required)
 // Dashboard, orders, and statistics
 // ===========================
 
 /**
  * Get driver dashboard
- * GET /api/driver/dashboard/:driverId
+ * GET /api/driver/dashboard
+ * Requires: Driver authentication
  */
-router.get('/dashboard/:driverId', DriverController.getDashboard);
+router.get('/dashboard', requireAuth, driverAuth, DriverController.getDashboard);
 
 /**
  * Get driver statistics
- * GET /api/driver/stats/:driverId
+ * GET /api/driver/stats
+ * Requires: Driver authentication
  */
-router.get('/stats/:driverId', DriverController.getStats);
+router.get('/stats', requireAuth, driverAuth, DriverController.getStats);
 
 /**
  * Get available orders for drivers to accept
  * GET /api/driver/orders/available
  * Query: ?limit=&skip=
+ * Requires: Driver authentication
  */
-router.get('/orders/available', DriverController.getAvailableOrders);
+router.get('/orders/available', requireAuth, driverAuth, DriverController.getAvailableOrders);
 
 /**
  * Get driver's assigned orders
- * GET /api/driver/orders/:driverId
+ * GET /api/driver/orders
  * Query: ?status=&limit=&skip=
+ * Requires: Driver authentication
  */
-router.get('/orders/:driverId', DriverController.getMyOrders);
+router.get('/orders', requireAuth, driverAuth, DriverController.getMyOrders);
 
 /**
  * Accept an available order
  * POST /api/driver/orders/:orderId/accept
- * Body: { driverId }
+ * Requires: Driver authentication
  */
-router.post('/orders/:orderId/accept', DriverController.acceptOrder);
+router.post('/orders/:orderId/accept', requireAuth, driverAuth, DriverController.acceptOrder);
 
 /**
  * Update order status
  * PATCH /api/driver/orders/:orderId/status
- * Body: { driverId, status }
+ * Body: { status }
+ * Requires: Driver authentication
  */
-router.patch('/orders/:orderId/status', DriverController.updateOrderStatus);
+router.patch('/orders/:orderId/status', requireAuth, driverAuth, DriverController.updateOrderStatus);
 
 export default router;
