@@ -111,15 +111,15 @@ export class TemplateService {
 
 // Pre-defined template variable sets for common use cases
 export const OTP_TEMPLATE_VARIABLES = {
-  signup: (code: string, appName = "Jadapi App") => ({
+  signup: (code: string, appName = "Jaddpi App") => ({
     otpCode: code,
     appName,
   }),
-  login: (code: string, appName = "Jadapi App") => ({
+  login: (code: string, appName = "Jaddpi App") => ({
     otpCode: code,
     appName,
   }),
-  passwordReset: (code: string, appName = "Jadapi App") => ({
+  passwordReset: (code: string, appName = "Jaddpi App") => ({
     otpCode: code,
     appName,
   }),

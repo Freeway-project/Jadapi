@@ -37,20 +37,20 @@ export function FareEstimateModal({
   onProceedToBooking,
 }: Props) {
   const router = useRouter()
-  const { user } = useAuthStore()
+  const { isAuthenticated } = useAuthStore()
 
   const handleContinue = () => {
-    if (!user) {
+    if (!isAuthenticated()) {
       // Not logged in - redirect to signup
       router.push('/auth/signup')
       return
     }
 
     // User is logged in - proceed to booking
+    onClose()
     if (onProceedToBooking) {
       onProceedToBooking()
     }
-    onClose()
   }
 
   return (
@@ -101,7 +101,7 @@ export function FareEstimateModal({
         </div>
 
         <DialogFooter className="mt-4 gap-2 pt-2">
-          {!user ? (
+          {!isAuthenticated() ? (
             <>
               <Button
                 variant="default"

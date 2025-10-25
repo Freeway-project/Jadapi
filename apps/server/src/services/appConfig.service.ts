@@ -1,4 +1,5 @@
 import AppConfig from '../models/AppConfig';
+import { logger } from '../utils/logger';
 
 /**
  * Service for managing app configuration including app active status
@@ -23,7 +24,7 @@ export class AppConfigService {
 
       return config;
     } catch (error) {
-      console.error('Error fetching app config:', error);
+      logger.error({ error }, 'AppConfigService.getAppConfig - Error fetching app config');
       throw new Error('Failed to fetch app configuration');
     }
   }
@@ -37,7 +38,7 @@ export class AppConfigService {
       const config = await this.getAppConfig();
       return config?.appActive ?? false;
     } catch (error) {
-      console.error('Error checking app active status:', error);
+      logger.error({ error }, 'AppConfigService.isAppActive - Error checking app active status');
       // Default to false if there's an error
       return false;
     }
@@ -61,7 +62,7 @@ export class AppConfigService {
 
       return config;
     } catch (error) {
-      console.error('Error updating app active status:', error);
+      logger.error({ error }, 'AppConfigService.updateAppActiveStatus - Error updating app active status');
       throw new Error('Failed to update app active status');
     }
   }
@@ -82,7 +83,7 @@ export class AppConfigService {
         version: config.version,
       };
     } catch (error) {
-      console.error('Error fetching full config:', error);
+      logger.error({ error }, 'AppConfigService.getFullConfig - Error fetching full config');
       throw new Error('Failed to fetch configuration');
     }
   }
@@ -114,7 +115,7 @@ export class AppConfigService {
 
       return config;
     } catch (error) {
-      console.error('Error adding promo code:', error);
+      logger.error({ error }, 'AppConfigService.addPromoCode - Error adding promo code');
       throw new Error('Failed to add promo code');
     }
   }
@@ -146,7 +147,7 @@ export class AppConfigService {
 
       return config;
     } catch (error) {
-      console.error('Error removing promo code:', error);
+      logger.error({ error }, 'AppConfigService.removePromoCode - Error removing promo code');
       throw new Error('Failed to remove promo code');
     }
   }

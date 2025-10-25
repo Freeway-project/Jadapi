@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-echo "Stopping JadAPI Services..."
+echo "Stopping JadDPI Services..."
 cd ..
 docker compose down
 echo "✓ Services stopped!"

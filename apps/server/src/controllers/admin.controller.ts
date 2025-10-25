@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AdminService } from "../services/admin.service";
 import { AppConfigService } from "../services/appConfig.service";
+import { SmsRateLimitService } from "../services/smsRateLimit.service";
 import { ApiError } from "../utils/ApiError";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 
@@ -116,6 +117,45 @@ export class AdminController {
   }
 
   /**
+   * GET /api/admin/sms/usage
+   * Get SMS usage statistics
+   */
+  static async getSmsUsage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await SmsRateLimitService.getUsageStats();
+
+      // Calculate usage percentages
+      const usagePercentages = {
+        hourly: (stats.hourly / stats.limits.global.hourly) * 100,
+        daily: (stats.daily / stats.limits.global.daily) * 100,
+        monthly: (stats.monthly / stats.limits.global.monthly) * 100,
+        costDaily: (stats.costDaily / stats.limits.costs.dailyLimit) * 100,
+        costMonthly: (stats.costMonthly / stats.limits.costs.monthlyLimit) * 100,
+      };
+
+      // Warnings if approaching limits
+      const warnings = [];
+      if (usagePercentages.hourly > 80) warnings.push("Hourly limit approaching (>80%)");
+      if (usagePercentages.daily > 80) warnings.push("Daily limit approaching (>80%)");
+      if (usagePercentages.monthly > 80) warnings.push("Monthly limit approaching (>80%)");
+      if (usagePercentages.costDaily > 80) warnings.push("Daily cost limit approaching (>80%)");
+      if (usagePercentages.costMonthly > 80) warnings.push("Monthly cost limit approaching (>80%)");
+
+      res.json({
+        success: true,
+        data: {
+          usage: stats,
+          percentages: usagePercentages,
+          warnings,
+          status: warnings.length > 0 ? "warning" : "healthy",
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * POST /api/admin/drivers
    * Create a new driver account
    */
@@ -124,7 +164,9 @@ export class AdminController {
       const driverData = {
         email: req.body.email,
         phone: req.body.phone,
+        password: req.body.password,
         name: req.body.name,
+        address: req.body.address,
         vehicleType: req.body.vehicleType,
         licenseNumber: req.body.licenseNumber,
       };

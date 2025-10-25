@@ -85,6 +85,10 @@ export const UserRepository = {
     return User.findOne({ "auth.phone": phone }).lean();
   },
 
+  async findByPhoneWithPassword(phone: string): Promise<UserDoc | null> {
+    return User.findOne({ "auth.phone": phone }).select('+auth.password').lean();
+  },
+
   async list(limit = 20, skip = 0): Promise<UserDoc[]> {
     return User.find({ status: "active" })
       .sort({ createdAt: -1 })
@@ -118,5 +122,13 @@ export const UserRepository = {
     }
 
     return User.findByIdAndUpdate(userId, update, { new: true }).lean();
+  },
+
+  async updateLastLogin(userId: Types.ObjectId): Promise<UserDoc | null> {
+    return User.findByIdAndUpdate(
+      userId,
+      { "auth.lastLoginAt": new Date() },
+      { new: true }
+    ).lean();
   }
 };

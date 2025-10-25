@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import BookingFlow from '../../components/booking/BookingFlow';
 import EarlyAccessForm from '../../components/booking/EarlyAccessForm';
 import { appConfigAPI } from '../../lib/api/appConfig';
+import { tokenManager } from '../../lib/api/client';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -14,6 +15,18 @@ function BookingPageContent() {
 
   const [isAppActive, setIsAppActive] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = tokenManager.getToken();
+    if (!token) {
+      toast.error('Please sign in to continue');
+      router.push('/search');
+      return;
+    }
+    setIsAuthenticated(true);
+  }, [router]);
 
   // Get search params
   const pickupAddress = searchParams.get('pickupAddress') || '';
@@ -25,6 +38,9 @@ function BookingPageContent() {
   const packageSize = searchParams.get('packageSize') || 'M';
   const distance = searchParams.get('distance');
   const duration = searchParams.get('duration');
+  // Fare params - only subtotal, tax, and total
+  const subtotal = searchParams.get('subtotal');
+  const tax = searchParams.get('tax');
   const total = searchParams.get('total');
 
   // Check app status on mount
@@ -56,13 +72,15 @@ function BookingPageContent() {
     }
   }, [isLoading, pickupAddress, dropoffAddress, pickupLat, pickupLng, dropoffLat, dropoffLng, router]);
 
-  // Loading state
-  if (isLoading) {
+  // Loading or auth check
+  if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-slate-50">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto" />
-          <p className="text-slate-600 font-medium">Checking service availability...</p>
+          <p className="text-slate-600 font-medium">
+            {!isAuthenticated ? 'Verifying authentication...' : 'Checking service availability...'}
+          </p>
         </div>
       </div>
     );
@@ -102,6 +120,8 @@ function BookingPageContent() {
         initialFareEstimate={{
           distance: distance ? parseFloat(distance) : 0,
           duration: duration ? parseFloat(duration) : 0,
+          subtotal: subtotal ? parseFloat(subtotal) : undefined,
+          tax: tax ? parseFloat(tax) : undefined,
           total: total ? parseFloat(total) : 0,
         }}
       />

@@ -6,17 +6,21 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 export const tokenManager = {
   getToken: () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken');
+      const token = localStorage.getItem('authToken');
+      console.log('[Token Manager] Getting token:', token ? `${token.substring(0, 20)}...` : 'null');
+      return token;
     }
     return null;
   },
   setToken: (token: string) => {
     if (typeof window !== 'undefined') {
+      console.log('[Token Manager] Setting token:', token ? `${token.substring(0, 20)}...` : 'null');
       localStorage.setItem('authToken', token);
     }
   },
   removeToken: () => {
     if (typeof window !== 'undefined') {
+      console.warn('[Token Manager] Removing token - Stack trace:', new Error().stack);
       localStorage.removeItem('authToken');
     }
   },
@@ -37,6 +41,9 @@ apiClient.interceptors.request.use(
     const token = tokenManager.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('[API Client] Token attached to request:', config.url);
+    } else {
+      console.warn('[API Client] No token found for request:', config.url);
     }
     return config;
   },
@@ -52,9 +59,19 @@ apiClient.interceptors.response.use(
                         error.message ||
                         'Unknown error';
 
-    // If 401, clear token
+    // Only clear token on 401 if it's an "Invalid token" or "Token expired" error
+    // Don't clear on "Authentication required" (missing auth middleware issue)
     if (error.response?.status === 401) {
-      tokenManager.removeToken();
+      const isTokenInvalid = errorMessage.toLowerCase().includes('invalid token') ||
+                            errorMessage.toLowerCase().includes('token expired') ||
+                            errorMessage.toLowerCase().includes('jwt');
+
+      if (isTokenInvalid) {
+        console.warn('[API Client] Invalid/expired token detected, removing token');
+        tokenManager.removeToken();
+      } else {
+        console.warn('[API Client] 401 error but token may still be valid:', errorMessage);
+      }
     }
 
     throw new APIError(errorMessage, error.response?.status);

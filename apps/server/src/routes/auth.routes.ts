@@ -18,6 +18,7 @@ router.get("/otp/status", OtpController.checkVerificationStatus);
 // Auth routes
 router.post("/signup", validateSignup, UserController.signup);
 router.post("/login", AuthController.login);
+router.post("/driver-login", AuthController.driverLogin);
 router.post("/create-admin", AuthController.createAdmin);
 router.post("/create-driver", AuthController.createDriver);
 

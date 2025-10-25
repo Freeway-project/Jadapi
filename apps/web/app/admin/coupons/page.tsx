@@ -158,8 +158,6 @@ export default function CouponsPage() {
                   required
                 >
                   <option value="percentage_discount">Percentage Discount</option>
-                  <option value="fixed_discount">Fixed Discount</option>
-                  <option value="eliminate_fee">Eliminate Fee</option>
                 </select>
               </div>
 

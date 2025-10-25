@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ActivityLog } from "../models/ActivityLog";
+import { logger } from "../utils/logger";
 
 /**
  * Middleware to log API activity
@@ -11,12 +12,11 @@ export const activityLogger = async (
 ) => {
   const startTime = Date.now();
 
-  // Capture response
+  // Capture response (for potential future use)
   const originalSend = res.send;
-  let responseBody: any;
 
   res.send = function (body: any) {
-    responseBody = body;
+    // responseBody could be used for detailed logging if needed
     return originalSend.call(this, body);
   };
 
@@ -54,7 +54,7 @@ export const activityLogger = async (
         },
       });
     } catch (error) {
-      console.error("Failed to log activity:", error);
+      logger.error({ error }, "activityLogger middleware - Failed to log activity");
     }
   });
 
@@ -80,6 +80,6 @@ export const logAdminAction = async (
       metadata,
     });
   } catch (error) {
-    console.error("Failed to log admin action:", error);
+    logger.error({ error, userId, action, resource }, "logAdminAction - Failed to log admin action");
   }
 };

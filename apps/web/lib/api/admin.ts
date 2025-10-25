@@ -26,7 +26,7 @@ export interface Activity {
   _id: string;
   userId?: {
     _id: string;
-    profile: { displayName: string };
+    profile: { name: string };
     auth: { email?: string };
   };
   action: string;
@@ -44,7 +44,7 @@ export interface Order {
   status: string;
   userId: {
     _id: string;
-    profile: { displayName: string };
+    profile: { name: string };
     auth: { phone?: string };
   };
   pickup: {
@@ -72,11 +72,44 @@ export interface SystemMetrics {
   };
 }
 
+export interface SmsUsageStats {
+  usage: {
+    hourly: number;
+    daily: number;
+    monthly: number;
+    costDaily: number;
+    costMonthly: number;
+    limits: {
+      perPhone: any;
+      global: {
+        hourly: number;
+        daily: number;
+        monthly: number;
+      };
+      costs: {
+        dailyLimit: number;
+        monthlyLimit: number;
+        perSmsCost: number;
+      };
+      cooldown: any;
+    };
+  };
+  percentages: {
+    hourly: number;
+    daily: number;
+    monthly: number;
+    costDaily: number;
+    costMonthly: number;
+  };
+  warnings: string[];
+  status: 'healthy' | 'warning';
+}
+
 export interface Driver {
   _id: string;
   uuid: string;
   profile: {
-    displayName: string;
+    name: string;
   };
   auth: {
     email?: string;
@@ -94,7 +127,8 @@ export interface CreateDriverData {
   email?: string;
   phone?: string;
   password?: string;
-  displayName: string;
+  name: string;
+  address: string;
   vehicleType?: string;
   licenseNumber?: string;
 }
@@ -231,5 +265,10 @@ export const adminAPI = {
   async updateEarlyAccessRequestStatus(requestId: string, status: string): Promise<any> {
     const res = await apiClient.put(`/admin/early-access-requests/${requestId}/status`, { status });
     return res.data;
+  },
+
+  async getSmsUsage(): Promise<SmsUsageStats> {
+    const res = await apiClient.get('/admin/sms/usage');
+    return res.data.data;
   },
 };

@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { User, MapPin, Package } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { FareEstimateResponse, deliveryAPI } from '../../lib/api/delivery';
 import { useAuthStore } from '../../lib/stores/authStore';
+import { tokenManager } from '../../lib/api/client';
 import { geocodeAddress } from '../../lib/utils/geocoding';
 import ProgressSteps, { BookingStep } from './components/ProgressSteps';
 import FareEstimate from './components/FareEstimate';
@@ -29,6 +31,8 @@ interface BookingFlowProps {
   initialFareEstimate: {
     distance: number;
     duration: number;
+    subtotal?: number;
+    tax?: number;
     total: number;
   };
   onBack?: () => void;
@@ -43,8 +47,31 @@ export default function BookingFlow({
   onBack,
   onComplete
 }: BookingFlowProps) {
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
   const [currentStep, setCurrentStep] = useState<BookingStep>('sender');
+
+  // Check authentication on mount and when navigating to payment step
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = tokenManager.getToken();
+      const hasUser = !!user;
+
+      if (!token || !hasUser) {
+        console.warn('[BookingFlow] Not authenticated - redirecting to signup');
+        toast.error('Please sign in to continue with booking');
+        router.push('/auth/signup');
+      }
+    };
+
+    // Check on mount
+    checkAuth();
+
+    // Check again when moving to payment step
+    if (currentStep === 'payment') {
+      checkAuth();
+    }
+  }, [currentStep, user, router]);
 
   const [sender, setSender] = useState<UserDetails>({
     name: '',
@@ -73,6 +100,10 @@ export default function BookingFlow({
     couponId: string;
     code: string;
     discount: number;
+    discountedSubtotal: number;
+    gst: number;
+    pst: number;
+    totalTax: number;
     newTotal: number;
   } | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -85,13 +116,12 @@ export default function BookingFlow({
       fare: {
         baseFare: 0,
         distanceFare: 0,
-        timeFare: 0,
         bandMultiplier: 1,
         bandLabel: '',
         sizeMultiplier: 1,
         edgeSurcharge: 0,
-        subtotal: initialFareEstimate.total,
-        tax: 0,
+        subtotal: initialFareEstimate.subtotal || initialFareEstimate.total,
+        tax: initialFareEstimate.tax || 0,
         total: initialFareEstimate.total,
         currency: 'CAD',
         distanceKm: initialFareEstimate.distance,
@@ -201,7 +231,7 @@ export default function BookingFlow({
     }
   };
 
-  const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; newTotal: number } | null) => {
+  const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; discountedSubtotal: number; gst: number; pst: number; totalTax: number; newTotal: number } | null) => {
     setAppliedCoupon(couponData);
   };
 
@@ -361,7 +391,7 @@ export default function BookingFlow({
                   (currentStep === 'review' && isCreatingOrder) ||
                   currentStep === 'payment'
                 }
-                className="flex-1 h-14 bg-black hover:bg-gray-900 text-white font-bold text-base rounded-full disabled:bg-gray-300 disabled:text-gray-500 shadow-lg transition-all"
+                className="flex-1 h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold text-base rounded-full disabled:bg-gray-300 disabled:text-gray-500 shadow-lg transition-all"
               >
                 {currentStep === 'review' && isCreatingOrder
                   ? 'Creating Order...'

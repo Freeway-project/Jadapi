@@ -1,6 +1,7 @@
 import { Coordinates, DistanceResult } from '../types/pricing.types';
 import { ENV } from '../config/env';
 import axios from 'axios';
+import { logger } from '../utils/logger';
 
 /**
  * Distance calculation service using Google Maps Distance Matrix API
@@ -95,7 +96,7 @@ export class DistanceService {
       };
 
     } catch (error) {
-      console.error('Service area validation error:', error);
+      logger.error({ error }, 'Service area validation error');
       return {
         isValid: false,
         error: 'Unable to validate service area. Please try again.'

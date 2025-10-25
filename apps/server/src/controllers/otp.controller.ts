@@ -3,6 +3,8 @@ import { OtpService, GenerateOtpData, VerifyOtpData } from "../services/otp.serv
 import { EmailService } from "../services/email.service";
 import { NotificationService } from "../services/notification.service";
 import { UserRepository } from "../repositories/user.repository";
+import { User } from "../models/user.model";
+import { jwtUtils } from "../utils/jwt";
 import { ApiError } from "../utils/ApiError";
 
 export const OtpController = {
@@ -113,11 +115,37 @@ export const OtpController = {
       const result = await OtpService.verifyOtp(verifyData);
 
       if (result.success) {
+        let token = null;
+        let user = null;
+
+        // For login type, generate JWT token and return user data
+        if (type === "login") {
+          // Find user by identifier (email or phone)
+          user = await User.findOne({
+            $or: [
+              { "auth.email": identifier },
+              { "auth.phone": identifier },
+              { email: identifier },
+              { phone: identifier }
+            ]
+          }).select("-password");
+
+          if (user && user.status === "active") {
+            token = jwtUtils.generateToken({
+              userId: user._id.toString(),
+              email: user.auth?.email,
+              roles: user.roles || []
+            });
+          }
+        }
+
         res.status(200).json({
           message: "OTP verified successfully",
           identifier,
           verified: true,
           otpId: result.otpId,
+          token,
+          user,
         });
       } else {
         throw new ApiError(400, "OTP verification failed");

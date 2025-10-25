@@ -9,6 +9,7 @@ import {
 } from '../types/pricing.types';
 import { DistanceService } from './distance.service';
 import { ConfigService } from './config.service';
+import { logger } from '../utils/logger';
 
 /**
  * Fare estimation service with configurable pricing
@@ -45,14 +46,11 @@ export class FareService {
 
     // Get current pricing configuration
     const config = await ConfigService.getActiveConfig();
-
-    console.log('🚀 ~ :34 ~ FareService ~ estimateFare ~ config::==', config)
-
+    logger.debug({ config }, 'FareService.estimateFare - config loaded');
 
     // Calculate distance and time
     const distance = await DistanceService.calculate(input.pickup, input.dropoff);
-
-    console.log('🚀 ~ :37 ~ FareService ~ estimateFare ~ distance::==', distance)
+    logger.debug({ distance }, 'FareService.estimateFare - distance calculated');
 
 
     // Calculate fare breakdown
@@ -92,26 +90,13 @@ export class FareService {
     // Distance-based fare
     const distanceFare = Math.round(distanceKm * rateCard.per_km_cents);
 
-  // Time-based fare removed — set to 0 (duration still returned for info)
-  const timeFare = 0;
-
     // Get distance band multiplier
     const band = this.getDistanceBand(distanceKm, bands);
 
     // Package size multiplier
     const sizeMultiplier = rateCard.size_multiplier[packageSize] || 1.0;
 
-  // Calculate subtotal before multipliers (exclude time-based charge)
-  const baseSubtotal = baseFare + distanceFare; // timeFare intentionally omitted
-
-    // // Apply band multiplier
-    // const afterBandMultiplier = Math.round(baseSubtotal * band.multiplier);
-
-    // // Apply size multiplier
-    // const afterSizeMultiplier = Math.round(afterBandMultiplier * sizeMultiplier);
-
     // Apply minimum fare
-    // const finalSubtotal = Math.max(afterSizeMultiplier, rateCard.min_fare_cents);
     const finalSubtotal = rateCard.min_fare_cents;
 
     // Calculate tax
@@ -123,7 +108,6 @@ export class FareService {
     return {
       baseFare: this.formatCents(baseFare, ui.round_display_to_cents),
       distanceFare: this.formatCents(distanceFare, ui.round_display_to_cents),
-      timeFare: this.formatCents(timeFare, ui.round_display_to_cents),
       bandMultiplier: band.multiplier,
       bandLabel: ui.show_band_label ? band.label : '',
       sizeMultiplier,

@@ -11,9 +11,10 @@ export const PaymentController = {
   async createPaymentIntent(req: Request, res: Response, next: NextFunction) {
     try {
       const { orderId, amount, currency, metadata } = req.body;
-      const userId = (req as any).user?.userId;
-
-      if (!userId) {
+      const user = (req as any).user;
+      
+      // requireAuth middleware already ensures user exists, but double-check for safety
+      if (!user || !user._id) {
         throw new ApiError(401, 'Authentication required');
       }
 
@@ -23,7 +24,7 @@ export const PaymentController = {
 
       const result = await PaymentService.createPaymentIntent({
         orderId,
-        userId,
+        userId: user._id.toString(),
         amount: Math.round(amount), // Ensure integer cents
         currency,
         metadata,

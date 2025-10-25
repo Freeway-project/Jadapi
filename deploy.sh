@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Jadapi Server Deployment Script
+# Jaddpi Server Deployment Script
 # This script pulls latest code from main branch and deploys using PM2
 
 set -e  # Exit on any error
 
-echo "🚀 Starting Jadapi Server Deployment..."
+echo "🚀 Starting Jaddpi Server Deployment..."
 echo "============================================"
 
 # Colors for output
@@ -15,7 +15,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Project directory
-PROJECT_DIR="/home/ubuntu/Jadapi"
+PROJECT_DIR="/home/ubuntu/Jaddpi"
 cd "$PROJECT_DIR"
 
 # Function to print colored output
@@ -74,7 +74,7 @@ cd "$PROJECT_DIR"
 echo ""
 echo "🔄 Managing PM2 process..."
 
-if pm2 describe jadapi-server > /dev/null 2>&1; then
+if pm2 describe jaddpi-server > /dev/null 2>&1; then
     print_warning "Restarting existing PM2 process..."
     pm2 restart ecosystem.config.js --update-env
 else
@@ -95,15 +95,15 @@ pm2 list
 # Show recent logs
 echo ""
 echo "📝 Recent logs (last 20 lines):"
-pm2 logs jadapi-server --lines 20 --nostream
+pm2 logs jaddpi-server --lines 20 --nostream
 
 echo ""
 echo "============================================"
 print_success "Deployment completed successfully! 🎉"
 echo ""
 echo "Useful commands:"
-echo "  - View logs:    pm2 logs jadapi-server"
-echo "  - Stop server:  pm2 stop jadapi-server"
-echo "  - Restart:      pm2 restart jadapi-server"
+echo "  - View logs:    pm2 logs jaddpi-server"
+echo "  - Stop server:  pm2 stop jaddpi-server"
+echo "  - Restart:      pm2 restart jaddpi-server"
 echo "  - Status:       pm2 status"
 echo ""

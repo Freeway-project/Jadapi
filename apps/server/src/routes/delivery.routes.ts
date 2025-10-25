@@ -3,9 +3,10 @@ import { DeliveryAreaValidator } from "../utils/cityDeliveryValidator";
 import { CityServiceAreaService } from "../services/cityServiceArea.service";
 import { ApiError } from "../utils/ApiError";
 import { DeliveryOrder } from "../models/DeliveryOrder";
-import { authenticate } from "../middlewares/auth";
+import { requireAuth } from "../middlewares/auth";
 import { CouponService } from "../services/coupon.service";
 import { checkAppActive } from "../middlewares/appActive";
+import { logger } from "../utils/logger";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.post("/check-address", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Check address error:", error);
+    logger.error({ error }, "delivery.routes - Check address error");
     res.status(500).json({
       success: false,
       message: "Failed to check delivery availability"
@@ -84,7 +85,7 @@ router.post("/validate-order-address", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Validate order address error:", error);
+    logger.error({ error }, "delivery.routes - Validate order address error");
     res.status(500).json({
       success: false,
       message: "Failed to validate address"
@@ -96,7 +97,7 @@ router.post("/validate-order-address", async (req: Request, res: Response) => {
  * GET /api/delivery/service-areas
  * Get all active delivery areas
  */
-router.get("/service-areas", async (req: Request, res: Response) => {
+router.get("/service-areas", async (_req: Request, res: Response) => {
   try {
     const areas = await DeliveryAreaValidator.getActiveDeliveryAreas();
 
@@ -108,7 +109,7 @@ router.get("/service-areas", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Get service areas error:", error);
+    logger.error({ error }, "delivery.routes - Get service areas error");
     res.status(500).json({
       success: false,
       message: "Failed to fetch service areas"
@@ -120,7 +121,7 @@ router.get("/service-areas", async (req: Request, res: Response) => {
  * POST /api/delivery/create-order
  * Create a new delivery order (with optional coupon)
  */
-router.post("/create-order", authenticate, async (req: Request, res: Response) => {
+router.post("/create-order", requireAuth, async (req: Request, res: Response) => {
   try {
     const {
       pickup,
@@ -128,7 +129,8 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       package: packageDetails,
       pricing,
       distance,
-      couponCode
+      couponCode,
+      coupon
     } = req.body;
 
     const user = (req as any).user;
@@ -153,29 +155,56 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
     let finalPricing = { ...pricing };
     let couponData = undefined;
 
-    // Handle coupon if provided
-    if (couponCode) {
-      const validation = await CouponService.validateCoupon(
-        couponCode,
-        user._id,
-        pricing.total,
-        user.accountType
-      );
+    // Handle coupon if provided (support both couponCode string and coupon object)
+    const code = couponCode || coupon?.code;
+
+    if (code) {
+      logger.info({ code, subtotal: pricing.subtotal }, "Processing coupon");
+
+      // Validate coupon - simple validation
+      const validation = await CouponService.validateCoupon(code, pricing.subtotal);
 
       if (!validation.valid) {
         throw new ApiError(400, validation.message || "Invalid coupon");
       }
 
-      // Calculate discount
+      // Calculate discount on subtotal (before tax)
       const discount = CouponService.calculateDiscount(
         validation.coupon!,
         pricing.subtotal,
-        pricing.baseFare
+        pricing.baseFare || 0
       );
 
-      // Update pricing with discount
+      logger.info({
+        couponCode: code,
+        originalSubtotal: pricing.subtotal,
+        calculatedDiscount: discount,
+        frontendDiscount: coupon?.discount
+      }, "Coupon discount calculated");
+
+      // Apply discount to subtotal
+      const discountedSubtotal = pricing.subtotal - discount;
+
+      // Recalculate taxes on discounted subtotal: 5% GST + 7% PST
+      const gst = Math.round(discountedSubtotal * 0.05);
+      const pst = Math.round(discountedSubtotal * 0.07);
+      const tax = gst + pst;
+
+      // Update pricing with discount and recalculated tax
       finalPricing.couponDiscount = discount;
-      finalPricing.total = pricing.total - discount;
+      finalPricing.subtotal = discountedSubtotal;
+      finalPricing.gst = gst;
+      finalPricing.pst = pst;
+      finalPricing.tax = tax;
+      finalPricing.total = discountedSubtotal + tax;
+
+      logger.info({
+        discountedSubtotal,
+        gst,
+        pst,
+        totalTax: tax,
+        finalTotal: finalPricing.total
+      }, "Final pricing calculated");
 
       // Store coupon info
       couponData = {
@@ -185,8 +214,22 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
         discountValue: validation.coupon!.discountValue
       };
 
-      // Increment coupon usage
-      await CouponService.applyCoupon(validation.coupon!._id);
+      // Track usage for analytics (non-blocking)
+      CouponService.recordCouponUsage(validation.coupon!._id).catch(err =>
+        logger.error({ error: err }, "Failed to record coupon usage")
+      );
+    } else if (!code && pricing.tax === 0) {
+      // If no coupon but tax is 0, calculate taxes on original subtotal
+      const gst = Math.round(pricing.subtotal * 0.05);
+      const pst = Math.round(pricing.subtotal * 0.07);
+      const tax = gst + pst;
+
+      finalPricing.gst = gst;
+      finalPricing.pst = pst;
+      finalPricing.tax = tax;
+      finalPricing.total = pricing.subtotal + tax;
+
+      logger.info({ subtotal: pricing.subtotal, gst, pst, tax, total: finalPricing.total }, "Tax calculated (no coupon)");
     }
 
     // Generate unique order ID
@@ -200,10 +243,13 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       paymentStatus: "unpaid",
       pickup: {
         address: pickup.address,
-        coordinates: pickup.coordinates,
+        coordinates: {
+          lat: pickup.coordinates.lat,
+          lng: pickup.coordinates.lng
+        },
         location: {
           type: "Point",
-          coordinates: [pickup.coordinates.lng, pickup.coordinates.lat] // GeoJSON: [lng, lat]
+          coordinates: [Number(pickup.coordinates.lng), Number(pickup.coordinates.lat)] // GeoJSON: [lng, lat]
         },
         contactName: pickup.contactName,
         contactPhone: pickup.contactPhone,
@@ -212,10 +258,13 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       },
       dropoff: {
         address: dropoff.address,
-        coordinates: dropoff.coordinates,
+        coordinates: {
+          lat: dropoff.coordinates.lat,
+          lng: dropoff.coordinates.lng
+        },
         location: {
           type: "Point",
-          coordinates: [dropoff.coordinates.lng, dropoff.coordinates.lat] // GeoJSON: [lng, lat]
+          coordinates: [Number(dropoff.coordinates.lng), Number(dropoff.coordinates.lat)] // GeoJSON: [lng, lat]
         },
         contactName: dropoff.contactName,
         contactPhone: dropoff.contactPhone,
@@ -244,7 +293,7 @@ router.post("/create-order", authenticate, async (req: Request, res: Response) =
       message: couponCode ? "Order created successfully with coupon applied" : "Order created successfully"
     });
   } catch (error: any) {
-    console.error("Create order error:", error);
+    logger.error({ error, userId: (req as any).user?._id }, "delivery.routes - Create order error");
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Failed to create order"
@@ -280,7 +329,7 @@ router.post("/admin/service-areas", async (req: Request, res: Response) => {
       message: `Service area '${name}' created successfully`
     });
   } catch (error: any) {
-    console.error("Create service area error:", error);
+    logger.error({ error }, "delivery.routes - Create service area error");
     if (error.code === 11000) {
       res.status(409).json({
         success: false,
@@ -320,7 +369,7 @@ router.get("/admin/service-areas", async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Get admin service areas error:", error);
+    logger.error({ error }, "delivery.routes - Get admin service areas error");
     res.status(500).json({
       success: false,
       message: "Failed to fetch service areas"
@@ -349,7 +398,7 @@ router.put("/admin/service-areas/:id", async (req: Request, res: Response) => {
       message: "Service area updated successfully"
     });
   } catch (error) {
-    console.error("Update service area error:", error);
+    logger.error({ error, id: req.params.id }, "delivery.routes - Update service area error");
     res.status(500).json({
       success: false,
       message: "Failed to update service area"
@@ -378,7 +427,7 @@ router.put("/admin/service-areas/:id/toggle", async (req: Request, res: Response
       message: `Service area ${isActive ? 'activated' : 'deactivated'} successfully`
     });
   } catch (error) {
-    console.error("Toggle service area error:", error);
+    logger.error({ error, id: req.params.id }, "delivery.routes - Toggle service area error");
     res.status(500).json({
       success: false,
       message: "Failed to toggle service area"

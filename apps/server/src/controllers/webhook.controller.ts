@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { stripe, stripeConfig } from '../config/stripe';
 import { PaymentService } from '../services/payment.service';
+import { EmailService } from '../services/email.service';
+import { InvoiceService } from '../services/invoice.service';
+import { DeliveryOrder } from '../models/DeliveryOrder';
+import { User } from '../models/user.model';
 import { logger } from '../utils/logger';
 import { ApiError } from '../utils/ApiError';
 import Stripe from 'stripe';
@@ -75,7 +79,7 @@ export const WebhookController = {
       // Always respond with 200 to acknowledge receipt
       res.json({ received: true });
     } catch (error: any) {
-      logger.error(`Webhook processing error:`, error);
+      logger.error({ error }, `Webhook processing error`);
       // Still respond with 200 to prevent Stripe from retrying
       res.json({ received: true, error: error.message });
     }
@@ -114,8 +118,50 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event) {
 
   logger.info(`✅ PaymentIntent ${paymentIntent.id} succeeded`);
 
-  // TODO: Update order status to 'paid'
-  // TODO: Send confirmation email to customer
+  try {
+    // Update order payment status to 'paid'
+    const order = await DeliveryOrder.findById(payment.orderId);
+    if (!order) {
+      logger.error(`Order not found for payment ${payment._id}`);
+      return;
+    }
+
+    order.paymentStatus = 'paid';
+    // Keep order status as-is (not tied to driver assignment)
+    await order.save();
+    logger.info(`✅ Order ${order.orderId} payment status updated to paid`);
+
+    // Get user details for invoice
+    const user = await User.findById(payment.userId);
+    if (!user) {
+      logger.error(`User not found for payment ${payment._id}`);
+      return;
+    }
+
+    const userEmail = user.auth?.email;
+    if (!userEmail) {
+      logger.error(`No email found for user ${user._id}`);
+      return;
+    }
+
+    // Generate invoice
+    const invoice = InvoiceService.generateInvoice(order, user, payment.stripePaymentIntentId);
+    logger.info(`✅ Invoice ${invoice.invoiceNumber} generated for order ${order.orderId}`);
+
+    // Send invoice email
+    await EmailService.sendEmail({
+      to: userEmail,
+      subject: `Invoice ${invoice.invoiceNumber} - Payment Confirmed`,
+      html: InvoiceService.generateInvoiceEmail(invoice),
+      text: InvoiceService.generateInvoiceTextEmail(invoice),
+    });
+
+    logger.info(`✅ Invoice email sent to ${userEmail}`);
+  } catch (error) {
+    logger.error({ error }, `Failed to process payment success`);
+    // Don't throw - we don't want to fail the webhook
+  }
+
   // TODO: Notify driver/dispatch system
 }
 

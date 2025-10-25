@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import { ENV } from "./env";
+import { logger } from "../utils/logger";
 
 export type RedisClient = ReturnType<typeof createClient>;
 
@@ -20,7 +21,7 @@ export async function getRedisClient(): Promise<RedisClient> {
         connectTimeout: 10000,
         reconnectStrategy: (retries) => {
           if (retries > 10) {
-            console.error("Redis: Max reconnection attempts reached");
+            logger.error("Redis: Max reconnection attempts reached");
             return new Error("Redis max reconnection attempts");
           }
           // Exponential backoff: 50ms * 2^retries
@@ -30,25 +31,25 @@ export async function getRedisClient(): Promise<RedisClient> {
     });
 
     redisClient.on("error", (err) => {
-      console.error("Redis Client Error:", err);
+      logger.error("Redis Client Error:", err);
     });
 
     redisClient.on("connect", () => {
-      console.log("✅ Redis client connected");
+      logger.info("✅ Redis client connected");
     });
 
     redisClient.on("reconnecting", () => {
-      console.log("🔄 Redis client reconnecting...");
+      logger.info("🔄 Redis client reconnecting...");
     });
 
     redisClient.on("ready", () => {
-      console.log("✅ Redis client ready");
+      logger.info("✅ Redis client ready");
     });
 
     await redisClient.connect();
     return redisClient;
   } catch (error) {
-    console.error("Failed to connect to Redis:", error);
+    logger.error({ error }, "Failed to connect to Redis");
     throw error;
   }
 }
@@ -60,7 +61,7 @@ export async function closeRedisClient(): Promise<void> {
   if (redisClient) {
     await redisClient.quit();
     redisClient = null;
-    console.log("Redis client disconnected");
+    logger.info("Redis client disconnected");
   }
 }
 

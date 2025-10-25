@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { AdminController } from "../controllers/admin.controller";
 import { activityLogger } from "../middlewares/activityLogger";
-import { requireAdmin } from "../middlewares/auth";
+import { requireAuth, requireAdmin } from "../middlewares/auth";
 
 const router = Router();
 
-// All admin routes require admin authentication
+// All admin routes require authentication and admin role
+router.use(requireAuth);
 router.use(requireAdmin);
 
 // Dashboard and metrics routes
@@ -19,6 +20,13 @@ router.get(
   "/metrics",
   activityLogger,
   AdminController.getSystemMetrics
+);
+
+// SMS usage routes
+router.get(
+  "/sms/usage",
+  activityLogger,
+  AdminController.getSmsUsage
 );
 
 // Admin routes

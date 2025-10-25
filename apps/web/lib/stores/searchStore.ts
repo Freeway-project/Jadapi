@@ -51,7 +51,7 @@ export const useSearchStore = create<SearchStore>()(
       clearRecentSearches: () => set({ recentSearches: [], currentSearch: null }),
     }),
     {
-      name: 'jadapi-search-storage',
+      name: 'jaddpi-search-storage',
       partialize: (state) => ({
         recentSearches: state.recentSearches,
       }),

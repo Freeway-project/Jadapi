@@ -17,9 +17,22 @@ interface ReviewOrderProps {
     couponId: string;
     code: string;
     discount: number;
+    discountedSubtotal: number;
+    gst: number;
+    pst: number;
+    totalTax: number;
     newTotal: number;
   } | null;
-  onCouponApplied?: (couponData: { couponId: string; code: string; discount: number; newTotal: number } | null) => void;
+  onCouponApplied?: (couponData: {
+    couponId: string;
+    code: string;
+    discount: number;
+    discountedSubtotal: number;
+    gst: number;
+    pst: number;
+    totalTax: number;
+    newTotal: number;
+  } | null) => void;
 }
 
 export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon, onCouponApplied }: ReviewOrderProps) {
@@ -39,7 +52,8 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
     try {
       const response = await couponAPI.validateCoupon({
         code: couponCode.trim(),
-        orderAmount: estimate?.data?.fare?.total || 0,
+        subtotal: estimate?.data?.fare?.subtotal || 0,
+        baseFare: estimate?.data?.fare?.baseFare || 0,
       });
 
       if (response.success && response.data) {
@@ -47,6 +61,10 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
           couponId: response.data.coupon.code,
           code: response.data.coupon.code,
           discount: response.data.discount,
+          discountedSubtotal: response.data.discountedSubtotal,
+          gst: response.data.gst,
+          pst: response.data.pst,
+          totalTax: response.data.totalTax,
           newTotal: response.data.newTotal,
         };
         onCouponApplied?.(couponData);
@@ -172,14 +190,37 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
               <span>Subtotal</span>
               <span>${((estimate?.data?.fare?.subtotal || 0) / 100).toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Tax</span>
-              <span>${((estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
-            </div>
             {appliedCoupon && (
               <div className="flex justify-between text-green-600 font-medium">
                 <span>Discount ({appliedCoupon.code})</span>
                 <span>-${(appliedCoupon.discount / 100).toFixed(2)}</span>
+              </div>
+            )}
+            {appliedCoupon && (
+              <div className="flex justify-between text-gray-600 text-xs">
+                <span>Subtotal after discount</span>
+                <span>${(appliedCoupon.discountedSubtotal / 100).toFixed(2)}</span>
+              </div>
+            )}
+            {appliedCoupon ? (
+              <>
+                <div className="flex justify-between text-gray-600 text-xs">
+                  <span>GST (5%)</span>
+                  <span>${(appliedCoupon.gst / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600 text-xs">
+                  <span>PST (7%)</span>
+                  <span>${(appliedCoupon.pst / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Tax</span>
+                  <span>${(appliedCoupon.totalTax / 100).toFixed(2)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-gray-600">
+                <span>Tax (GST 5% + PST 7%)</span>
+                <span>${((estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
               </div>
             )}
             <div className="border-t border-gray-200 pt-2 mt-2">

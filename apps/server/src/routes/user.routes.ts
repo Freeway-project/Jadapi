@@ -4,17 +4,20 @@ import {
   validateEmailVerification,
   validatePhoneVerification
 } from "../middlewares/validation";
-import { authenticate } from "../middlewares/auth";
+import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
-// User management routes
+// Protected routes - require authentication
+router.get("/dashboard", requireAuth, UserController.getDashboard);
+router.get("/profile", requireAuth, UserController.getProfile);
+router.patch("/profile", requireAuth, UserController.updateProfile);
+
+// User management routes (admin)
 router.get("/", UserController.list);
 router.get("/search", UserController.searchByIdentifier);
-router.get("/dashboard", authenticate, UserController.getDashboard);
 router.get("/:id", UserController.get);
 router.get("/uuid/:uuid", UserController.getByUuid);
-router.patch("/:id/profile", UserController.updateProfile);
 
 // Verification routes
 router.post("/:id/verify-email", validateEmailVerification, UserController.verifyEmail);

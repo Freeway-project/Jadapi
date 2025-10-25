@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Package, CreditCard, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { FareEstimateResponse } from '../../../lib/api/delivery';
 import { paymentAPI } from '../../../lib/api/payment';
+import { tokenManager } from '../../../lib/api/client';
 import { Button } from '@workspace/ui/components/button';
 import toast from 'react-hot-toast';
 
@@ -32,12 +34,22 @@ export default function PaymentSection({
   onPaymentSuccess,
   onPaymentError,
 }: PaymentSectionProps) {
+  const router = useRouter();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Create PaymentIntent when component mounts
   useEffect(() => {
+    // Check authentication before attempting to create payment intent
+    const token = tokenManager.getToken();
+    if (!token) {
+      console.error('[Payment] No authentication token found');
+      toast.error('Please sign in to continue with payment');
+      router.push('/auth/signup');
+      return;
+    }
+
     if (!orderId) {
       setError('Order ID is required to process payment');
       return;
@@ -47,6 +59,8 @@ export default function PaymentSection({
       setIsLoading(true);
       try {
         const amount = estimate?.data?.fare?.total || 0;
+        console.log('[Payment] Creating payment intent:', { orderId, amount });
+
         const response = await paymentAPI.createPaymentIntent({
           orderId,
           amount,
@@ -57,8 +71,10 @@ export default function PaymentSection({
           },
         });
 
+        console.log('[Payment] Payment intent created successfully');
         setClientSecret(response.data.clientSecret);
       } catch (err: any) {
+        console.error('[Payment] Failed to create payment intent:', err);
         const errorMsg = err?.response?.data?.message || err?.message || 'Failed to initialize payment';
         setError(errorMsg);
         onPaymentError?.(errorMsg);
@@ -69,7 +85,7 @@ export default function PaymentSection({
     };
 
     createPaymentIntent();
-  }, [orderId, estimate]);
+  }, [orderId, estimate, router]);
 
   const options = {
     clientSecret: clientSecret || undefined,

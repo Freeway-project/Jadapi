@@ -17,9 +17,9 @@
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pm2:build": "rm -rf dist && pnpm install && pnpm run build",
-    "pm2:restart": "pm2 restart jadapi-server || pm2 start dist/server.js --name jadapi-server --time",
-    "pm2:stop": "pm2 stop jadapi-server",
-    "pm2:logs": "pm2 logs jadapi-server",
+    "pm2:restart": "pm2 restart jaddpi-server || pm2 start dist/server.js --name jaddpi-server --time",
+    "pm2:stop": "pm2 stop jaddpi-server",
+    "pm2:logs": "pm2 logs jaddpi-server",
     "pm2:monit": "pm2 monit",
     "deploy": "pnpm run pm2:build && pnpm run pm2:restart"
   },

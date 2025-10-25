@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { PricingConfig } from '../types/pricing.types';
 import defaultConfig from '../config/app.config';
+import { logger } from '../utils/logger';
 
 /**
  * Configuration service for loading and managing pricing configuration
@@ -31,7 +32,7 @@ export class ConfigService {
       this.cachedConfig = defaultConfig as AppConfig;
       return this.cachedConfig;
     } catch (error) {
-      console.error('Failed to load config:', error);
+      logger.error({ error }, 'Failed to load config');
       throw new Error('Configuration file not found or invalid');
     }
   }
@@ -96,7 +97,7 @@ export class ConfigService {
       // Reload cache
       await this.reloadConfig();
     } catch (error) {
-      console.error('Failed to update config:', error);
+      logger.error({ error }, 'Failed to update config');
       throw new Error('Failed to write configuration file');
     }
   }
