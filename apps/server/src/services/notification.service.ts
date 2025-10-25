@@ -98,7 +98,7 @@ export class NotificationService {
         phoneE164: phoneNumber,
         message,
         type,
-        senderId: "Jadapi"
+        senderId: "Jaddpi"
       });
       logger.info({ phoneNumber, type }, `Custom message sent to ${phoneNumber}`);
     } catch (error) {

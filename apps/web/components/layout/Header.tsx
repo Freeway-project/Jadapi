@@ -16,7 +16,7 @@ export default function Header() {
             <div className="p-1.5 sm:p-2 bg-blue-600 rounded-lg sm:rounded-xl">
               <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="text-lg sm:text-xl font-bold text-gray-900">JadAPI</span>
+            <span className="text-lg sm:text-xl font-bold text-gray-900">JadDPI</span>
           </Link>
 
           <div className="flex items-center space-x-2 sm:space-x-3">

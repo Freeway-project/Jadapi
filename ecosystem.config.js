@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: 'jadapi-server',
-    cwd: '/home/ubuntu/Jadapi/apps/server',
+      name: 'jaddpi-server',
+    cwd: '/home/ubuntu/Jaddpi/apps/server',
       script: 'dist/server.js',
       instances: 1,
       exec_mode: 'cluster',
@@ -12,9 +12,9 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 4001,
       },
-  error_file: '/home/ubuntu/Jadapi/logs/server-error.log',
-  out_file: '/home/ubuntu/Jadapi/logs/server-out.log',
-  log_file: '/home/ubuntu/Jadapi/logs/server-combined.log',
+  error_file: '/home/ubuntu/Jaddpi/logs/server-error.log',
+  out_file: '/home/ubuntu/Jaddpi/logs/server-out.log',
+  log_file: '/home/ubuntu/Jaddpi/logs/server-combined.log',
       time: true,
       autorestart: true,
       max_restarts: 10,

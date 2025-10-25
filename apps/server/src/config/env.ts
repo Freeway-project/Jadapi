@@ -12,7 +12,7 @@ export const ENV = {
   SMTP_SECURE: process.env.SMTP_SECURE === "true",
   SMTP_USER: process.env.SMTP_USER ?? "",
   SMTP_PASS: process.env.SMTP_PASS ?? "",
-  SMTP_FROM_NAME: process.env.SMTP_FROM_NAME ?? "Jadapi App",
+  SMTP_FROM_NAME: process.env.SMTP_FROM_NAME ?? "Jaddpi App",
   SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL ?? process.env.SMTP_USER ?? "",
   ADMIN_NOTIFICATION_EMAIL: process.env.ADMIN_NOTIFICATION_EMAIL ?? "canadaharsh2002@gmail.com",
 

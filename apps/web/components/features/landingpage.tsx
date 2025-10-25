@@ -2,7 +2,7 @@ import { MapPin, Package, Shield, Clock, BarChart3, FileText, Camera, CheckCircl
 import { BaseAnimation } from '../animations';
 import Header from '../layout/Header';
 
-export default function JadapiLanding() {
+export default function JaddpiLanding() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -186,7 +186,7 @@ export default function JadapiLanding() {
               <span>What area do you serve?</span>
               <span className="text-blue-600 group-open:rotate-180 transition-transform">▼</span>
             </summary>
-            <p className="mt-4 text-gray-600 leading-relaxed">Currently, jadapi operates exclusively within Vancouver, BC. We do not ship hazardous items or materials. Join our waitlist to be notified when we expand to nearby cities.</p>
+            <p className="mt-4 text-gray-600 leading-relaxed">Currently, jaddpi operates exclusively within Vancouver, BC. We do not ship hazardous items or materials. Join our waitlist to be notified when we expand to nearby cities.</p>
           </details>
           
           <details className="bg-white rounded-lg border border-gray-200 p-6 group">
@@ -228,7 +228,7 @@ export default function JadapiLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
-              <div className="text-2xl font-bold text-white">jadapi</div>
+              <div className="text-2xl font-bold text-white">jaddpi</div>
               <span className="px-3 py-1 bg-blue-900 text-blue-300 rounded-full text-xs font-medium">Local to Vancouver, BC</span>
             </div>
             
@@ -240,7 +240,7 @@ export default function JadapiLanding() {
           </div>
           
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
-            © 2025 jadapi. All rights reserved.
+            © 2025 jaddpi. All rights reserved.
           </div>
         </div>
       </footer>

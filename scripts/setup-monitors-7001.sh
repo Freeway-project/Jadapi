@@ -22,7 +22,7 @@ MONITOR 1: Server Health Check ⭐ (CRITICAL)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
 
-echo "Name:           Jadapi - Health Check"
+echo "Name:           Jaddpi - Health Check"
 echo "Monitor Type:   HTTP(s)"
 echo "URL:            http://$VPS_IP:4001/health"
 echo "Method:         GET"
@@ -37,7 +37,7 @@ MONITOR 2: API Status Check
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
 
-echo "Name:           Jadapi - API Status"
+echo "Name:           Jaddpi - API Status"
 echo "Monitor Type:   HTTP(s)"
 echo "URL:            http://$VPS_IP:4001/api/status"
 echo "Method:         GET"
@@ -52,7 +52,7 @@ MONITOR 3: Web Frontend
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOF
 
-echo "Name:           Jadapi - Frontend"
+echo "Name:           Jaddpi - Frontend"
 echo "Monitor Type:   HTTP(s)"
 echo "URL:            http://$VPS_IP:3000"
 echo "Method:         GET"

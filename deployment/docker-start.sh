@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-echo "Starting JadAPI Services..."
+echo "Starting JadDPI Services..."
 cd ..
 docker compose up -d
 echo "✓ Services started!"

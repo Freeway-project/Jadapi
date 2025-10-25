@@ -24,7 +24,7 @@ export const emailConfig: EmailConfig = {
     pass: process.env.SMTP_PASS || "",
   },
   from: {
-    name: process.env.SMTP_FROM_NAME || "Jadapi App",
+    name: process.env.SMTP_FROM_NAME || "Jaddpi App",
     email: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || "",
   },
 };
