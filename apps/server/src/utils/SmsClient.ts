@@ -3,9 +3,16 @@ import { logger } from "./logger";
 import { SmsRateLimitService } from "../services/smsRateLimit.service";
 import { ApiError } from "./ApiError";
 
-const sns = new SNSClient({ region: "ca-central-1" });
+const sns = new SNSClient({ 
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
+  }
+});
 
 export type SmsType = "otp" | "delivery" | "booking" | "promotional" | "transactional";
+export type SmsSource = "form" | "api" | "system" | "manual" | "other";
 
 interface SmsOptions {
   phoneE164: string;
@@ -13,24 +20,41 @@ interface SmsOptions {
   type?: SmsType;
   senderId?: string;
   skipRateLimit?: boolean; // Emergency bypass (use with caution)
+  source?: SmsSource; // Track where the SMS request came from
+  metadata?: Record<string, string>; // Additional context about the request
 }
 
 /**
  * Generic SMS sender for all types of messages with rate limiting and cost control
  */
 export async function sendSms(options: SmsOptions): Promise<void> {
-  const { phoneE164, message, type = "transactional", senderId = "jaddpi", skipRateLimit = false } = options;
+  const { 
+    phoneE164, 
+    message, 
+    type = "transactional", 
+    senderId = "jaddpi", 
+    skipRateLimit = false,
+    source = "other",
+    metadata = {}
+  } = options;
 
-  logger.info({ phoneE164, type, messageLength: message.length }, `Attempting to send SMS`);
+  logger.info({ 
+    phoneE164, 
+    type, 
+    messageLength: message.length,
+    source,
+    metadata
+  }, `Attempting to send SMS from ${source}`);
 
   // Check rate limits (unless emergency bypass)
   if (!skipRateLimit) {
     const rateLimitCheck = await SmsRateLimitService.canSendSms(phoneE164, type, message);
 
     if (!rateLimitCheck.allowed) {
-      logger.warn({ phoneE164, type, reason: rateLimitCheck.reason }, "SMS blocked by rate limit");
+      logger.warn({ phoneE164, type, source, reason: rateLimitCheck.reason }, "SMS blocked by rate limit");
       throw new ApiError(429, rateLimitCheck.reason || "SMS rate limit exceeded", {
         retryAfter: rateLimitCheck.retryAfter,
+        source,
       });
     }
   }
@@ -38,23 +62,42 @@ export async function sendSms(options: SmsOptions): Promise<void> {
   // Determine SMS type for AWS SNS
   const smsType = type === "promotional" ? "Promotional" : "Transactional";
 
+  // Prepare metadata for SNS
+  const messageAttributes = {
+    "AWS.SNS.SMS.SMSType": { DataType: "String", StringValue: smsType },
+    "AWS.SNS.SMS.SenderID": { DataType: "String", StringValue: senderId },
+    "Custom.Source": { DataType: "String", StringValue: source },
+    ...Object.entries(metadata).reduce((acc, [key, value]) => ({
+      ...acc,
+      [`Custom.${key}`]: { DataType: "String", StringValue: value }
+    }), {})
+  };
+
   const cmd = new PublishCommand({
     PhoneNumber: phoneE164,
     Message: message,
-    MessageAttributes: {
-      "AWS.SNS.SMS.SMSType": { DataType: "String", StringValue: smsType },
-      "AWS.SNS.SMS.SenderID": { DataType: "String", StringValue: senderId },
-    }
+    MessageAttributes: messageAttributes
   });
 
   try {
     await sns.send(cmd);
-    logger.info({ phoneE164, type }, `SMS sent successfully to ${phoneE164} (type: ${type})`);
+    logger.info({ 
+      phoneE164, 
+      type, 
+      source,
+      metadata 
+    }, `SMS sent successfully to ${phoneE164} (type: ${type}, source: ${source})`);
 
     // Record successful send for rate limiting
     await SmsRateLimitService.recordSmsSent(phoneE164, type, message);
   } catch (error) {
-    logger.error({ error, phoneE164, type }, `Failed to send SMS to ${phoneE164}`);
+    logger.error({ 
+      error, 
+      phoneE164, 
+      type,
+      source,
+      metadata 
+    }, `Failed to send SMS to ${phoneE164} from source ${source}`);
 
     // Record failure for cooldown
     await SmsRateLimitService.recordSmsFailure(phoneE164, type);

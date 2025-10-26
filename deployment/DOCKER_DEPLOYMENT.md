@@ -1,6 +1,6 @@
-# Docker Deployment Guide for JadAPI
+# Docker Deployment Guide for jaddpi
 
-Complete guide for deploying JadAPI using Docker and Docker Compose with Nginx reverse proxy.
+Complete guide for deploying jaddpi using Docker and Docker Compose with Nginx reverse proxy.
 
 ## Architecture
 
@@ -21,8 +21,8 @@ Internet → Nginx (Port 80/443)
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/Freeway-project/Jadapi.git
-cd Jadapi
+git clone https://github.com/Freeway-project/jaddpi.git
+cd jaddpi
 ```
 
 ### 2. Configure Environment
@@ -67,7 +67,7 @@ docker compose up -d
 
 #### Backend
 ```env
-MONGODB_URI=mongodb://localhost:27017/jadapi
+MONGODB_URI=mongodb://localhost:27017/jaddpi
 JWT_SECRET=your-secret-here
 JWT_REFRESH_SECRET=your-refresh-secret-here
 STRIPE_SECRET_KEY=sk_test_your_key
@@ -78,7 +78,7 @@ GOOGLE_MAPS_API_KEY=your_key
 ```env
 NEXT_PUBLIC_API_URL=http://localhost/api
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
-NEXT_PUBLIC_APP_NAME=JadAPI
+NEXT_PUBLIC_APP_NAME=jaddpi
 ```
 
 See `.env.example` for complete list.
@@ -147,17 +147,17 @@ docker compose exec server npm run migrate
 ## Services
 
 ### Nginx (Reverse Proxy)
-- **Container:** jadapi-nginx
+- **Container:** jaddpi-nginx
 - **Ports:** 80, 443
 - **Config:** `nginx-docker.conf`
 
 ### Frontend (Next.js)
-- **Container:** jadapi-web
+- **Container:** jaddpi-web
 - **Internal Port:** 3000
 - **Dockerfile:** `apps/web/Dockerfile`
 
 ### Backend (Express)
-- **Container:** jadapi-server
+- **Container:** jaddpi-server
 - **Internal Port:** 5000
 - **Dockerfile:** `apps/server/Dockerfile`
 
@@ -182,8 +182,8 @@ docker compose version
 
 ```bash
 # Clone repository
-git clone https://github.com/Freeway-project/Jadapi.git
-cd Jadapi
+git clone https://github.com/Freeway-project/jaddpi.git
+cd jaddpi
 
 # Configure environment
 cp .env.example .env
@@ -483,7 +483,7 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /path/to/Jadapi
+            cd /path/to/jaddpi
             git pull
             ./docker-build.sh
             docker compose down

@@ -9,7 +9,7 @@ import { Label } from '@workspace/ui/components/label';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('jadapi@admin.com');
+  const [email, setEmail] = useState('jaddpi@admin.com');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);

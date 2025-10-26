@@ -58,7 +58,7 @@ jobs:
           context: .
           file: ./apps/server/Dockerfile
           push: false
-          tags: jadapi-server:${{ github.sha }}
+          tags: jaddpi-server:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: type=docker,dest=/tmp/server-image.tar
@@ -113,12 +113,12 @@ jobs:
       - name: Run Server Container
         run: |
           docker run -d \
-            --name jadapi-server \
+            --name jaddpi-server \
             --network host \
             -e NODE_ENV=test \
             -e PORT=4001 \
-            -e MONGO_URI=mongodb://localhost:27017/jadapi-test \
-            -e MONGODB_URI=mongodb://localhost:27017/jadapi-test \
+            -e MONGO_URI=mongodb://localhost:27017/jaddpi-test \
+            -e MONGODB_URI=mongodb://localhost:27017/jaddpi-test \
             -e REDIS_URL=redis://localhost:6379 \
             -e JWT_SECRET=test-secret-key-for-ci-cd-pipeline \
             -e STRIPE_SECRET_KEY=sk_test_mock \
@@ -131,13 +131,13 @@ jobs:
             -e SMTP_PASS=test-pass \
             -e SMTP_FROM_EMAIL=test@example.com \
             -e SMTP_FROM_NAME=Test \
-            jadapi-server:${{ github.sha }}
+            jaddpi-server:${{ github.sha }}
 
       - name: Verify Environment Variables
         run: |
           echo "Checking environment variables in container..."
-          docker exec jadapi-server sh -c 'echo "MONGO_URI=$MONGO_URI"'
-          docker exec jadapi-server sh -c 'echo "PORT=$PORT"'
+          docker exec jaddpi-server sh -c 'echo "MONGO_URI=$MONGO_URI"'
+          docker exec jaddpi-server sh -c 'echo "PORT=$PORT"'
 
       - name: Wait for Server to Start
         run: |
@@ -152,7 +152,7 @@ jobs:
           done
           echo "❌ Server failed to become healthy"
           echo "Container logs:"
-          docker logs jadapi-server
+          docker logs jaddpi-server
           exit 1
 
       - name: Test Health Endpoint
@@ -179,13 +179,13 @@ jobs:
 
       - name: Show Container Logs on Failure
         if: failure()
-        run: docker logs jadapi-server
+        run: docker logs jaddpi-server
 
       - name: Cleanup
         if: always()
         run: |
-          docker stop jadapi-server || true
-          docker rm jadapi-server || true
+          docker stop jaddpi-server || true
+          docker rm jaddpi-server || true
 
   # Job 4: Security Scan
   security-scan:
@@ -209,7 +209,7 @@ jobs:
       - name: Run Trivy Security Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: jadapi-server:${{ github.sha }}
+          image-ref: jaddpi-server:${{ github.sha }}
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true

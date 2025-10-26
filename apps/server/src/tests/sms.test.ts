@@ -83,7 +83,7 @@ describe("SMS Client Tests", () => {
   }, 10000);
 
   test("should send custom message", async () => {
-    const customMessage = "This is a test message from Jadapi logistics platform.";
+    const customMessage = "This is a test message from jaddpi logistics platform.";
     
     if (DRY_RUN) {
       console.log(`Would send custom message to ${TEST_PHONE}: ${customMessage}`);
@@ -138,7 +138,7 @@ export async function runManualSmsTests() {
       name: "Custom Message",
       fn: () => sendSms({
         phoneE164: TEST_PHONE,
-        message: "Test message from Jadapi SMS client",
+        message: "Test message from jaddpi SMS client",
         type: "transactional"
       })
     }

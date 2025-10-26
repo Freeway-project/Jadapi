@@ -1,4 +1,4 @@
-# JadAPI Deployment
+# jaddpi Deployment
 
 All deployment scripts and documentation.
 

@@ -1,0 +1,81 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10.4.1'
+
+jobs:
+  deploy:
+    name: Deploy to Production VPS
+    runs-on: ubuntu-latest
+    # Only deploy if CI checks passed (you can add this as a dependency if needed)
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            echo "🚀 Starting deployment..."
+
+            # Navigate to project directory
+            cd /home/ubuntu/Jadapi || exit 1
+
+            # Pull latest changes from main
+            echo "📥 Pulling latest changes from main branch..."
+            git pull origin main
+
+            # Stop existing containers
+            echo "🛑 Stopping existing containers..."
+            docker compose down
+
+            # Build new images
+            echo "🔨 Building Docker images..."
+            docker compose build --no-cache
+
+            # Start containers
+            echo "▶️  Starting containers..."
+            docker compose up -d
+
+            # Wait for services to be healthy
+            echo "⏳ Waiting for services to be healthy..."
+            sleep 10
+
+            # Check container status
+            echo "📊 Container status:"
+            docker compose ps
+
+            # Check server health
+            echo "🏥 Checking server health..."
+            for i in {1..30}; do
+              if curl -s http://localhost:5000/health > /dev/null 2>&1; then
+                echo "✅ Server is healthy!"
+                break
+              fi
+              echo "Attempt $i/30: Server not ready yet..."
+              sleep 2
+            done
+
+            # Clean up old images
+            echo "🧹 Cleaning up old Docker images..."
+            docker image prune -f
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deployment to VPS succeeded"
+          else
+            echo "❌ Deployment to VPS failed"
+            exit 1
+          fi

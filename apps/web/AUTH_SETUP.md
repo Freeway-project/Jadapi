@@ -100,13 +100,13 @@ Beautiful login UI with:
    ```bash
    curl -X POST http://localhost:3006/api/auth/create-admin \
      -H "Content-Type: application/json" \
-     -d '{"email":"admin@jadapi.com","password":"Admin123!","displayName":"Jadapi Admin"}'
+     -d '{"email":"admin@jaddpi.com","password":"Admin123!","displayName":"jaddpi Admin"}'
    ```
 
 3. **Access the admin panel:**
    - Visit: `http://localhost:3004/admin/dashboard`
    - You'll be redirected to `/admin/login`
-   - Login with: `admin@jadapi.com` / `Admin123!`
+   - Login with: `admin@jaddpi.com` / `Admin123!`
    - You'll be redirected to the dashboard
 
 4. **Try protected features:**

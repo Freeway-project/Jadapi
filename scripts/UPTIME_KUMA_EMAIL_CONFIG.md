@@ -5,7 +5,7 @@
 ### Your Email Setup:
 - **Sending From:** indianshahishere@gmail.com
 - **Sending To:** jaddpi1@gmail.com
-- **From Name:** jadapi
+- **From Name:** jaddpi
 
 ---
 
@@ -48,7 +48,7 @@ Open: `http://your-vps-ip:7001`
 | Security | TLS (STARTTLS) |
 | Username | indianshahishere@gmail.com |
 | Password | iispstgsnsrdauro |
-| From | indianshahishere@gmail.com (jadapi) |
+| From | indianshahishere@gmail.com (jaddpi) |
 | To | jaddpi1@gmail.com |
 
 ---
@@ -57,11 +57,11 @@ Open: `http://your-vps-ip:7001`
 
 ### When Monitor Goes DOWN:
 ```
-From: jadapi <indianshahishere@gmail.com>
+From: jaddpi <indianshahishere@gmail.com>
 To: jaddpi1@gmail.com
-Subject: [Jadapi Alert] Jadapi - Health Check is DOWN
+Subject: [jaddpi Alert] jaddpi - Health Check is DOWN
 
-Monitor: Jadapi - Health Check
+Monitor: jaddpi - Health Check
 Status: DOWN
 Time: 2025-10-20 05:45:00
 Message: HTTP Error 503
@@ -70,11 +70,11 @@ URL: http://your-ip:4001/health
 
 ### When Monitor Comes UP:
 ```
-From: jadapi <indianshahishere@gmail.com>
+From: jaddpi <indianshahishere@gmail.com>
 To: jaddpi1@gmail.com
-Subject: [Jadapi Alert] Jadapi - Health Check is UP
+Subject: [jaddpi Alert] jaddpi - Health Check is UP
 
-Monitor: Jadapi - Health Check
+Monitor: jaddpi - Health Check
 Status: UP
 Time: 2025-10-20 05:46:30
 ```
@@ -87,12 +87,12 @@ In Uptime Kuma notification settings, you can customize:
 
 **Subject Line:**
 ```
-[Jadapi] {{MONITOR_NAME}} is {{STATUS}}
+[jaddpi] {{MONITOR_NAME}} is {{STATUS}}
 ```
 
 **Email Body:**
 ```
-🚨 Jadapi Monitoring Alert
+🚨 jaddpi Monitoring Alert
 
 Monitor: {{MONITOR_NAME}}
 Status: {{STATUS}}
@@ -102,7 +102,7 @@ Message: {{ERROR_MESSAGE}}
 URL: {{MONITOR_URL}}
 
 ────────────────────────
-Jadapi Monitoring System
+jaddpi Monitoring System
 ```
 
 ---
@@ -150,7 +150,7 @@ jaddpi1@gmail.com, another@email.com, team@company.com
 ## 🎉 You're All Set!
 
 Alerts will be sent:
-- **FROM:** jadapi (indianshahishere@gmail.com)
+- **FROM:** jaddpi (indianshahishere@gmail.com)
 - **TO:** jaddpi1@gmail.com
 
 Whenever your monitors go down or come back up! 🚀

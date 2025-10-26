@@ -115,7 +115,7 @@ async function testAwsSns() {
     {
       name: "💬 Custom Message",
       test: async () => {
-        const message = "Hello from Jadapi! This is a test of our SMS system. 📱✨";
+        const message = "Hello from jaddpi! This is a test of our SMS system. 📱✨";
         console.log(`   Message: "${message}"`);
         
         if (!DRY_RUN) {

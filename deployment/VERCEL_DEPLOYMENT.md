@@ -1,4 +1,4 @@
-# Vercel Deployment Guide for JadAPI
+# Vercel Deployment Guide for jaddpi
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
 ### Optional Variables
 ```
-NEXT_PUBLIC_APP_NAME=JadAPI
+NEXT_PUBLIC_APP_NAME=jaddpi
 NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
 NEXT_PUBLIC_ENABLE_DEBUG=false
 NEXT_PUBLIC_MAINTENANCE_MODE=false
@@ -66,10 +66,10 @@ NEXT_PUBLIC_CDN_URL=https://cdn.yourdomain.com
 1. Go to Vercel Dashboard
 2. Click **Add New** → **Project**
 3. Import your GitHub repository
-4. Select the repository containing JadAPI
+4. Select the repository containing jaddpi
 
 ### 4.2 Configure Project
-1. Project Name: `jadapi-web` (or your preferred name)
+1. Project Name: `jaddpi-web` (or your preferred name)
 2. Framework Preset: Next.js
 3. Root Directory: Leave as `.` (project root)
 4. Build settings: Use the configuration from Step 3
@@ -88,7 +88,7 @@ NEXT_PUBLIC_CDN_URL=https://cdn.yourdomain.com
 
 ```bash
 # Navigate to project root
-cd /path/to/Jadapi
+cd /path/to/jaddpi
 
 # Deploy to production
 vercel --prod
@@ -97,7 +97,7 @@ vercel --prod
 # - Set up and deploy: Y
 # - Which scope: Select your team/personal account
 # - Link to existing project: N (first time) or Y (subsequent)
-# - Project name: jadapi-web
+# - Project name: jaddpi-web
 # - In which directory is your code located: ./
 ```
 

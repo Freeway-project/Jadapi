@@ -1,6 +1,88 @@
-# Jadapi Server Deployment Guide
+# jaddpi Server Deployment Guide
 
-This guide covers deploying the Jadapi API server on your VPS with Nginx and PM2.
+This guide covers two deployment methods:
+1. **CI/CD with Docker** (Recommended) - Automated deployment via GitHub Actions
+2. **Manual with PM2** - Traditional deployment with Nginx and PM2
+
+---
+
+## Method 1: CI/CD with Docker (Recommended)
+
+### Overview
+
+Automated deployment using GitHub Actions that triggers on every push to `main` branch.
+
+### Setup GitHub Secrets
+
+1. Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret** and add:
+
+| Secret Name | Description | Example |
+|------------|-------------|---------|
+| `SSH_HOST` | VPS IP address or hostname | `123.45.67.89` |
+| `SSH_USER` | SSH username | `ubuntu` |
+| `SSH_KEY` | Private SSH key (entire content) | Contents of `~/.ssh/your-key.pem` |
+| `SSH_PORT` | SSH port (optional) | `22` |
+
+**To get SSH_KEY value:**
+```bash
+cat ~/.ssh/your-key.pem
+# Copy entire output including BEGIN/END lines
+```
+
+### VPS Prerequisites
+
+Ensure your VPS has:
+- Docker and Docker Compose installed
+- Project cloned at `/home/ubuntu/Jadapi`
+- `.env` file configured in `/home/ubuntu/Jadapi/apps/server/.env`
+
+### Deployment Process
+
+When you push to `main`:
+1. ✅ CI pipeline runs (lint, type-check, build, test)
+2. 🚀 Deploy workflow triggers automatically
+3. 📥 Pulls latest code on VPS
+4. 🛑 Stops existing containers
+5. 🔨 Builds new Docker images
+6. ▶️ Starts containers
+7. 🏥 Checks service health
+8. 🧹 Cleans up old images
+
+### Manual Trigger
+
+Go to **Actions** tab → **Deploy to VPS** → **Run workflow**
+
+### Monitor Deployment
+
+- View logs in GitHub **Actions** tab
+- SSH into VPS and check: `docker compose ps`
+- View container logs: `docker compose logs -f`
+
+### Troubleshooting CI/CD
+
+```bash
+# SSH into VPS
+cd /home/ubuntu/Jadapi
+
+# Check container status
+docker compose ps
+
+# View logs
+docker compose logs
+
+# Restart containers
+docker compose restart
+
+# Rebuild if needed
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## Method 2: Manual Deployment with PM2
 
 ## Quick Start
 
@@ -35,7 +117,7 @@ That's it! Your API is now running at `http://your-server-ip/api`
 - `deploy.sh` - Automated deployment script (pull, build, restart)
 - `setup-nginx.sh` - One-time Nginx configuration
 - `ecosystem.config.js` - PM2 process configuration
-- `nginx-jadapi.conf` - Nginx reverse proxy configuration
+- `nginx-jaddpi.conf` - Nginx reverse proxy configuration
 
 ---
 
@@ -46,7 +128,7 @@ That's it! Your API is now running at `http://your-server-ip/api`
 After making changes and pushing to the `main` branch:
 
 ```bash
-cd /home/ubuntu/Development/Jadapi
+cd /home/ubuntu/Development/jaddpi
 bash deploy.sh
 ```
 
@@ -73,33 +155,33 @@ This script will:
 
 ### View Logs
 ```bash
-pm2 logs jadapi-server
+pm2 logs jaddpi-server
 ```
 
 ### View Real-time Logs
 ```bash
-pm2 logs jadapi-server --lines 100
+pm2 logs jaddpi-server --lines 100
 ```
 
 ### Restart Server
 ```bash
-pm2 restart jadapi-server
+pm2 restart jaddpi-server
 ```
 
 ### Stop Server
 ```bash
-pm2 stop jadapi-server
+pm2 stop jaddpi-server
 ```
 
 ### Start Server
 ```bash
-pm2 start jadapi-server
+pm2 start jaddpi-server
 ```
 
 ### View Process Status
 ```bash
 pm2 status
-pm2 describe jadapi-server
+pm2 describe jaddpi-server
 ```
 
 ### Monitor Resources
@@ -118,8 +200,8 @@ pm2 save
 ## Nginx Configuration
 
 ### Location
-- **Config file:** `/etc/nginx/sites-available/jadapi`
-- **Enabled symlink:** `/etc/nginx/sites-enabled/jadapi`
+- **Config file:** `/etc/nginx/sites-available/jaddpi`
+- **Enabled symlink:** `/etc/nginx/sites-enabled/jaddpi`
 
 ### Current Setup
 - Listens on port 80
@@ -139,10 +221,10 @@ sudo systemctl reload nginx
 ### View Nginx Logs
 ```bash
 # Access logs
-sudo tail -f /var/log/nginx/jadapi-access.log
+sudo tail -f /var/log/nginx/jaddpi-access.log
 
 # Error logs
-sudo tail -f /var/log/nginx/jadapi-error.log
+sudo tail -f /var/log/nginx/jaddpi-error.log
 ```
 
 ---
@@ -156,7 +238,7 @@ When you get a domain name:
 
 2. **Update Nginx configuration**
    ```bash
-   sudo nano /etc/nginx/sites-available/jadapi
+   sudo nano /etc/nginx/sites-available/jaddpi
    ```
 
    Change this line:
@@ -210,7 +292,7 @@ sudo certbot renew
 
 ## Environment Variables
 
-Located at: `/home/ubuntu/Development/Jadapi/apps/server/.env`
+Located at: `/home/ubuntu/Development/jaddpi/apps/server/.env`
 
 ### Important Variables to Configure
 
@@ -271,13 +353,13 @@ sudo netstat -tulpn | grep :4001
 ### View All Logs
 ```bash
 # Application logs
-pm2 logs jadapi-server
+pm2 logs jaddpi-server
 
 # Nginx access logs
-sudo tail -f /var/log/nginx/jadapi-access.log
+sudo tail -f /var/log/nginx/jaddpi-access.log
 
 # Nginx error logs
-sudo tail -f /var/log/nginx/jadapi-error.log
+sudo tail -f /var/log/nginx/jaddpi-error.log
 
 # System logs
 journalctl -u nginx -f
@@ -290,13 +372,13 @@ journalctl -u nginx -f
 ### Server Not Starting
 ```bash
 # Check PM2 logs
-pm2 logs jadapi-server --err
+pm2 logs jaddpi-server --err
 
 # Check if port 4001 is in use
 sudo lsof -i :4001
 
 # Restart the server
-pm2 restart jadapi-server
+pm2 restart jaddpi-server
 ```
 
 ### Nginx 502 Bad Gateway
@@ -305,17 +387,17 @@ pm2 restart jadapi-server
 pm2 status
 
 # Check Nginx error logs
-sudo tail -f /var/log/nginx/jadapi-error.log
+sudo tail -f /var/log/nginx/jaddpi-error.log
 
 # Restart both services
-pm2 restart jadapi-server
+pm2 restart jaddpi-server
 sudo systemctl restart nginx
 ```
 
 ### Build Failures
 ```bash
 # Clear node_modules and reinstall
-cd /home/ubuntu/Development/Jadapi
+cd /home/ubuntu/Development/jaddpi
 rm -rf node_modules apps/*/node_modules
 pnpm install
 
@@ -333,7 +415,7 @@ sudo lsof -i :4001
 sudo kill -9 PID
 
 # Restart PM2
-pm2 restart jadapi-server
+pm2 restart jaddpi-server
 ```
 
 ---
@@ -358,7 +440,7 @@ sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 
 ### Create Backup
 ```bash
-cd /home/ubuntu/Development/Jadapi
+cd /home/ubuntu/Development/jaddpi
 git stash
 git tag backup-$(date +%Y%m%d-%H%M%S)
 git push origin --tags
@@ -366,7 +448,7 @@ git push origin --tags
 
 ### Rollback to Previous Version
 ```bash
-cd /home/ubuntu/Development/Jadapi
+cd /home/ubuntu/Development/jaddpi
 git log --oneline  # Find the commit to rollback to
 git reset --hard COMMIT_HASH
 bash deploy.sh
@@ -420,10 +502,10 @@ sudo netstat -tulpn
 bash deploy.sh
 
 # View logs
-pm2 logs jadapi-server
+pm2 logs jaddpi-server
 
 # Restart server
-pm2 restart jadapi-server
+pm2 restart jaddpi-server
 
 # Nginx reload
 sudo systemctl reload nginx
@@ -432,7 +514,7 @@ sudo systemctl reload nginx
 pm2 status && sudo systemctl status nginx
 
 # View real-time logs
-pm2 logs jadapi-server --lines 100
+pm2 logs jaddpi-server --lines 100
 ```
 
 ---
@@ -440,7 +522,7 @@ pm2 logs jadapi-server --lines 100
 ## Support
 
 For issues or questions:
-1. Check logs: `pm2 logs jadapi-server`
-2. Check Nginx logs: `sudo tail -f /var/log/nginx/jadapi-error.log`
+1. Check logs: `pm2 logs jaddpi-server`
+2. Check Nginx logs: `sudo tail -f /var/log/nginx/jaddpi-error.log`
 3. Review this deployment guide
-4. Check application logs in `/home/ubuntu/Development/Jadapi/logs/`
+4. Check application logs in `/home/ubuntu/Development/jaddpi/logs/`

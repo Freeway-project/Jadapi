@@ -48,7 +48,7 @@ If you prefer step-by-step deployment:
 
 ### 1. Build the Server
 ```bash
-cd /home/ubuntu/Jadapi/jadapi-app/apps/server
+cd /home/ubuntu/jaddpi/jaddpi-app/apps/server
 rm -rf dist
 pnpm install
 pnpm run build
@@ -62,9 +62,9 @@ ls -la dist/
 
 ### 3. Restart PM2
 ```bash
-pm2 restart jadapi-server
+pm2 restart jaddpi-server
 # OR if not running yet:
-pm2 start dist/server.js --name jadapi-server --time
+pm2 start dist/server.js --name jaddpi-server --time
 ```
 
 ### 4. Save PM2 Configuration
@@ -76,7 +76,7 @@ pm2 startup  # To auto-start on server reboot
 ### 5. Check Status
 ```bash
 pm2 status
-pm2 logs jadapi-server --lines 50
+pm2 logs jaddpi-server --lines 50
 ```
 
 ---
@@ -86,7 +86,7 @@ pm2 logs jadapi-server --lines 50
 Alternative method using the provided shell script:
 
 ```bash
-cd /home/ubuntu/Jadapi/jadapi-app/apps/server
+cd /home/ubuntu/jaddpi/jaddpi-app/apps/server
 ./build-and-restart.sh
 ```
 
@@ -104,16 +104,16 @@ The script provides:
 ### Process Management
 ```bash
 pm2 list                     # List all processes
-pm2 restart jadapi-server    # Restart server
-pm2 stop jadapi-server       # Stop server
-pm2 delete jadapi-server     # Remove from PM2
-pm2 reload jadapi-server     # Zero-downtime restart
+pm2 restart jaddpi-server    # Restart server
+pm2 stop jaddpi-server       # Stop server
+pm2 delete jaddpi-server     # Remove from PM2
+pm2 reload jaddpi-server     # Zero-downtime restart
 ```
 
 ### Monitoring
 ```bash
-pm2 logs jadapi-server       # Stream logs
-pm2 logs jadapi-server --lines 100  # Show last 100 lines
+pm2 logs jaddpi-server       # Stream logs
+pm2 logs jaddpi-server --lines 100  # Show last 100 lines
 pm2 monit                    # Real-time monitoring
 pm2 status                   # Process status
 ```
@@ -130,11 +130,11 @@ pm2 unstartup                # Disable startup script
 
 ## Environment Variables
 
-Make sure these are set in `/home/ubuntu/Jadapi/jadapi-app/apps/server/.env`:
+Make sure these are set in `/home/ubuntu/jaddpi/jaddpi-app/apps/server/.env`:
 
 ```env
 # Database
-MONGODB_URI=mongodb://localhost:27017/jadapi
+MONGODB_URI=mongodb://localhost:27017/jaddpi
 
 # Server
 PORT=3006
@@ -179,20 +179,20 @@ lsof -i :3006
 kill -9 $(lsof -t -i:3006)
 
 # Start fresh
-pm2 delete jadapi-server
+pm2 delete jaddpi-server
 pnpm run deploy
 ```
 
 ### Check Logs for Errors
 ```bash
 # PM2 logs
-pm2 logs jadapi-server --lines 100
+pm2 logs jaddpi-server --lines 100
 
 # Error logs only
-pm2 logs jadapi-server --err
+pm2 logs jaddpi-server --err
 
 # Follow logs in real-time
-pm2 logs jadapi-server --lines 0
+pm2 logs jaddpi-server --lines 0
 ```
 
 ### Database Connection Issues
@@ -253,7 +253,7 @@ For automated deployments, you can add this to crontab or use in CI/CD:
 
 ```bash
 #!/bin/bash
-cd /home/ubuntu/Jadapi/jadapi-app/apps/server
+cd /home/ubuntu/jaddpi/jaddpi-app/apps/server
 git pull origin main
 pnpm run deploy
 pm2 save
