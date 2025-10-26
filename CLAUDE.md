@@ -11,4 +11,4 @@ Avoid speculative features; implement what the scope requires.
 - and make api call at unifrm place , follow exisiting architecure and patterns
 - Now aim of this session is on booking\
 Stick to the point ,dont add extra ,\
-Stick to current attribute and tkae feedback and give summary of task doen and why\
+Stick to current attribute and take feedback and give summary of task doen and why\
