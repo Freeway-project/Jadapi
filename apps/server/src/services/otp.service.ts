@@ -90,15 +90,24 @@ export const OtpService = {
       logger.debug({ identifier, code: code?.length ? `${code.slice(0,2)}****` : 'empty', type }, 'OtpService.verifyOtp - input data');
     }
 
+    // Normalize identifier - lowercase if it looks like an email
+    const normalizedIdentifier = identifier.includes('@')
+      ? identifier.toLowerCase().trim()
+      : identifier.trim();
+
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug({ original: identifier, normalized: normalizedIdentifier }, 'OtpService.verifyOtp - normalized identifier');
+    }
+
     // Find the latest unverified OTP for this identifier and type
     // Also check if the identifier matches email or phoneNumber fields for backwards compatibility
     const query = {
       $and: [
         {
           $or: [
-            { identifier },
-            { email: identifier },
-            { phoneNumber: identifier }
+            { identifier: normalizedIdentifier },
+            { email: normalizedIdentifier },
+            { phoneNumber: normalizedIdentifier }
           ]
         },
         { type },
@@ -168,13 +177,18 @@ export const OtpService = {
       logger.debug({ identifier, type }, 'OtpService.isIdentifierVerified - checking');
     }
 
+    // Normalize identifier - lowercase if it looks like an email
+    const normalizedIdentifier = identifier.includes('@')
+      ? identifier.toLowerCase().trim()
+      : identifier.trim();
+
     const query = {
       $and: [
         {
           $or: [
-            { identifier },
-            { email: identifier },
-            { phoneNumber: identifier }
+            { identifier: normalizedIdentifier },
+            { email: normalizedIdentifier },
+            { phoneNumber: normalizedIdentifier }
           ]
         },
         { type },

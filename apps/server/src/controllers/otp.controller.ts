@@ -120,15 +120,44 @@ export const OtpController = {
 
         // For login type, generate JWT token and return user data
         if (type === "login") {
+          // Normalize identifier - lowercase if email, trim otherwise
+          const normalizedIdentifier = identifier.includes('@')
+            ? identifier.toLowerCase().trim()
+            : identifier.trim();
+
+          // Build flexible phone query to match different formats
+          // If identifier is phone (no @), try to match with/without country code
+          const isPhone = !identifier.includes('@');
+          const phoneDigits = isPhone ? normalizedIdentifier.replace(/\D/g, '') : '';
+
           // Find user by identifier (email or phone)
-          user = await User.findOne({
+          const query = {
             $or: [
-              { "auth.email": identifier },
-              { "auth.phone": identifier },
-              { email: identifier },
-              { phone: identifier }
+              { "auth.email": normalizedIdentifier },
+              { "auth.phone": normalizedIdentifier },
+              ...(isPhone && phoneDigits ? [
+                { "auth.phone": { $regex: phoneDigits + '$' } }, // Match phone ending with digits
+                { "auth.phone": '+' + normalizedIdentifier }, // Try with +
+                { "auth.phone": '+1' + normalizedIdentifier }, // Try with +1 (US/Canada)
+              ] : [])
             ]
-          }).select("-password");
+          };
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 Finding user with query:', JSON.stringify(query, null, 2));
+          }
+
+          user = await User.findOne(query).select("-password");
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 User found:', user ? {
+              uuid: user.uuid,
+              'auth.email': user.auth?.email,
+              'auth.phone': user.auth?.phone,
+              status: user.status,
+              roles: user.roles
+            } : null);
+          }
 
           if (user && user.status === "active") {
             token = jwtUtils.generateToken({

@@ -2,6 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { UserService, SignupData } from "../services/user.service";
 import { OtpService } from "../services/otp.service";
 import { ApiError } from "../utils/ApiError";
+import { DeliveryOrder } from "../models/DeliveryOrder";
+import { Payment } from "../models/Payment";
+import { InvoiceService } from "../services/invoice.service";
+import { User } from "../models/user.model";
 
 export const UserController = {
   async signup(req: Request, res: Response, next: NextFunction) {
@@ -309,6 +313,205 @@ export const UserController = {
       res.json({
         success: true,
         data: dashboardData
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Get all orders for the authenticated user
+   * GET /api/users/orders
+   */
+  async getUserOrders(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const { limit = 20, skip = 0, status } = req.query;
+
+      // Build query filter
+      const filter: any = { userId };
+      if (status) {
+        filter.status = status;
+      }
+
+      // Fetch orders with pagination
+      const orders = await DeliveryOrder.find(filter)
+        .sort({ createdAt: -1 })
+        .limit(Number(limit))
+        .skip(Number(skip))
+        .lean();
+
+      const total = await DeliveryOrder.countDocuments(filter);
+
+      res.json({
+        success: true,
+        data: {
+          orders,
+          pagination: {
+            total,
+            limit: Number(limit),
+            skip: Number(skip),
+            hasMore: Number(skip) + orders.length < total
+          }
+        }
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Get a single order by orderId
+   * GET /api/users/orders/:orderId
+   */
+  async getOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const { orderId } = req.params;
+
+      // Find order - ensure it belongs to the authenticated user
+      const order = await DeliveryOrder.findOne({
+        orderId,
+        userId
+      }).lean();
+
+      if (!order) {
+        throw new ApiError(404, "Order not found");
+      }
+
+      // Get payment info if exists
+      const payment = await Payment.findOne({ orderId: order._id })
+        .select('status amount currency paymentMethod createdAt updatedAt')
+        .lean();
+
+      res.json({
+        success: true,
+        data: {
+          order,
+          payment
+        }
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Get invoice/receipt for an order
+   * GET /api/users/orders/:orderId/invoice
+   */
+  async getOrderInvoice(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const { orderId } = req.params;
+
+      // Find order - ensure it belongs to the authenticated user
+      const order = await DeliveryOrder.findOne({
+        orderId,
+        userId
+      });
+
+      if (!order) {
+        throw new ApiError(404, "Order not found");
+      }
+
+      // Only generate invoice for paid orders
+      if (order.paymentStatus !== 'paid') {
+        throw new ApiError(400, "Invoice is only available for paid orders");
+      }
+
+      // Get user details
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new ApiError(404, "User not found");
+      }
+
+      // Get payment details
+      const payment = await Payment.findOne({ orderId: order._id });
+
+      // Generate invoice
+      const invoice = InvoiceService.generateInvoice(
+        order,
+        user,
+        payment?.stripePaymentIntentId
+      );
+
+      res.json({
+        success: true,
+        data: {
+          invoice
+        }
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * Get payment history for the authenticated user
+   * GET /api/users/payments
+   */
+  async getUserPayments(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?._id || req.user?.id;
+      if (!userId) {
+        throw new ApiError(401, "User not authenticated");
+      }
+
+      const { limit = 20, skip = 0, status } = req.query;
+
+      // Build query filter
+      const filter: any = { userId };
+      if (status) {
+        filter.status = status;
+      }
+
+      // Fetch payments with pagination
+      const payments = await Payment.find(filter)
+        .sort({ createdAt: -1 })
+        .limit(Number(limit))
+        .skip(Number(skip))
+        .select('orderId amount currency status paymentMethod createdAt updatedAt')
+        .lean();
+
+      const total = await Payment.countDocuments(filter);
+
+      // Get order details for each payment
+      const paymentsWithOrders = await Promise.all(
+        payments.map(async (payment) => {
+          const order = await DeliveryOrder.findById(payment.orderId)
+            .select('orderId status pickup.address dropoff.address createdAt')
+            .lean();
+          return {
+            ...payment,
+            order
+          };
+        })
+      );
+
+      res.json({
+        success: true,
+        data: {
+          payments: paymentsWithOrders,
+          pagination: {
+            total,
+            limit: Number(limit),
+            skip: Number(skip),
+            hasMore: Number(skip) + payments.length < total
+          }
+        }
       });
     } catch (err) {
       next(err);

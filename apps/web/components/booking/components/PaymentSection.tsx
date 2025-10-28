@@ -62,11 +62,11 @@ export default function PaymentSection({
         console.log('[Payment] Creating payment intent:', { orderId, amount });
 
         const response = await paymentAPI.createPaymentIntent({
-          orderId,
+          orderId: orderId!,
           amount,
           currency: 'cad',
           metadata: {
-            orderId,
+            orderId: orderId!,
             amount,
           },
         });
@@ -211,6 +211,13 @@ function CheckoutForm({
         setPaymentStatus('succeeded');
         toast.success('Payment successful!');
         onSuccess?.();
+
+        // Get orderId from metadata or parent component
+        const orderIdFromIntent = paymentIntent.metadata?.orderId;
+        if (orderIdFromIntent) {
+          // Redirect to success page with orderId
+          window.location.href = `/booking/success?orderId=${orderIdFromIntent}`;
+        }
       }
     } catch (err: any) {
       setPaymentStatus('failed');
