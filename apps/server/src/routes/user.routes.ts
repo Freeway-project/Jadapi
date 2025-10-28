@@ -13,6 +13,14 @@ router.get("/dashboard", requireAuth, UserController.getDashboard);
 router.get("/profile", requireAuth, UserController.getProfile);
 router.patch("/profile", requireAuth, UserController.updateProfile);
 
+// Order routes (user's own orders)
+router.get("/orders", requireAuth, UserController.getUserOrders);
+router.get("/orders/:orderId", requireAuth, UserController.getOrder);
+router.get("/orders/:orderId/invoice", requireAuth, UserController.getOrderInvoice);
+
+// Payment history
+router.get("/payments", requireAuth, UserController.getUserPayments);
+
 // User management routes (admin)
 router.get("/", UserController.list);
 router.get("/search", UserController.searchByIdentifier);

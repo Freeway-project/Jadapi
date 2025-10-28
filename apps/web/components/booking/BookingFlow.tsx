@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, MapPin, Package } from 'lucide-react';
+import { User, MapPin, Package, X, Home, Menu } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { FareEstimateResponse, deliveryAPI } from '../../lib/api/delivery';
 import { useAuthStore } from '../../lib/stores/authStore';
@@ -272,6 +272,37 @@ export default function BookingFlow({
 
           {/* Floating Progress Bar on Map */}
           <div className="absolute top-0 left-0 right-0 bg-white/95 backdrop-blur-sm px-4 py-3 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <button
+                onClick={() => {
+                  if (currentStep === 'sender') {
+                    router.push('/dashboard');
+                  } else {
+                    handlePrevious();
+                  }
+                }}
+                className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                {currentStep === 'sender' ? (
+                  <X className="w-5 h-5 text-gray-700" />
+                ) : (
+                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                )}
+              </button>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.push('/search')}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  title="New Search"
+                >
+                  <Home className="w-5 h-5 text-gray-700" />
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-gray-900">
                 {currentStep === 'sender' ? 'Pickup Details' :
@@ -410,6 +441,41 @@ export default function BookingFlow({
       <div className="hidden lg:flex h-full bg-white">
         {/* Left Side - Form Content (40% width) */}
         <div className="w-[480px] flex flex-col border-r border-gray-200">
+          {/* Header with Navigation */}
+          <div className="shrink-0 border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {currentStep !== 'sender' && (
+                  <button
+                    onClick={handlePrevious}
+                    className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
+                <h1 className="text-lg font-bold text-gray-900">New Delivery</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Dashboard"
+                >
+                  <Home className="w-5 h-5 text-gray-700" />
+                </button>
+                <button
+                  onClick={() => router.push('/search')}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Exit"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Progress Steps */}
           <div className="shrink-0">
             <ProgressSteps steps={steps} currentStep={currentStep} />
