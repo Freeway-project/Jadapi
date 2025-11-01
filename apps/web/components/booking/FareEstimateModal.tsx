@@ -55,9 +55,9 @@ export function FareEstimateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[380px] bg-white border-2 border-black shadow-2xl p-5">
+      <DialogContent className="max-w-[90vw] sm:max-w-[380px] bg-white border-2 border-black shadow-2xl p-4 sm:p-5 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-3">
-          <DialogTitle className="text-lg font-bold text-black">Your Estimate</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg font-bold text-black">Your Estimate</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -65,34 +65,34 @@ export function FareEstimateModal({
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-black flex-shrink-0"></div>
-              <div className="text-sm text-gray-900 truncate">{pickup}</div>
+              <div className="text-xs sm:text-sm text-gray-900 truncate">{pickup}</div>
             </div>
             <div className="ml-1 border-l border-gray-300 h-2"></div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-black flex-shrink-0"></div>
-              <div className="text-sm text-gray-900 truncate">{dropoff}</div>
+              <div className="text-xs sm:text-sm text-gray-900 truncate">{dropoff}</div>
             </div>
           </div>
 
           {/* Price - Simple */}
           <div className="text-center py-3">
-            <div className="text-4xl font-bold text-black">
+            <div className="text-3xl sm:text-4xl font-bold text-black">
               ${((estimatedFare.total || 0) / 100).toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">CAD</div>
           </div>
 
           {/* Details - Compact Row */}
-          <div className="flex items-center justify-around bg-gray-50 rounded-lg py-2.5 px-3 border border-gray-200">
+          <div className="flex items-center justify-around bg-gray-50 rounded-lg py-2.5 px-2 sm:px-3 border border-gray-200">
             <div className="flex items-center gap-1.5">
-              <Route className="w-3.5 h-3.5 text-gray-500" />
+              <Route className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
               <span className="text-xs text-gray-600">{estimatedFare.distance.toFixed(1)} km</span>
             </div>
             {estimatedFare.duration && (
               <>
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-gray-500" />
+                  <Clock className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
                   <span className="text-xs text-gray-600">{estimatedFare.duration} min</span>
                 </div>
               </>
@@ -100,19 +100,19 @@ export function FareEstimateModal({
           </div>
         </div>
 
-        <DialogFooter className="mt-4 gap-2 pt-2">
+        <DialogFooter className="mt-4 gap-2 pt-2 flex-col sm:flex-row">
           {!isAuthenticated() ? (
             <>
               <Button
                 variant="default"
                 onClick={onClose}
-                className="flex-1 h-10 text-xs font-semibold  border-2 border-gray-600 hover:bg-gray-500"
+                className="w-full sm:flex-1 h-10 text-xs font-semibold border-2 border-gray-600 hover:bg-gray-500"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleContinue}
-                className="flex-1 h-10 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full sm:flex-1 h-10 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Sign Up
               </Button>

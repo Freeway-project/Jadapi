@@ -152,17 +152,24 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       throw new ApiError(400, "Pricing and distance information are required");
     }
 
-    let finalPricing = { ...pricing };
+    // Map baseFare to subtotal if baseFare is provided (frontend compatibility)
+    const normalizedPricing = {
+      ...pricing,
+      subtotal: pricing.subtotal ?? pricing.baseFare,
+      baseFare: pricing.baseFare ?? pricing.subtotal
+    };
+
+    let finalPricing = { ...normalizedPricing };
     let couponData = undefined;
 
     // Handle coupon if provided (support both couponCode string and coupon object)
     const code = couponCode || coupon?.code;
 
     if (code) {
-      logger.info({ code, subtotal: pricing.subtotal }, "Processing coupon");
+      logger.info({ code, subtotal: normalizedPricing.subtotal }, "Processing coupon");
 
       // Validate coupon - simple validation
-      const validation = await CouponService.validateCoupon(code, pricing.subtotal);
+      const validation = await CouponService.validateCoupon(code, normalizedPricing.subtotal);
 
       if (!validation.valid) {
         throw new ApiError(400, validation.message || "Invalid coupon");
@@ -171,19 +178,19 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       // Calculate discount on subtotal (before tax)
       const discount = CouponService.calculateDiscount(
         validation.coupon!,
-        pricing.subtotal,
-        pricing.baseFare || 0
+        normalizedPricing.subtotal,
+        normalizedPricing.baseFare || 0
       );
 
       logger.info({
         couponCode: code,
-        originalSubtotal: pricing.subtotal,
+        originalSubtotal: normalizedPricing.subtotal,
         calculatedDiscount: discount,
         frontendDiscount: coupon?.discount
       }, "Coupon discount calculated");
 
       // Apply discount to subtotal
-      const discountedSubtotal = pricing.subtotal - discount;
+      const discountedSubtotal = normalizedPricing.subtotal - discount;
 
       // Recalculate taxes on discounted subtotal: 5% GST + 7% PST
       const gst = Math.round(discountedSubtotal * 0.05);
@@ -193,6 +200,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       // Update pricing with discount and recalculated tax
       finalPricing.couponDiscount = discount;
       finalPricing.subtotal = discountedSubtotal;
+      finalPricing.baseFare = discountedSubtotal;
       finalPricing.gst = gst;
       finalPricing.pst = pst;
       finalPricing.tax = tax;
@@ -218,18 +226,18 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       CouponService.recordCouponUsage(validation.coupon!._id).catch(err =>
         logger.error({ error: err }, "Failed to record coupon usage")
       );
-    } else if (!code && pricing.tax === 0) {
+    } else if (!code && normalizedPricing.tax === 0) {
       // If no coupon but tax is 0, calculate taxes on original subtotal
-      const gst = Math.round(pricing.subtotal * 0.05);
-      const pst = Math.round(pricing.subtotal * 0.07);
+      const gst = Math.round(normalizedPricing.subtotal * 0.05);
+      const pst = Math.round(normalizedPricing.subtotal * 0.07);
       const tax = gst + pst;
 
       finalPricing.gst = gst;
       finalPricing.pst = pst;
       finalPricing.tax = tax;
-      finalPricing.total = pricing.subtotal + tax;
+      finalPricing.total = normalizedPricing.subtotal + tax;
 
-      logger.info({ subtotal: pricing.subtotal, gst, pst, tax, total: finalPricing.total }, "Tax calculated (no coupon)");
+      logger.info({ subtotal: normalizedPricing.subtotal, gst, pst, tax, total: finalPricing.total }, "Tax calculated (no coupon)");
     }
 
     // Generate unique order ID
