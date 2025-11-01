@@ -15,7 +15,8 @@ export default function DriverDashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
   const [orders, setOrders] = useState<DriverOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeStatus, setActiveStatus] = useState<OrderStatus>('assigned');
 
   useEffect(() => {
@@ -26,20 +27,26 @@ export default function DriverDashboardPage() {
       return;
     }
 
-    fetchOrders();
+    // Initial fetch
+    fetchOrders(true);
 
-    // Poll for orders every 5 seconds
+    // Silent background polling every 5 seconds
     const pollInterval = setInterval(() => {
-      fetchOrders();
+      fetchOrders(false); // Silent refresh
     }, 5000);
 
     // Cleanup interval on unmount or when dependencies change
     return () => clearInterval(pollInterval);
   }, [activeStatus, user, router]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (showLoader = false) => {
     try {
-      setIsLoading(true);
+      // Only show loading spinner on initial load or manual refresh
+      if (showLoader) {
+        setIsInitialLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
 
       if (activeStatus === 'available') {
         const response = await driverAPI.getAvailableOrders({ limit: 50 });
@@ -68,31 +75,45 @@ export default function DriverDashboardPage() {
         return;
       }
 
-      toast.error('Failed to load orders');
+      // Only show error toast on initial load, not during background polling
+      if (showLoader) {
+        toast.error('Failed to load orders');
+      }
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsRefreshing(false);
     }
   };
 
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
   const handleAcceptOrder = async (orderId: string) => {
     try {
+      setActionLoading(orderId);
       await driverAPI.acceptOrder(orderId);
       toast.success('Order accepted');
-      fetchOrders();
+      // Silent refresh after accepting
+      fetchOrders(false);
     } catch (error: any) {
       console.error('Failed to accept order:', error);
       toast.error(error?.response?.data?.message || 'Failed to accept order');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
+      setActionLoading(orderId);
       await driverAPI.updateOrderStatus(orderId, newStatus);
       toast.success(`Order marked as ${newStatus.replace('_', ' ')}`);
-      fetchOrders();
+      // Silent refresh after status update
+      fetchOrders(false);
     } catch (error: any) {
       console.error('Failed to update status:', error);
       toast.error(error?.response?.data?.message || 'Failed to update status');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -119,14 +140,24 @@ export default function DriverDashboardPage() {
   };
 
   const renderOrderActions = (order: DriverOrder) => {
+    const isLoading = actionLoading === order._id;
+
     if (activeStatus === 'available') {
       return (
         <Button
           size="sm"
           onClick={() => handleAcceptOrder(order._id)}
+          disabled={isLoading}
           className="w-full"
         >
-          Accept Order
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Accepting...</span>
+            </div>
+          ) : (
+            'Accept Order'
+          )}
         </Button>
       );
     }
@@ -136,9 +167,17 @@ export default function DriverDashboardPage() {
         <Button
           size="sm"
           onClick={() => handleUpdateStatus(order._id, 'picked_up')}
+          disabled={isLoading}
           className="w-full"
         >
-          Mark as Picked Up
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Updating...</span>
+            </div>
+          ) : (
+            'Mark as Picked Up'
+          )}
         </Button>
       );
     }
@@ -148,9 +187,17 @@ export default function DriverDashboardPage() {
         <Button
           size="sm"
           onClick={() => handleUpdateStatus(order._id, 'in_transit')}
+          disabled={isLoading}
           className="w-full"
         >
-          Start Delivery
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Updating...</span>
+            </div>
+          ) : (
+            'Start Delivery'
+          )}
         </Button>
       );
     }
@@ -160,9 +207,17 @@ export default function DriverDashboardPage() {
         <Button
           size="sm"
           onClick={() => handleUpdateStatus(order._id, 'delivered')}
+          disabled={isLoading}
           className="w-full bg-green-600 hover:bg-green-700"
         >
-          Complete Delivery
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Completing...</span>
+            </div>
+          ) : (
+            'Complete Delivery'
+          )}
         </Button>
       );
     }
@@ -170,7 +225,7 @@ export default function DriverDashboardPage() {
     return null;
   };
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -187,9 +242,18 @@ export default function DriverDashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
         {/* Header */}
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
+        <div className="mb-4 sm:mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
+          </div>
+          {/* Silent refresh indicator */}
+          {isRefreshing && (
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span className="hidden sm:inline">Updating...</span>
+            </div>
+          )}
         </div>
 
         {/* Status Tabs */}

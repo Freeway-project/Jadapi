@@ -70,18 +70,12 @@ export interface FareEstimateInput {
 }
 
 export interface FareBreakdown {
-  baseFare: number;
-  distanceFare: number;
-  bandMultiplier: number;
-  bandLabel: string;
-  sizeMultiplier: number;
-  edgeSurcharge: number;
-  subtotal: number;
-  tax: number;
-  total: number;
-  currency: string;
-  distanceKm: number;
-  durationMinutes: number;
+  baseFare: number;        // Total fare before tax
+  tax: number;            // Tax amount (GST)
+  total: number;          // Final total (baseFare + tax)
+  currency: string;       // Currency code (e.g., 'CAD')
+  distanceKm: number;     // Distance in kilometers
+  durationMinutes: number; // Duration in minutes
 }
 
 export interface FareEstimateResult {

@@ -111,15 +111,38 @@ export default function PaymentSection({
         <h3 className="text-lg font-semibold text-gray-900">Payment</h3>
       </div>
 
-      {/* Amount */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">Amount Due</span>
-          <span className="text-3xl font-bold text-blue-600">
-            ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
-          </span>
+      {/* Pricing Breakdown */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="p-5 space-y-3">
+          {/* Base Fare */}
+          <div className="flex items-center justify-between">
+            <span className="text-base text-gray-700">Delivery Fee</span>
+            <span className="text-lg font-semibold text-gray-900">
+              ${((estimate?.data?.fare?.baseFare || 0) / 100).toFixed(2)}
+            </span>
+          </div>
+
+          {/* Tax */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Tax (GST/HST)</span>
+            <span className="font-medium text-gray-900">
+              ${((estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}
+            </span>
+          </div>
         </div>
-        <p className="text-xs text-gray-600 mt-2">CAD - Secure payment via Stripe</p>
+
+        {/* Total Amount */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-5 py-4 border-t-2 border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-semibold text-gray-700 block">Total Amount</span>
+              <span className="text-xs text-gray-600">{estimate?.data?.fare?.currency || 'CAD'} - Secure payment via Stripe</span>
+            </div>
+            <span className="text-3xl font-bold text-blue-600">
+              ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Payment Form */}
@@ -213,7 +236,8 @@ function CheckoutForm({
         onSuccess?.();
 
         // Get orderId from metadata or parent component
-        const orderIdFromIntent = paymentIntent.metadata?.orderId;
+        const metadata = (paymentIntent as any).metadata as Record<string, string> | undefined;
+        const orderIdFromIntent = metadata?.orderId;
         if (orderIdFromIntent) {
           // Redirect to success page with orderId
           window.location.href = `/booking/success?orderId=${orderIdFromIntent}`;

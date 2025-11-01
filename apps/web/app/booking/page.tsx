@@ -38,10 +38,11 @@ function BookingPageContent() {
   const packageSize = searchParams.get('packageSize') || 'M';
   const distance = searchParams.get('distance');
   const duration = searchParams.get('duration');
-  // Fare params - only subtotal, tax, and total
-  const subtotal = searchParams.get('subtotal');
+  // Simplified fare params
+  const baseFare = searchParams.get('baseFare');
   const tax = searchParams.get('tax');
   const total = searchParams.get('total');
+  const currency = searchParams.get('currency');
 
   // Check app status on mount
   useEffect(() => {
@@ -120,9 +121,10 @@ function BookingPageContent() {
         initialFareEstimate={{
           distance: distance ? parseFloat(distance) : 0,
           duration: duration ? parseFloat(duration) : 0,
-          subtotal: subtotal ? parseFloat(subtotal) : undefined,
-          tax: tax ? parseFloat(tax) : undefined,
+          baseFare: baseFare ? parseFloat(baseFare) : 0,
+          tax: tax ? parseFloat(tax) : 0,
           total: total ? parseFloat(total) : 0,
+          currency: currency || 'CAD',
         }}
       />
     </div>

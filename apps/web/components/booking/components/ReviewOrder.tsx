@@ -52,7 +52,7 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
     try {
       const response = await couponAPI.validateCoupon({
         code: couponCode.trim(),
-        subtotal: estimate?.data?.fare?.subtotal || 0,
+        subtotal: estimate?.data?.fare?.baseFare || 0, // Using baseFare as subtotal
         baseFare: estimate?.data?.fare?.baseFare || 0,
       });
 
@@ -187,8 +187,8 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
           <h4 className="font-semibold text-gray-900 mb-3 text-sm">Price Summary</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between text-gray-600">
-              <span>Subtotal</span>
-              <span>${((estimate?.data?.fare?.subtotal || 0) / 100).toFixed(2)}</span>
+              <span>Base Fare</span>
+              <span>${((estimate?.data?.fare?.baseFare || 0) / 100).toFixed(2)}</span>
             </div>
             {appliedCoupon && (
               <div className="flex justify-between text-green-600 font-medium">

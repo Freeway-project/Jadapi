@@ -74,7 +74,10 @@ export class FareService {
   }
 
   /**
-   * Calculate detailed fare breakdown
+   * Calculate simplified fare breakdown
+   * Formula: baseFare = base + (distance * per_km) + (duration * per_min)
+   * Apply package size multiplier and minimum fare
+   * Then add tax to get total
    */
   private static calculateFareBreakdown(
     distanceKm: number,
@@ -82,56 +85,37 @@ export class FareService {
     packageSize: PackageSize,
     config: PricingConfig
   ): FareBreakdown {
-    const { rateCard, bands, tax, ui } = config;
+    const { rateCard, tax, ui } = config;
 
-    // Base fare
-    const baseFare = rateCard.base_cents;
+    // Calculate base components
+    const baseComponent = rateCard.base_cents;
+    const distanceComponent = Math.round(distanceKm * rateCard.per_km_cents);
+    const durationComponent = Math.round(durationMinutes * rateCard.per_min_cents);
 
-    // Distance-based fare
-    const distanceFare = Math.round(distanceKm * rateCard.per_km_cents);
+    // Sum all components
+    let calculatedFare = baseComponent + distanceComponent + durationComponent;
 
-    // Get distance band multiplier
-    const band = this.getDistanceBand(distanceKm, bands);
-
-    // Package size multiplier
+    // Apply package size multiplier
     const sizeMultiplier = rateCard.size_multiplier[packageSize] || 1.0;
+    calculatedFare = Math.round(calculatedFare * sizeMultiplier);
 
     // Apply minimum fare
-    const finalSubtotal = rateCard.min_fare_cents;
+    const baseFare = Math.max(calculatedFare, rateCard.min_fare_cents);
 
-    // Calculate tax
-    const taxAmount = tax.enabled ? Math.round(finalSubtotal * tax.rate) : 0;
+    // Calculate tax (GST/HST)
+    const taxAmount = tax.enabled ? Math.round(baseFare * tax.rate) : 0;
 
     // Total
-    const total = finalSubtotal + taxAmount;
+    const total = baseFare + taxAmount;
 
     return {
       baseFare: this.formatCents(baseFare, ui.round_display_to_cents),
-      distanceFare: this.formatCents(distanceFare, ui.round_display_to_cents),
-      bandMultiplier: band.multiplier,
-      bandLabel: ui.show_band_label ? band.label : '',
-      sizeMultiplier,
-      edgeSurcharge: 0,
-      subtotal: this.formatCents(finalSubtotal, ui.round_display_to_cents),
       tax: this.formatCents(taxAmount, ui.round_display_to_cents),
       total: this.formatCents(total, ui.round_display_to_cents),
       currency: rateCard.currency,
       distanceKm: Math.round(distanceKm * 100) / 100,
       durationMinutes: Math.round(durationMinutes)
     };
-  }
-
-  /**
-   * Get the appropriate distance band for the given distance
-   */
-  private static getDistanceBand(distanceKm: number, bands: DistanceBand[]): DistanceBand {
-    for (const band of bands) {
-      if (distanceKm <= band.km_max) {
-        return band;
-      }
-    }
-    // Return last band if distance exceeds all bands
-    return bands[bands.length - 1];
   }
 
   /**
