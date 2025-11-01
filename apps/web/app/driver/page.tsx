@@ -31,6 +31,7 @@ export default function DriverDashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeStatus, setActiveStatus] = useState<OrderStatus>('available');
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied'>('prompt');
 
   // Get current active order ID for location tracking
   const activeOrderId = orders.find(o => ['assigned', 'picked_up', 'in_transit'].includes(o.status))?._id;
@@ -42,6 +43,70 @@ export default function DriverDashboardPage() {
     orderId: activeOrderId,
     updateInterval: 5000, // Update every 5 seconds
   });
+
+  // Handle location toggle with permission request
+  const handleLocationToggle = async () => {
+    if (locationEnabled) {
+      // Turning off - just disable
+      setLocationEnabled(false);
+      toast.success('Location sharing turned off');
+      return;
+    }
+
+    // Turning on - request permission first
+    try {
+      if (!navigator.geolocation) {
+        toast.error('Geolocation is not supported by your browser');
+        return;
+      }
+
+      // Show message asking user to allow
+      toast('Please allow location access when prompted', {
+        icon: '📍',
+        duration: 3000,
+      });
+
+      // Request permission
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      
+      if (permission.state === 'denied') {
+        toast.error('Location permission denied. Please enable it in your browser settings.');
+        setPermissionState('denied');
+        return;
+      }
+
+      // Try to get current position to trigger permission prompt if needed
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success - enable location sharing
+          setLocationEnabled(true);
+          setPermissionState('granted');
+          toast.success('✓ Location sharing enabled');
+        },
+        (error) => {
+          // Handle errors
+          if (error.code === error.PERMISSION_DENIED) {
+            toast.error('Location permission denied. Please click "Allow" to share your location.');
+            setPermissionState('denied');
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            toast.error('Location unavailable. Please check your device settings.');
+          } else if (error.code === error.TIMEOUT) {
+            toast.error('Location request timed out. Please try again.');
+          } else {
+            toast.error('Failed to get your location. Please try again.');
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } catch (error) {
+      console.error('Error requesting location permission:', error);
+      toast.error('Failed to request location permission');
+    }
+  };
 
   useEffect(() => {
     // Check authentication
@@ -306,7 +371,7 @@ export default function DriverDashboardPage() {
                 </div>
               </div>
               <Button
-                onClick={() => setLocationEnabled(!locationEnabled)}
+                onClick={handleLocationToggle}
                 variant={isTracking ? 'default' : 'outline'}
                 size="sm"
                 className={isTracking ? 'bg-green-600 hover:bg-green-700' : ''}
