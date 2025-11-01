@@ -8,6 +8,7 @@ import couponRoutes from "./coupon.routes";
 import driverRoutes from "./driver.routes";
 import paymentRoutes from "./payment.routes";
 import smsRoutes from "./sms.routes";
+import trackingRoutes from "./tracking.routes";
 import { AppConfigService } from "../services/appConfig.service";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 import { ApiError } from "../utils/ApiError";
@@ -163,5 +164,8 @@ router.use("/payment", paymentRoutes);
 
 // SMS routes (admin)
 router.use("/sms", smsRoutes);
+
+// Tracking routes (public - no auth required)
+router.use("/track", trackingRoutes);
 
 export default router;

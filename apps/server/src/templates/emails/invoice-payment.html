@@ -317,6 +317,23 @@
       </div>
     </div>
 
+    <!-- Track Order Section -->
+    <div class="section" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 8px; padding: 30px; text-align: center; margin: 30px 0;">
+      <h3 style="color: white; margin: 0 0 10px 0; font-size: 20px;">Track Your Delivery</h3>
+      <p style="color: rgba(255,255,255,0.9); margin: 0 0 20px 0; font-size: 14px;">
+        Follow your order in real-time and see the driver's location
+      </p>
+      <a href="{{trackingUrl}}" 
+         style="display: inline-block; background: white; color: #2563eb; padding: 14px 32px; 
+                text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 16px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        🚚 Track Order {{orderId}}
+      </a>
+      <p style="color: rgba(255,255,255,0.8); margin: 20px 0 0 0; font-size: 12px;">
+        Or visit: <span style="font-family: monospace;">{{trackingUrl}}</span>
+      </p>
+    </div>
+
     <!-- Footer -->
     <div class="footer">
       <p class="thank-you">Thank you for your business!</p>

@@ -2,6 +2,7 @@ import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 import { logger } from "./logger";
 import { SmsRateLimitService } from "../services/smsRateLimit.service";
 import { ApiError } from "./ApiError";
+import { ENV } from "../config/env";
 
 const sns = new SNSClient({ 
   region: process.env.AWS_REGION || 'us-east-1',
@@ -10,6 +11,12 @@ const sns = new SNSClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
   }
 });
+
+// Helper to get tracking URL
+const getTrackingUrl = (orderId: string): string => {
+  const baseUrl = ENV.FRONTEND_URL.replace(/\/$/, ''); // Remove trailing slash
+  return `${baseUrl}/track/${orderId}`;
+};
 
 export type SmsType = "otp" | "delivery" | "booking" | "promotional" | "transactional";
 export type SmsSource = "form" | "api" | "system" | "manual" | "other";
@@ -147,13 +154,13 @@ export const SmsTemplates = {
     `Your Jaddpi verification code is ${code}. It expires in ${minutes} minutes. Don't share this code with anyone.`,
 
   deliveryStarted: (orderId: string, driverName: string) =>
-    `📦 Your package #${orderId} is out for delivery with ${driverName}. Track your delivery at jaddpi.com/track/${orderId}`,
+    `📦 Your package #${orderId} is out for delivery with ${driverName}. Track your delivery at ${getTrackingUrl(orderId)}`,
 
   deliveryCompleted: (orderId: string) =>
     `✅ Your package #${orderId} has been successfully delivered! Thank you for using Jaddpi.`,
 
   bookingConfirmed: (orderId: string, pickupTime: string) =>
-    `📋 Booking confirmed! Order #${orderId} will be picked up at ${pickupTime}. Track at jaddpi.com/track/${orderId}`,
+    `📋 Booking confirmed! Order #${orderId} will be picked up at ${pickupTime}. Track at ${getTrackingUrl(orderId)}`,
   
   deliveryAttempted: (orderId: string, nextAttempt: string) => 
     `❗ Delivery attempt failed for #${orderId}. Next attempt: ${nextAttempt}. Contact us if needed.`,
