@@ -8,7 +8,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}   JadDPI Server Build & Restart${NC}"
+echo -e "${BLUE}   JadAPI Server Build & Restart${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
@@ -70,7 +70,7 @@ echo ""
 
 # Step 5: Stop PM2 process
 # print_info "Stopping PM2 process..."
-# pm2 stop jaddpi-server 2>/dev/null || print_info "No existing PM2 process found"
+# pm2 stop jadapi-server 2>/dev/null || print_info "No existing PM2 process found"
 # print_status "PM2 process stopped"
 # echo ""
 
@@ -78,7 +78,7 @@ echo ""
 # Start or restart the specific PM2 process for the server
 print_info "Starting PM2 process..."
 # Try to restart the existing process; if it's not found, start it from the built dist
-pm2 restart jaddpi-server || pm2 start dist/server.js --name jaddpi-server --time
+pm2 restart jadapi-server || pm2 start dist/server.js --name jadapi-server --time
 # if [ $? -ne 0 ]; then
 #     print_error "Failed to start PM2 process"
 #     exit 1
@@ -99,7 +99,7 @@ echo ""
 
 # Step 9: Show logs
 print_info "Recent logs:"
-pm2 logs jaddpi-server --lines 20 --nostream
+pm2 logs jadapi-server --lines 20 --nostream
 echo ""
 
 echo -e "${GREEN}========================================${NC}"
@@ -107,8 +107,8 @@ echo -e "${GREEN}   Server restarted successfully!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo -e "Useful commands:"
-echo -e "  ${BLUE}pm2 logs jaddpi-server${NC}        - View logs"
+echo -e "  ${BLUE}pm2 logs jadapi-server${NC}        - View logs"
 echo -e "  ${BLUE}pm2 monit${NC}                      - Monitor all processes"
-echo -e "  ${BLUE}pm2 restart jaddpi-server${NC}     - Restart server"
-echo -e "  ${BLUE}pm2 stop jaddpi-server${NC}        - Stop server"
+echo -e "  ${BLUE}pm2 restart jadapi-server${NC}     - Restart server"
+echo -e "  ${BLUE}pm2 stop jadapi-server${NC}        - Stop server"
 echo ""
