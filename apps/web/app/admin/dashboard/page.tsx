@@ -1,15 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { adminAPI, DashboardStats, Activity, Order, SystemMetrics } from '../../../lib/api/admin';
-import { Package, Users, DollarSign, Activity as ActivityIcon, TrendingUp, Clock } from 'lucide-react';
+import { Package, Users, DollarSign, Activity as ActivityIcon, TrendingUp, Clock, LogOut } from 'lucide-react';
+import { useAuthStore } from '../../../lib/stores/authStore';
+import { Button } from '@workspace/ui/components/button';
+import toast from 'react-hot-toast';
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const { logout } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+    router.push('/admin/login');
+  };
 
   useEffect(() => {
     loadData();
@@ -51,9 +63,20 @@ export default function AdminDashboard() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
+        </div>
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          size="sm"
+          className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Logout</span>
+        </Button>
       </div>
 
       {/* Stats Grid */}

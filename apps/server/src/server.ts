@@ -6,6 +6,7 @@ import { logger } from "./utils/logger";
 import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { authenticate } from "./middlewares/auth";
+import webhookRoutes from "./routes/webhook.routes";
 
 const app = express();
 
@@ -16,6 +17,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// IMPORTANT: Webhook routes MUST come BEFORE express.json()
+// to receive raw body for signature verification
+app.use("/api/webhooks", webhookRoutes);
+
+// JSON body parser for all other routes
 app.use(express.json());
 
 // Health check endpoint (no auth required)

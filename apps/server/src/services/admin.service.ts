@@ -1,7 +1,9 @@
 import { ActivityLog } from "../models/ActivityLog";
 import { DeliveryOrder } from "../models/DeliveryOrder";
 import { User } from "../models/user.model";
+import { UserRepository } from "../repositories/user.repository";
 import { Types } from "mongoose";
+import bcrypt from "bcrypt";
 
 export class AdminService {
   /**
@@ -320,10 +322,14 @@ export class AdminService {
       throw new Error('Address is required');
     }
 
+    if (!driverData.password) {
+      throw new Error('Password is required');
+    }
+
     // Check if driver already exists
     const existingDriver = await User.findOne({
       $or: [
-        ...(driverData.email ? [{ 'auth.email': driverData.email }] : []),
+        ...(driverData.email ? [{ 'auth.email': driverData.email.toLowerCase() }] : []),
         ...(driverData.phone ? [{ 'auth.phone': driverData.phone }] : [])
       ]
     });
@@ -332,29 +338,19 @@ export class AdminService {
       throw new Error('User with this email or phone already exists');
     }
 
-    // Hash password if provided
-    let hashedPassword: string | undefined;
-    if (driverData.password) {
-      const bcrypt = require('bcrypt');
-      hashedPassword = await bcrypt.hash(driverData.password, 10);
-    }
+    // Hash password
+    const hashedPassword = await bcrypt.hash(driverData.password, 10);
 
-    // Create driver account
-    const driver = await User.create({
+    // Create driver account using UserRepository which handles UUID generation
+    const driver = await UserRepository.create({
       accountType: 'individual',
+      email: driverData.email?.toLowerCase(),
+      phone: driverData.phone,
+      password: hashedPassword,
+      name: driverData.name,
+      address: driverData.address,
       roles: ['driver'],
       status: 'active',
-      auth: {
-        email: driverData.email?.toLowerCase(),
-        phone: driverData.phone,
-        password: hashedPassword,
-        emailVerifiedAt: driverData.email ? new Date() : null,
-        phoneVerifiedAt: driverData.phone ? new Date() : null,
-      },
-      profile: {
-        name: driverData.name,
-        address: driverData.address,
-      },
     });
 
     return driver;

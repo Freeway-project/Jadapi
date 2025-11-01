@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 
 declare global {
@@ -12,6 +11,7 @@ declare global {
 
 /**
  * Middleware to check if user has admin role
+ * NOTE: Must be used after requireAuth middleware
  */
 export const requireAdmin = async (
   req: Request,
@@ -19,27 +19,19 @@ export const requireAdmin = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.id || req.user?._id;
-
-    if (!userId) {
+    // requireAuth already sets req.user to the User document
+    if (!req.user) {
       throw new ApiError(401, "Authentication required");
     }
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    if (!user.roles?.includes("admin")) {
+    if (!req.user.roles?.includes("admin")) {
       throw new ApiError(403, "Admin access required");
     }
 
-    if (user.status !== "active") {
+    if (req.user.status !== "active") {
       throw new ApiError(403, "Account is not active");
     }
 
-    req.user = user;
     next();
   } catch (error) {
     next(error);
