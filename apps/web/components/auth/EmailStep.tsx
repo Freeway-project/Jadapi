@@ -170,7 +170,7 @@ export default function EmailStep() {
             <div className="relative">
               <Input
                 id="phoneNumber"
-                type="tel"
+                type="text"
                 placeholder="(555) 123-4567"
                 disabled={isSubmitting || isLoading}
                 className="w-full px-4 sm:px-5 py-3 sm:py-4 text-sm sm:text-lg border-2 border-gray-300 rounded-xl bg-white text-black placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"

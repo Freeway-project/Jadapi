@@ -13,7 +13,7 @@
     "test:verification": "jest tests/integration/verification.test.ts --verbose",
     "test:signup-flow": "jest tests/integration/signup-flow.test.ts --verbose",
     "dev": "nodemon --watch src --exec ts-node src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp -r src/templates dist/templates",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pm2:build": "rm -rf dist && pnpm install && pnpm run build",
