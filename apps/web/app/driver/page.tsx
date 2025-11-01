@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { driverAPI, type DriverOrder } from '../../lib/api/driver';
 import { useAuthStore } from '../../lib/stores/authStore';
+import { useDriverLocation } from '../../hooks/useDriverLocation';
 import Header from '../../components/layout/Header';
-import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, ExternalLink } from 'lucide-react';
+import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, ExternalLink, Radio } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import toast from 'react-hot-toast';
 
@@ -29,6 +30,18 @@ export default function DriverDashboardPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeStatus, setActiveStatus] = useState<OrderStatus>('available');
+  const [locationEnabled, setLocationEnabled] = useState(false);
+
+  // Get current active order ID for location tracking
+  const activeOrderId = orders.find(o => ['assigned', 'picked_up', 'in_transit'].includes(o.status))?._id;
+
+  // Initialize driver location tracking
+  const { isTracking, lastUpdate, error: locationError } = useDriverLocation({
+    enabled: locationEnabled,
+    driverId: user?._id || user?.id,
+    orderId: activeOrderId,
+    updateInterval: 5000, // Update every 5 seconds
+  });
 
   useEffect(() => {
     // Check authentication
@@ -249,19 +262,59 @@ export default function DriverDashboardPage() {
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-        {/* Header */}
-        <div className="mb-4 sm:mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
-            <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
-          </div>
-          {/* Silent refresh indicator */}
-          {isRefreshing && (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              <span className="hidden sm:inline">Updating...</span>
+        {/* Header with Location Toggle */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
+              <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
             </div>
-          )}
+            {/* Silent refresh indicator */}
+            {isRefreshing && (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span className="hidden sm:inline">Updating...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Location Tracking Card */}
+          <div className={`p-4 rounded-lg border-2 transition-all ${
+            isTracking 
+              ? 'bg-green-50 border-green-500' 
+              : 'bg-gray-50 border-gray-300'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${
+                  isTracking ? 'bg-green-500' : 'bg-gray-400'
+                }`}>
+                  <Radio className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Location Sharing: {isTracking ? 'ON' : 'OFF'}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {isTracking 
+                      ? `Last updated: ${lastUpdate?.toLocaleTimeString() || 'Just now'}` 
+                      : 'Enable to share your live location with customers'}
+                  </p>
+                  {locationError && (
+                    <p className="text-xs text-red-600 mt-1">⚠️ {locationError}</p>
+                  )}
+                </div>
+              </div>
+              <Button
+                onClick={() => setLocationEnabled(!locationEnabled)}
+                variant={isTracking ? 'default' : 'outline'}
+                size="sm"
+                className={isTracking ? 'bg-green-600 hover:bg-green-700' : ''}
+              >
+                {isTracking ? 'Turn Off' : 'Turn On'}
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Status Tabs - Mobile First */}

@@ -1,8 +1,45 @@
-import { MapPin, Package, Shield, Clock, BarChart3, FileText, Camera, CheckCircle } from 'lucide-react';
+'use client';
+
+import { MapPin, Package, Shield, Clock, BarChart3, FileText, Camera, CheckCircle, Search, Loader2 } from 'lucide-react';
 import { BaseAnimation } from '../animations';
 import Header from '../layout/Header';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function JaddpiLanding() {
+  const router = useRouter();
+  const [orderId, setOrderId] = useState('');
+  const [isTracking, setIsTracking] = useState(false);
+
+  const handleTrack = () => {
+    if (!orderId.trim()) {
+      toast.error('Please enter an order ID');
+      return;
+    }
+
+    const cleanOrderId = orderId.trim().toUpperCase();
+
+    // Validate order ID format (ORD-YYYY-XXX)
+    const orderIdPattern = /^ORD-\d{4}-\d+$/;
+    if (!orderIdPattern.test(cleanOrderId)) {
+      toast.error('Invalid order ID format. Example: ORD-2025-001');
+      return;
+    }
+
+    setIsTracking(true);
+
+    // Small delay for better UX
+    setTimeout(() => {
+      router.push(`/track/${cleanOrderId}`);
+    }, 300);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTrack();
+    }
+  };
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -26,9 +63,123 @@ export default function JaddpiLanding() {
             <a href="/search" className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
               Create an order
             </a>
-            <a href="/track" className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-lg font-semibold hover:border-blue-300 hover:text-blue-600 transition">
+            <button
+              onClick={() => {
+                const trackSection = document.getElementById('track-order');
+                trackSection?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-lg font-semibold hover:border-blue-300 hover:text-blue-600 transition"
+            >
               Track a parcel
-            </a>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Track Order Section */}
+      <section id="track-order" className="bg-gradient-to-br from-blue-50 to-white py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 md:p-12">
+            {/* Header */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <MapPin className="w-8 h-8 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Track Your Delivery</h2>
+                <p className="text-gray-600 mt-1">Enter your order ID to see real-time tracking</p>
+              </div>
+            </div>
+
+            {/* Input Section */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="track-orderId" className="block text-sm font-medium text-gray-700 mb-2">
+                  Order ID
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Package className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="track-orderId"
+                    type="text"
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value.toUpperCase())}
+                    onKeyPress={handleKeyPress}
+                    placeholder="ORD-2025-001"
+                    className="block w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl 
+                             focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                             placeholder-gray-400 text-gray-900 font-mono text-lg
+                             transition-all hover:border-gray-400"
+                    disabled={isTracking}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  Format: ORD-YYYY-XXX (e.g., ORD-2025-001)
+                </p>
+              </div>
+
+              <button
+                onClick={handleTrack}
+                disabled={isTracking || !orderId.trim()}
+                className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl 
+                         font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-3 shadow-lg shadow-blue-600/30
+                         hover:shadow-xl hover:shadow-blue-600/40"
+              >
+                {isTracking ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    Opening Tracker...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-6 h-6" />
+                    Track My Order
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Info Cards */}
+            <div className="mt-8 grid md:grid-cols-2 gap-4">
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-900 font-semibold mb-1">Real-time Updates</p>
+                    <p className="text-xs text-blue-700">
+                      See your driver's live location and estimated arrival time
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-green-900 font-semibold mb-1">Photo Proof</p>
+                    <p className="text-xs text-green-700">
+                      Get instant delivery confirmation with photos
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Help Text */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <p className="text-sm text-gray-600 text-center">
+                <strong className="text-gray-900">Need help?</strong> Your order ID was sent via email and SMS after booking.
+                Can't find it? <a href="/contact" className="text-blue-600 hover:text-blue-700 font-medium">Contact support</a>
+              </p>
+            </div>
           </div>
         </div>
       </section>

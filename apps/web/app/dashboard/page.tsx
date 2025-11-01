@@ -1,22 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '../../lib/stores/authStore';
 import { userAPI, type DashboardData } from '../../lib/api/user';
 import Header from '../../components/layout/Header';
-import { Package, TruckIcon, CheckCircle, Clock, Loader2, FileText, Receipt } from 'lucide-react';
+import TrackOrderWidget from '../../components/tracking/TrackOrderWidget';
+import { Package, TruckIcon, CheckCircle, Clock, Loader2, FileText, Receipt, MapPin } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import toast from 'react-hot-toast';
 
-type TabType = 'orders' | 'invoices';
+type TabType = 'orders' | 'invoices' | 'track';
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('orders');
+  
+  // Check URL for tab parameter
+  const tabFromUrl = searchParams.get('tab') as TabType;
+  const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl || 'orders');
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -26,7 +31,12 @@ export default function DashboardPage() {
     }
 
     fetchDashboardData();
-  }, []);
+
+    // Update active tab if URL parameter changes
+    if (tabFromUrl && ['orders', 'invoices', 'track'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   const fetchDashboardData = async () => {
     try {
@@ -104,6 +114,19 @@ export default function DashboardPage() {
               <div className="flex items-center justify-center gap-2">
                 <Package className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Orders</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('track')}
+              className={`flex-1 py-3 sm:py-4 px-4 text-sm sm:text-base font-medium text-center transition-colors ${
+                activeTab === 'track'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Track</span>
               </div>
             </button>
             <button
@@ -234,6 +257,19 @@ export default function DashboardPage() {
                             minute: '2-digit'
                           })}
                         </p>
+
+                        {/* Track Order Button */}
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => router.push(`/track/${order.orderId}`)}
+                            className="w-full sm:w-auto text-xs flex items-center justify-center gap-2"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            Track Order
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="text-right flex-shrink-0">
@@ -254,6 +290,51 @@ export default function DashboardPage() {
                 <Button onClick={() => router.push('/search')}>
                   Create Order
                 </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Track Order Tab Content */}
+        {activeTab === 'track' && (
+          <div className="max-w-2xl mx-auto">
+            <TrackOrderWidget />
+            
+            {/* Recent Orders Quick Access */}
+            {dashboardData?.recentOrders && dashboardData.recentOrders.length > 0 && (
+              <div className="mt-6 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Track</h3>
+                <p className="text-sm text-gray-600 mb-4">Click any order to track it</p>
+                <div className="space-y-2">
+                  {dashboardData.recentOrders.slice(0, 5).map((order) => (
+                    <button
+                      key={order._id}
+                      onClick={() => router.push(`/track/${order.orderId}`)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 
+                               hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-blue-100 transition-colors">
+                          <Package className="w-4 h-4 text-gray-600 group-hover:text-blue-600" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-mono text-sm font-semibold text-gray-900">
+                            {order.orderId}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                            {order.dropoff.address}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          {formatStatus(order.status)}
+                        </span>
+                        <MapPin className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -368,5 +449,20 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-700">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
