@@ -149,6 +149,7 @@ export class InvoiceService {
    * Formats invoice data for email template rendering
    */
   static getInvoiceTemplateVariables(invoice: InvoiceData): Record<string, any> {
+    const { ENV } = require('../config/env');
     const formatCurrency = (amount: number) => this.formatCurrency(amount, invoice.pricing.currency);
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -163,11 +164,17 @@ export class InvoiceService {
       minute: '2-digit'
     });
 
+    // Generate tracking URL
+    const trackingUrl = `${ENV.FRONTEND_URL}/track/${invoice.orderId}`;
+
     return {
       // Invoice meta
       invoiceNumber: invoice.invoiceNumber,
       invoiceDate: formatDate(invoice.invoiceDate),
       orderId: invoice.orderId,
+
+      // Tracking
+      trackingUrl,
 
       // Customer info
       customerName: invoice.customer.name,

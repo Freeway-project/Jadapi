@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
-import { User } from "../models/user.model";
 
 /**
  * Middleware to check if authenticated user has driver role
+ * NOTE: Must be used after requireAuth middleware
  */
 export async function driverAuth(
   req: Request,
@@ -11,21 +11,16 @@ export async function driverAuth(
   next: NextFunction
 ) {
   try {
-    if (!req.user?.userId) {
+    // requireAuth already sets req.user to the User document
+    if (!req.user) {
       throw new ApiError(401, "Authentication required");
     }
 
-    const user = await User.findById(req.user.userId);
-
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-
-    if (!user.roles.includes("driver")) {
+    if (!req.user.roles?.includes("driver")) {
       throw new ApiError(403, "Driver access required");
     }
 
-    if (user.status !== "active") {
+    if (req.user.status !== "active") {
       throw new ApiError(403, "Driver account is not active");
     }
 

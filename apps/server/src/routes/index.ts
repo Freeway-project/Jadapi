@@ -7,8 +7,8 @@ import adminRoutes from "./admin.routes";
 import couponRoutes from "./coupon.routes";
 import driverRoutes from "./driver.routes";
 import paymentRoutes from "./payment.routes";
-import webhookRoutes from "./webhook.routes";
 import smsRoutes from "./sms.routes";
+import trackingRoutes from "./tracking.routes";
 import { AppConfigService } from "../services/appConfig.service";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
 import { ApiError } from "../utils/ApiError";
@@ -162,10 +162,10 @@ router.use("/driver", driverRoutes);
 // Payment routes
 router.use("/payment", paymentRoutes);
 
-// Webhook routes
-router.use("/webhooks", webhookRoutes);
-
 // SMS routes (admin)
 router.use("/sms", smsRoutes);
+
+// Tracking routes (public - no auth required)
+router.use("/track", trackingRoutes);
 
 export default router;

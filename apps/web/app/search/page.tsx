@@ -47,10 +47,11 @@ export default function SearchPage() {
       packageSize: additionalData.packageSize,
       distance: estimateData.data.distance?.distanceKm?.toString() || '0',
       duration: estimateData.data.distance?.durationMinutes?.toString() || '0',
-      // Only base fare and tax
-      subtotal: fare?.subtotal?.toString() || '0',
+      // Simplified fare breakdown
+      baseFare: fare?.baseFare?.toString() || '0',
       tax: fare?.tax?.toString() || '0',
       total: fare?.total?.toString() || '0',
+      currency: fare?.currency || 'CAD',
     });
 
     router.push(`/booking?${params.toString()}`);

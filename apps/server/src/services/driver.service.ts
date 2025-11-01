@@ -97,9 +97,16 @@ export class DriverService {
 
   /**
    * Accept an available order
+   * @param orderIdOrMongoId - Can be either orderId (ORD-XXX) or MongoDB _id
    */
-  static async acceptOrder(orderId: string, driverId: Types.ObjectId) {
-    const order = await DeliveryOrder.findOne({ orderId });
+  static async acceptOrder(orderIdOrMongoId: string, driverId: Types.ObjectId) {
+    // Try to find by orderId first, then by _id
+    let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
+
+    // If not found by orderId, try by MongoDB _id
+    if (!order && Types.ObjectId.isValid(orderIdOrMongoId)) {
+      order = await DeliveryOrder.findById(orderIdOrMongoId);
+    }
 
     if (!order) {
       throw new ApiError(404, "Order not found");
@@ -135,13 +142,20 @@ export class DriverService {
 
   /**
    * Update order status (driver actions)
+   * @param orderIdOrMongoId - Can be either orderId (ORD-XXX) or MongoDB _id
    */
   static async updateOrderStatus(
-    orderId: string,
+    orderIdOrMongoId: string,
     driverId: Types.ObjectId,
     newStatus: "picked_up" | "in_transit" | "delivered" | "cancelled"
   ) {
-    const order = await DeliveryOrder.findOne({ orderId });
+    // Try to find by orderId first, then by _id
+    let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
+
+    // If not found by orderId, try by MongoDB _id
+    if (!order && Types.ObjectId.isValid(orderIdOrMongoId)) {
+      order = await DeliveryOrder.findById(orderIdOrMongoId);
+    }
 
     if (!order) {
       throw new ApiError(404, "Order not found");

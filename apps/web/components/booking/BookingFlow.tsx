@@ -31,9 +31,10 @@ interface BookingFlowProps {
   initialFareEstimate: {
     distance: number;
     duration: number;
-    subtotal?: number;
+    baseFare?: number;
     tax?: number;
     total: number;
+    currency?: string;
   };
   onBack?: () => void;
   onComplete?: () => void;
@@ -114,16 +115,10 @@ export default function BookingFlow({
     success: true,
     data: {
       fare: {
-        baseFare: 0,
-        distanceFare: 0,
-        bandMultiplier: 1,
-        bandLabel: '',
-        sizeMultiplier: 1,
-        edgeSurcharge: 0,
-        subtotal: initialFareEstimate.subtotal || initialFareEstimate.total,
+        baseFare: initialFareEstimate.baseFare || initialFareEstimate.total,
         tax: initialFareEstimate.tax || 0,
         total: initialFareEstimate.total,
-        currency: 'CAD',
+        currency: initialFareEstimate.currency || 'CAD',
         distanceKm: initialFareEstimate.distance,
         durationMinutes: initialFareEstimate.duration
       },

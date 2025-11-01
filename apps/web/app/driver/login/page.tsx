@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@workspace/ui/components/button';
-import { LogIn, Phone, Lock, Loader2 } from 'lucide-react';
+import { Phone, Lock, Loader2, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiClient, tokenManager } from '../../../lib/api/client';
 import { useAuthStore } from '../../../lib/stores/authStore';
@@ -11,14 +11,17 @@ import { useAuthStore } from '../../../lib/stores/authStore';
 export default function DriverLoginPage() {
   const router = useRouter();
   const { setUser } = useAuthStore();
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('123456789');
+  const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!phone || !password) {
+    const trimmedPhone = phone?.trim();
+    const trimmedPassword = password?.trim();
+
+    if (!trimmedPhone || !trimmedPassword) {
       toast.error('Please enter phone and password');
       return;
     }
@@ -27,25 +30,20 @@ export default function DriverLoginPage() {
       setIsLoading(true);
 
       const response = await apiClient.post('/auth/driver-login', {
-        phone,
-        password,
+        phone: trimmedPhone,
+        password: trimmedPassword,
       });
 
       if (response.data?.success && response.data?.token) {
-        // Store token
         tokenManager.setToken(response.data.token);
-
-        // Store user data
         setUser(response.data.user);
-
-        toast.success('Login successful!');
+        toast.success('Welcome back!');
         router.push('/driver');
       } else {
         toast.error('Login failed');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Login failed';
+      const errorMessage = error?.response?.data?.message || error?.message || 'Invalid credentials';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

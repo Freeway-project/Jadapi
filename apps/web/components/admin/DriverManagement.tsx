@@ -19,6 +19,7 @@ export default function DriverManagement() {
     address: '',
     email: '',
     phone: '',
+    password: '',
     vehicleType: '',
     licenseNumber: '',
   });
@@ -66,6 +67,11 @@ export default function DriverManagement() {
       return;
     }
 
+    if (!formData.password || formData.password.length < 6) {
+      setFormError('Password is required and must be at least 6 characters');
+      return;
+    }
+
     try {
       await adminAPI.createDriver(formData);
       setFormSuccess('Driver created successfully!');
@@ -74,6 +80,7 @@ export default function DriverManagement() {
         address: '',
         email: '',
         phone: '',
+        password: '',
         vehicleType: '',
         licenseNumber: '',
       });
@@ -173,7 +180,7 @@ export default function DriverManagement() {
                 />
               </div>
               <div>
-                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone</Label>
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone *</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -181,6 +188,19 @@ export default function DriverManagement() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="mt-1 h-10 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Min 6 characters"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="mt-1 h-10 text-sm"
+                  required
+                  minLength={6}
                 />
               </div>
               <div>

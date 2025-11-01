@@ -4,19 +4,44 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { driverAPI, type DriverOrder } from '../../lib/api/driver';
 import { useAuthStore } from '../../lib/stores/authStore';
+import { useDriverLocation } from '../../hooks/useDriverLocation';
 import Header from '../../components/layout/Header';
-import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation } from 'lucide-react';
+import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, ExternalLink, Radio } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import toast from 'react-hot-toast';
 
-type OrderStatus = 'available' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered';
+type OrderStatus = 'available' | 'in_progress';
+
+// Helper function to generate Google Maps directions URL with full route
+const getRouteDirectionsUrl = (
+  pickupLat: number,
+  pickupLng: number,
+  dropoffLat: number,
+  dropoffLng: number
+) => {
+  // Shows full route from pickup to dropoff in Google Maps
+  return `https://www.google.com/maps/dir/?api=1&origin=${pickupLat},${pickupLng}&destination=${dropoffLat},${dropoffLng}&travelmode=driving`;
+};
 
 export default function DriverDashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
   const [orders, setOrders] = useState<DriverOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeStatus, setActiveStatus] = useState<OrderStatus>('assigned');
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeStatus, setActiveStatus] = useState<OrderStatus>('available');
+  const [locationEnabled, setLocationEnabled] = useState(false);
+
+  // Get current active order ID for location tracking
+  const activeOrderId = orders.find(o => ['assigned', 'picked_up', 'in_transit'].includes(o.status))?._id;
+
+  // Initialize driver location tracking
+  const { isTracking, lastUpdate, error: locationError } = useDriverLocation({
+    enabled: locationEnabled,
+    driverId: user?._id || user?.id,
+    orderId: activeOrderId,
+    updateInterval: 5000, // Update every 5 seconds
+  });
 
   useEffect(() => {
     // Check authentication
@@ -26,37 +51,40 @@ export default function DriverDashboardPage() {
       return;
     }
 
-    fetchOrders();
+    // Initial fetch
+    fetchOrders(true);
 
-    // Poll for orders every 5 seconds
+    // Silent background polling every 5 seconds
     const pollInterval = setInterval(() => {
-      fetchOrders();
+      fetchOrders(false); // Silent refresh
     }, 5000);
 
     // Cleanup interval on unmount or when dependencies change
     return () => clearInterval(pollInterval);
   }, [activeStatus, user, router]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (showLoader = false) => {
     try {
-      setIsLoading(true);
+      // Only show loading spinner on initial load or manual refresh
+      if (showLoader) {
+        setIsInitialLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
 
       if (activeStatus === 'available') {
+        // Fetch available orders (pending, no driver assigned)
         const response = await driverAPI.getAvailableOrders({ limit: 50 });
         setOrders(response.data?.orders || []);
       } else {
-        const statusMap: Record<string, string> = {
-          assigned: 'assigned',
-          picked_up: 'picked_up',
-          in_transit: 'in_transit',
-          delivered: 'delivered',
-        };
-
-        const response = await driverAPI.getMyOrders({
-          status: statusMap[activeStatus],
-          limit: 50,
-        });
-        setOrders(response.data?.orders || []);
+        // Fetch in-progress orders (assigned, picked_up, in_transit)
+        // Note: Backend doesn't support multiple status filtering, so we'll fetch all driver orders
+        // and filter client-side
+        const response = await driverAPI.getMyOrders({ limit: 50 });
+        const inProgressOrders = response.data?.orders?.filter((order: DriverOrder) =>
+          ['assigned', 'picked_up', 'in_transit'].includes(order.status)
+        ) || [];
+        setOrders(inProgressOrders);
       }
     } catch (error: any) {
       console.error('Failed to fetch orders:', error);
@@ -68,31 +96,45 @@ export default function DriverDashboardPage() {
         return;
       }
 
-      toast.error('Failed to load orders');
+      // Only show error toast on initial load, not during background polling
+      if (showLoader) {
+        toast.error('Failed to load orders');
+      }
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsRefreshing(false);
     }
   };
 
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
   const handleAcceptOrder = async (orderId: string) => {
     try {
+      setActionLoading(orderId);
       await driverAPI.acceptOrder(orderId);
       toast.success('Order accepted');
-      fetchOrders();
+      // Silent refresh after accepting
+      fetchOrders(false);
     } catch (error: any) {
       console.error('Failed to accept order:', error);
       toast.error(error?.response?.data?.message || 'Failed to accept order');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
+      setActionLoading(orderId);
       await driverAPI.updateOrderStatus(orderId, newStatus);
       toast.success(`Order marked as ${newStatus.replace('_', ' ')}`);
-      fetchOrders();
+      // Silent refresh after status update
+      fetchOrders(false);
     } catch (error: any) {
       console.error('Failed to update status:', error);
       toast.error(error?.response?.data?.message || 'Failed to update status');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -119,14 +161,24 @@ export default function DriverDashboardPage() {
   };
 
   const renderOrderActions = (order: DriverOrder) => {
+    const isLoading = actionLoading === order._id;
+
     if (activeStatus === 'available') {
       return (
         <Button
           size="sm"
           onClick={() => handleAcceptOrder(order._id)}
+          disabled={isLoading}
           className="w-full"
         >
-          Accept Order
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Accepting...</span>
+            </div>
+          ) : (
+            'Accept Order'
+          )}
         </Button>
       );
     }
@@ -136,9 +188,17 @@ export default function DriverDashboardPage() {
         <Button
           size="sm"
           onClick={() => handleUpdateStatus(order._id, 'picked_up')}
+          disabled={isLoading}
           className="w-full"
         >
-          Mark as Picked Up
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Updating...</span>
+            </div>
+          ) : (
+            'Mark as Picked Up'
+          )}
         </Button>
       );
     }
@@ -148,9 +208,17 @@ export default function DriverDashboardPage() {
         <Button
           size="sm"
           onClick={() => handleUpdateStatus(order._id, 'in_transit')}
+          disabled={isLoading}
           className="w-full"
         >
-          Start Delivery
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Updating...</span>
+            </div>
+          ) : (
+            'Start Delivery'
+          )}
         </Button>
       );
     }
@@ -160,9 +228,17 @@ export default function DriverDashboardPage() {
         <Button
           size="sm"
           onClick={() => handleUpdateStatus(order._id, 'delivered')}
+          disabled={isLoading}
           className="w-full bg-green-600 hover:bg-green-700"
         >
-          Complete Delivery
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Completing...</span>
+            </div>
+          ) : (
+            'Complete Delivery'
+          )}
         </Button>
       );
     }
@@ -170,7 +246,7 @@ export default function DriverDashboardPage() {
     return null;
   };
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -186,33 +262,86 @@ export default function DriverDashboardPage() {
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
-        {/* Header */}
+        {/* Header with Location Toggle */}
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
+              <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
+            </div>
+            {/* Silent refresh indicator */}
+            {isRefreshing && (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span className="hidden sm:inline">Updating...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Location Tracking Card */}
+          <div className={`p-4 rounded-lg border-2 transition-all ${
+            isTracking 
+              ? 'bg-green-50 border-green-500' 
+              : 'bg-gray-50 border-gray-300'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${
+                  isTracking ? 'bg-green-500' : 'bg-gray-400'
+                }`}>
+                  <Radio className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Location Sharing: {isTracking ? 'ON' : 'OFF'}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {isTracking 
+                      ? `Last updated: ${lastUpdate?.toLocaleTimeString() || 'Just now'}` 
+                      : 'Enable to share your live location with customers'}
+                  </p>
+                  {locationError && (
+                    <p className="text-xs text-red-600 mt-1">⚠️ {locationError}</p>
+                  )}
+                </div>
+              </div>
+              <Button
+                onClick={() => setLocationEnabled(!locationEnabled)}
+                variant={isTracking ? 'default' : 'outline'}
+                size="sm"
+                className={isTracking ? 'bg-green-600 hover:bg-green-700' : ''}
+              >
+                {isTracking ? 'Turn Off' : 'Turn On'}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Status Tabs */}
-        <div className="mb-4">
-          <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-hide">
+        {/* Status Tabs - Mobile First */}
+        <div className="mb-6">
+          <div className="grid grid-cols-2 gap-3">
             {[
-              { key: 'available' as OrderStatus, label: 'Available', icon: Package },
-              { key: 'assigned' as OrderStatus, label: 'Assigned', icon: Clock },
-              { key: 'picked_up' as OrderStatus, label: 'Picked Up', icon: Navigation },
-              { key: 'in_transit' as OrderStatus, label: 'In Transit', icon: Navigation },
-              { key: 'delivered' as OrderStatus, label: 'Delivered', icon: CheckCircle },
-            ].map(({ key, label, icon: Icon }) => (
+              { key: 'available' as OrderStatus, label: 'Pending', icon: Package, count: activeStatus === 'available' ? orders.length : null },
+              { key: 'in_progress' as OrderStatus, label: 'In Progress', icon: Navigation, count: activeStatus === 'in_progress' ? orders.length : null },
+            ].map(({ key, label, icon: Icon, count }) => (
               <button
                 key={key}
                 onClick={() => setActiveStatus(key)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl font-semibold transition-all ${
                   activeStatus === key
-                    ? 'border-b-2 border-blue-600 text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-blue-600 text-white shadow-lg scale-[1.02]'
+                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{label}</span>
+                <Icon className="w-6 h-6" />
+                <span className="text-base">{label}</span>
+                {count !== null && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    activeStatus === key ? 'bg-blue-500' : 'bg-gray-100'
+                  }`}>
+                    {count} orders
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -251,47 +380,68 @@ export default function DriverDashboardPage() {
                   </div>
                 </div>
 
-                {/* Pickup Location */}
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 mb-1">Pickup</p>
-                      <p className="text-sm text-gray-900 font-medium truncate">{order.pickup?.address}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
-                          <User className="w-3 h-3" />
-                          <span>{order.pickup?.contactName}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
-                          <Phone className="w-3 h-3" />
-                          <span>{order.pickup?.contactPhone}</span>
+                {/* Route Display */}
+                <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-lg p-4 mb-4 border border-gray-200">
+                  <div className="space-y-3">
+                    {/* Pickup Location */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-500 mb-1">Pickup</p>
+                        <p className="text-sm text-gray-900 font-medium truncate">{order.pickup?.address}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <User className="w-3 h-3" />
+                            <span>{order.pickup?.contactName}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <Phone className="w-3 h-3" />
+                            <span>{order.pickup?.contactPhone}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Dropoff Location */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 mb-1">Dropoff</p>
-                      <p className="text-sm text-gray-900 font-medium truncate">{order.dropoff?.address}</p>
-                      <div className="flex items-center gap-3 mt-1">
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
-                          <User className="w-3 h-3" />
-                          <span>{order.dropoff?.contactName}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-600">
-                          <Phone className="w-3 h-3" />
-                          <span>{order.dropoff?.contactPhone}</span>
+                    {/* Route Line */}
+                    <div className="ml-4 border-l-2 border-dashed border-blue-300 h-4"></div>
+
+                    {/* Dropoff Location */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-500 mb-1">Dropoff</p>
+                        <p className="text-sm text-gray-900 font-medium truncate">{order.dropoff?.address}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <User className="w-3 h-3" />
+                            <span>{order.dropoff?.contactName}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <Phone className="w-3 h-3" />
+                            <span>{order.dropoff?.contactPhone}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Get Directions Button */}
+                    <button
+                      onClick={() => window.open(getRouteDirectionsUrl(
+                        order.pickup.coordinates.lat,
+                        order.pickup.coordinates.lng,
+                        order.dropoff.coordinates.lat,
+                        order.dropoff.coordinates.lng
+                      ), '_blank')}
+                      className="w-full mt-3 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      <span>Get Directions</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 

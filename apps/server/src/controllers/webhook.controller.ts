@@ -46,7 +46,7 @@ export const WebhookController = {
         return res.json({ received: true, status: 'already_processed' });
       }
 
-      // Handle different event types
+
       switch (event.type) {
         case 'payment_intent.created':
           await handlePaymentIntentCreated(event);

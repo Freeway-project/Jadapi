@@ -11,7 +11,7 @@ export const AuthController = {
    */
   async createAdmin(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password, name } = req.body;
+      const { email, password, name, address } = req.body;
 
       if (!email || !password || !name) {
         throw new ApiError(400, "Email, password, and name are required");
@@ -33,6 +33,7 @@ export const AuthController = {
         phone: undefined,
         password: hashedPassword,
         name,
+        address: address || 'N/A',
         roles: ["admin"],
         status: "active",
       });

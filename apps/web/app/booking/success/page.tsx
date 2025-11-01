@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Download, Home, Package, MapPin, User, CreditCard, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { ordersAPI, Invoice, Order } from '../../../lib/api/orders';
 import toast from 'react-hot-toast';
 
-export default function BookingSuccessPage() {
+function BookingSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams?.get('orderId');
@@ -234,24 +234,52 @@ export default function BookingSuccessPage() {
         )}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="space-y-3">
+          {/* Track Order - Primary CTA */}
           <Button
-            onClick={() => router.push('/dashboard')}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-full font-semibold"
+            onClick={() => router.push(`/track/${order.orderId}`)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white h-14 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
           >
-            <Home className="w-4 h-4 mr-2" />
-            Go to Dashboard
+            <MapPin className="w-5 h-5 mr-2" />
+            Track Your Delivery
           </Button>
-          <Button
-            onClick={() => router.push('/search')}
-            variant="outline"
-            className="flex-1 h-12 rounded-full font-semibold border-gray-300"
-          >
-            <Package className="w-4 h-4 mr-2" />
-            New Booking
-          </Button>
+
+          {/* Secondary Actions */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => router.push('/dashboard')}
+              variant="outline"
+              className="flex-1 h-12 rounded-full font-semibold border-gray-300"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Go to Dashboard
+            </Button>
+            <Button
+              onClick={() => router.push('/search')}
+              variant="outline"
+              className="flex-1 h-12 rounded-full font-semibold border-gray-300"
+            >
+              <Package className="w-4 h-4 mr-2" />
+              New Booking
+            </Button>
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-700">Loading your order...</p>
+        </div>
+      </div>
+    }>
+      <BookingSuccessContent />
+    </Suspense>
   );
 }
