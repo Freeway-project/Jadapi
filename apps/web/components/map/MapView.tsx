@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
 
 interface Location {
   lat: number;
@@ -48,6 +48,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
   });
 
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -57,9 +58,40 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
     setMap(null);
   }, []);
 
+  // Fetch directions when both locations are available
+  useEffect(() => {
+    if (!pickupLocation || !dropoffLocation) {
+      setDirectionsResponse(null);
+      return;
+    }
+
+    const directionsService = new google.maps.DirectionsService();
+
+    directionsService.route(
+      {
+        origin: pickupLocation,
+        destination: dropoffLocation,
+        travelMode: google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          setDirectionsResponse(result);
+        } else {
+          console.error('Directions request failed:', status);
+          setDirectionsResponse(null);
+        }
+      }
+    );
+  }, [pickupLocation, dropoffLocation]);
+
   // Update map bounds when locations change
   useEffect(() => {
     if (map && (pickupLocation || dropoffLocation)) {
+      // If we have directions, let DirectionsRenderer handle the bounds
+      if (directionsResponse) {
+        return;
+      }
+
       const bounds = new google.maps.LatLngBounds();
 
       if (pickupLocation) {
@@ -94,7 +126,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
         }
       }
     }
-  }, [map, pickupLocation, dropoffLocation]);
+  }, [map, pickupLocation, dropoffLocation, directionsResponse]);
 
   if (!isLoaded) {
     return (
@@ -106,7 +138,6 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
 
   return (
     <GoogleMap
-
       mapContainerStyle={containerStyle}
       mapContainerClassName={className}
       center={defaultCenter}
@@ -114,9 +145,22 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
       onLoad={onLoad}
       onUnmount={onUnmount}
       options={mapOptions}
-
-
     >
+      {/* Directions Route */}
+      {directionsResponse && (
+        <DirectionsRenderer
+          directions={directionsResponse}
+          options={{
+            suppressMarkers: true,
+            polylineOptions: {
+              strokeColor: '#3811d5ff',
+              strokeOpacity: 0.8,
+              strokeWeight: 5,
+            },
+          }}
+        />
+      )}
+
       {/* Pickup Marker (Blue) */}
       {pickupLocation && (
         <Marker
@@ -124,7 +168,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
           icon={{
             path: google.maps.SymbolPath.CIRCLE,
             scale: 12,
-            fillColor: '#2563EB',
+            fillColor: '#06f22dff',
             fillOpacity: 1,
             strokeWeight: 3,
             strokeColor: '#FFFFFF'
@@ -139,25 +183,10 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
           icon={{
             path: google.maps.SymbolPath.CIRCLE,
             scale: 12,
-            fillColor: '#10B981',
+            fillColor: '#f31515ff',
             fillOpacity: 1,
             strokeWeight: 3,
             strokeColor: '#FFFFFF'
-          }}
-        />
-      )}
-
-      {/* Route Line */}
-      {pickupLocation && dropoffLocation && (
-        <Polyline
-          path={[pickupLocation, dropoffLocation]}
-          options={{
-            strokeColor: '#3B82F6',
-            strokeOpacity: 0.8,
-            strokeWeight: 4,
-            geodesic: true,
-            path: [pickupLocation, dropoffLocation]
-
           }}
         />
       )}

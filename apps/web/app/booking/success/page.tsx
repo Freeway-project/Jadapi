@@ -50,7 +50,36 @@ function BookingSuccessContent() {
     };
 
     fetchOrderDetails();
-  }, [orderId]);
+
+    // Poll for updates if payment is still processing
+    const pollInterval = setInterval(async () => {
+      try {
+        const orderResponse = await ordersAPI.getOrder(orderId);
+        const updatedOrder = orderResponse.data.order;
+        setOrder(updatedOrder);
+
+        // If payment is now complete, try to fetch invoice
+        if (updatedOrder.paymentStatus === 'paid' && !invoice) {
+          try {
+            const invoiceResponse = await ordersAPI.getOrderInvoice(orderId);
+            setInvoice(invoiceResponse.data.invoice);
+          } catch (invoiceError) {
+            console.log('Invoice not available yet:', invoiceError);
+          }
+        }
+
+        // Stop polling if payment is complete
+        if (updatedOrder.paymentStatus === 'paid') {
+          clearInterval(pollInterval);
+        }
+      } catch (err) {
+        console.error('Error polling order status:', err);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(pollInterval);
+  }, [orderId, invoice]);
 
   const formatCurrency = (amount: number, currency: string = 'CAD') => {
     return `${currency} $${(amount / 100).toFixed(2)}`;
@@ -172,66 +201,99 @@ function BookingSuccessContent() {
         </div>
 
         {/* Invoice/Receipt */}
-        {invoice && (
-          <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-blue-600" />
-              Receipt
-            </h2>
+        <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <FileText className="w-5 h-5 mr-2 text-blue-600" />
+            Receipt
+          </h2>
 
-            <div className="space-y-3 mb-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Base Fare</span>
-                <span className="font-medium text-gray-900">{formatCurrency(invoice.pricing.baseFare, invoice.pricing.currency)}</span>
-              </div>
-
-              {invoice.pricing.distanceFare > 0 && (
+          {order.paymentStatus === 'paid' ? (
+            <>
+              <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Distance Fare</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(invoice.pricing.distanceFare, invoice.pricing.currency)}</span>
+                  <span className="text-gray-600">Base Fare</span>
+                  <span className="font-medium text-gray-900">
+                    {formatCurrency(invoice?.pricing?.baseFare || order.pricing.baseFare, invoice?.pricing?.currency || order.pricing.currency)}
+                  </span>
                 </div>
-              )}
 
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium text-gray-900">{formatCurrency(invoice.pricing.subtotal, invoice.pricing.currency)}</span>
+                {(invoice?.pricing?.distanceFare || order.pricing.distanceFare) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Distance Fare</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(invoice?.pricing?.distanceFare || order.pricing.distanceFare, invoice?.pricing?.currency || order.pricing.currency)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-medium text-gray-900">
+                    {formatCurrency(invoice?.pricing?.subtotal || order.pricing.subtotal, invoice?.pricing?.currency || order.pricing.currency)}
+                  </span>
+                </div>
+
+                {(invoice?.pricing?.couponDiscount || order.pricing.couponDiscount) && (invoice?.pricing?.couponDiscount || order.pricing.couponDiscount || 0) > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Discount ({invoice?.pricing?.couponCode || order.coupon?.code})</span>
+                    <span className="font-medium">
+                      -{formatCurrency(invoice?.pricing?.couponDiscount || order.pricing.couponDiscount || 0, invoice?.pricing?.currency || order.pricing.currency)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="font-medium text-gray-900">
+                    {formatCurrency(invoice?.pricing?.tax || order.pricing.tax, invoice?.pricing?.currency || order.pricing.currency)}
+                  </span>
+                </div>
+
+                <div className="pt-3 border-t border-gray-200 flex justify-between">
+                  <span className="text-lg font-bold text-gray-900">Total</span>
+                  <span className="text-lg font-bold text-blue-600">
+                    {formatCurrency(invoice?.pricing?.total || order.pricing.total, invoice?.pricing?.currency || order.pricing.currency)}
+                  </span>
+                </div>
               </div>
 
-              {invoice.pricing.couponDiscount && invoice.pricing.couponDiscount > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount ({invoice.pricing.couponCode})</span>
-                  <span className="font-medium">-{formatCurrency(invoice.pricing.couponDiscount, invoice.pricing.currency)}</span>
+              <div className="bg-green-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <p className="text-sm font-semibold text-gray-900">Payment Complete</p>
                 </div>
-              )}
-
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Tax ({invoice.pricing.taxRate}%)</span>
-                <span className="font-medium text-gray-900">{formatCurrency(invoice.pricing.tax, invoice.pricing.currency)}</span>
+                {invoice && (
+                  <>
+                    <p className="text-xs text-gray-600">
+                      Invoice: {invoice.invoiceNumber}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Paid on: {formatDate(invoice.payment.paidAt)}
+                    </p>
+                  </>
+                )}
+                <p className="text-xs text-gray-600">
+                  Status: <span className="font-medium text-green-600">PAID</span>
+                </p>
               </div>
-
-              <div className="pt-3 border-t border-gray-200 flex justify-between">
-                <span className="text-lg font-bold text-gray-900">Total</span>
-                <span className="text-lg font-bold text-blue-600">{formatCurrency(invoice.pricing.total, invoice.pricing.currency)}</span>
+            </>
+          ) : (
+            <div className="bg-yellow-50 rounded-xl p-6 text-center">
+              <Loader2 className="w-8 h-8 text-yellow-600 animate-spin mx-auto mb-3" />
+              <p className="text-sm font-semibold text-gray-900 mb-1">Processing Payment</p>
+              <p className="text-xs text-gray-600">
+                Your payment is being processed. This page will update automatically once complete.
+              </p>
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Total Amount</span>
+                  <span className="font-semibold text-gray-900">{formatCurrency(order.pricing.total, order.pricing.currency)}</span>
+                </div>
+                <p className="text-xs text-gray-500">Order ID: {order.orderId}</p>
               </div>
             </div>
-
-            <div className="bg-gray-50 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CreditCard className="w-4 h-4 text-gray-600" />
-                <p className="text-sm font-semibold text-gray-900">Payment Information</p>
-              </div>
-              <p className="text-xs text-gray-600">
-                Invoice: {invoice.invoiceNumber}
-              </p>
-              <p className="text-xs text-gray-600">
-                Paid on: {formatDate(invoice.payment.paidAt)}
-              </p>
-              <p className="text-xs text-gray-600">
-                Status: <span className="font-medium text-green-600">PAID</span>
-              </p>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Actions */}
         <div className="space-y-3">
