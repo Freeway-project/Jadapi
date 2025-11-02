@@ -53,9 +53,18 @@ export function FareEstimateModal({
     }
   }
 
+  // Format address to remove country/province and keep first 3 segments so it fits in two lines
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    const parts = address.split(',').map(p => p.trim()).filter(Boolean);
+    // Keep up to first 3 segments (e.g. name, street, city) and drop province/country
+    const kept = parts.slice(0, 3);
+    return kept.join(', ');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] sm:max-w-[380px] bg-white border-2 border-black shadow-2xl p-4 sm:p-5 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-sm bg-white border-2 border-black shadow-2xl p-4 sm:p-5 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-3">
           <DialogTitle className="text-base sm:text-lg font-bold text-black">Your Estimate</DialogTitle>
         </DialogHeader>
@@ -63,14 +72,34 @@ export function FareEstimateModal({
         <div className="space-y-3">
           {/* Route - Minimal */}
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="w-2 h-2 rounded-full bg-black flex-shrink-0"></div>
-              <div className="text-xs sm:text-sm text-gray-900 truncate">{pickup}</div>
+              <div
+                className="text-xs sm:text-sm text-gray-900 min-w-0 flex-1"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {formatAddress(pickup)}
+              </div>
             </div>
             <div className="ml-1 border-l border-gray-300 h-2"></div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="w-2 h-2 rounded-full bg-black flex-shrink-0"></div>
-              <div className="text-xs sm:text-sm text-gray-900 truncate">{dropoff}</div>
+              <div
+                className="text-xs sm:text-sm text-gray-900 min-w-0 flex-1"
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {formatAddress(dropoff)}
+              </div>
             </div>
           </div>
 
@@ -100,13 +129,13 @@ export function FareEstimateModal({
           </div>
         </div>
 
-        <DialogFooter className="mt-4 gap-2 pt-2 flex-col sm:flex-row">
+        <DialogFooter className="mt-4 gap-2 pt-2 flex flex-col sm:flex-row">
           {!isAuthenticated() ? (
             <>
               <Button
-                variant="default"
+                variant="outline"
                 onClick={onClose}
-                className="w-full sm:flex-1 h-10 text-xs font-semibold border-2 border-gray-600 hover:bg-gray-500"
+                className="w-full sm:flex-1 h-10 text-xs font-semibold"
               >
                 Cancel
               </Button>
@@ -120,7 +149,7 @@ export function FareEstimateModal({
           ) : (
             <Button
               onClick={handleContinue}
-              className="w-full h-10 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full h-10 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white"
             >
               Proceed to Booking
             </Button>
