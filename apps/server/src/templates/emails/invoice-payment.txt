@@ -18,7 +18,7 @@ Pickup: {{pickupAddress}}
 {{#pickupContactName}}Contact: {{pickupContactName}}{{/pickupContactName}}
 Dropoff: {{dropoffAddress}}
 {{#dropoffContactName}}Contact: {{dropoffContactName}}{{/dropoffContactName}}
-Package Size: {{packageSize}}
+Package Size: {{#isEnvelope}}Envelope (up to 5kg){{/isEnvelope}}{{#isSmall}}Small (10x10x10 in){{/isSmall}}{{#isMedium}}Medium (14x14x14 in){{/isMedium}}{{#isLarge}}Large (16x16x16 in, up to 15kg){{/isLarge}}{{^isEnvelope}}{{^isSmall}}{{^isMedium}}{{^isLarge}}{{packageSize}}{{/isLarge}}{{/isMedium}}{{/isSmall}}{{/isEnvelope}}
 Distance: {{distance}} km
 
 PRICING BREAKDOWN:

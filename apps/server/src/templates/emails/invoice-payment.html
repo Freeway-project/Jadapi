@@ -242,7 +242,13 @@
       <div class="info-grid">
         <div class="info-box">
           <div class="info-label">Package Size</div>
-          <div class="info-value">{{packageSize}}</div>
+          <div class="info-value">
+            {{#isEnvelope}}Envelope (up to 5kg){{/isEnvelope}}
+            {{#isSmall}}Small (10×10×10 in){{/isSmall}}
+            {{#isMedium}}Medium (14×14×14 in){{/isMedium}}
+            {{#isLarge}}Large (16×16×16 in, up to 15kg){{/isLarge}}
+            {{^isEnvelope}}{{^isSmall}}{{^isMedium}}{{^isLarge}}{{packageSize}}{{/isLarge}}{{/isMedium}}{{/isSmall}}{{/isEnvelope}}
+          </div>
         </div>
         <div class="info-box">
           <div class="info-label">Distance</div>

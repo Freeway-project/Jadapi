@@ -192,6 +192,10 @@ export class InvoiceService {
       dropoffContactName: invoice.delivery.dropoff.contactName || '',
       dropoffContactPhone: invoice.delivery.dropoff.contactPhone || '',
       packageSize: invoice.delivery.packageSize,
+      isEnvelope: invoice.delivery.packageSize.toUpperCase() === 'XS' ? 'true' : '',
+      isSmall: invoice.delivery.packageSize.toUpperCase() === 'S' ? 'true' : '',
+      isMedium: invoice.delivery.packageSize.toUpperCase() === 'M' ? 'true' : '',
+      isLarge: invoice.delivery.packageSize.toUpperCase() === 'L' ? 'true' : '',
       distance: invoice.delivery.distance.toFixed(2),
 
       // Pricing
