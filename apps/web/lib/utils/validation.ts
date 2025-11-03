@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const phoneRegex = /^(\+1|1)?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/;
+export const phoneRegex = /^[0-9]{10}$/;
 
 // Vancouver address validation
 const isVancouverAddress = (address: string): boolean => {
@@ -19,7 +19,7 @@ const isVancouverAddress = (address: string): boolean => {
 const vancouverAddressSchema = z.string()
   .min(10, 'Please enter a complete address')
   .refine(isVancouverAddress, {
-    message: 'Address must be in Vancouver, BC. We currently only serve the Vancouver area.'
+    message: 'Address must be in Surrey or Langley, BC. We currently only serve the Surrey and Langley area.'
   });
 
 export const emailPhoneSchema = z.object({
@@ -45,6 +45,9 @@ export const individualSignupSchema = z.object({
     message: 'Address is required',
   }),
   otp: z.string().length(6, 'OTP must be 6 digits').regex(/^\d+$/, 'OTP must contain only numbers'),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: 'You must accept the terms and conditions',
+  }),
 });
 
 export const businessSignupSchema = z.object({
@@ -58,6 +61,9 @@ export const businessSignupSchema = z.object({
   }),
   emailOtp: z.string().length(6, 'Email OTP must be 6 digits').regex(/^\d+$/, 'Email OTP must contain only numbers'),
   phoneOtp: z.string().length(6, 'Phone OTP must be 6 digits').regex(/^\d+$/, 'Phone OTP must contain only numbers'),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: 'You must accept the terms and conditions',
+  }),
 });
 
 export type EmailPhoneFormData = z.infer<typeof emailPhoneSchema>;

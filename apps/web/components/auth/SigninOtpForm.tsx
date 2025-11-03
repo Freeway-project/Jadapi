@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,6 @@ import { useAuthStore } from '../../lib/stores/authStore';
 import { otpSchema, OTPFormData } from '../../lib/utils/validation';
 import { authAPI, tokenManager } from '../../lib/api/auth';
 import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Shield, ArrowLeft, ArrowRight, Mail, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -33,8 +32,25 @@ export default function SigninOtpForm() {
   const identifierType = isEmailLogin ? 'email' : 'phone';
 
   const handleOtpChange = (index: number, value: string) => {
+    // Handle pasting multiple digits in a single input
     if (value.length > 1) {
-      value = value.slice(-1);
+      const pastedData = value.replace(/\s/g, '').slice(0, 6);
+
+      if (!/^\d+$/.test(pastedData)) {
+        return;
+      }
+
+      const newOtp = [...otp];
+      for (let i = 0; i < pastedData.length && (index + i) < 6; i++) {
+        newOtp[index + i] = pastedData[i] || '';
+      }
+      setOtp(newOtp);
+      clearErrors('otp');
+
+      // Focus the last filled input or next empty
+      const lastFilledIndex = Math.min(index + pastedData.length - 1, 5);
+      inputRefs.current[lastFilledIndex]?.focus();
+      return;
     }
 
     if (value && !/^\d$/.test(value)) {
@@ -57,23 +73,25 @@ export default function SigninOtpForm() {
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, index: number) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, 6);
+    const pastedData = e.clipboardData.getData('text').replace(/\s/g, '').slice(0, 6);
 
     if (!/^\d+$/.test(pastedData)) {
+      toast.error('Please paste a valid 6-digit code');
       return;
     }
 
     const newOtp = [...otp];
-    for (let i = 0; i < pastedData.length && i < 6; i++) {
-      newOtp[i] = pastedData[i] || '';
+    for (let i = 0; i < pastedData.length && (index + i) < 6; i++) {
+      newOtp[index + i] = pastedData[i] || '';
     }
     setOtp(newOtp);
     clearErrors('otp');
 
-    const nextIndex = Math.min(pastedData.length, 5);
-    inputRefs.current[nextIndex]?.focus();
+    // Focus the last filled input or next empty
+    const lastFilledIndex = Math.min(index + pastedData.length - 1, 5);
+    inputRefs.current[lastFilledIndex]?.focus();
   };
 
   const onSubmit = async () => {
@@ -198,16 +216,18 @@ export default function SigninOtpForm() {
                     ref={(el) => { inputRefs.current[index] = el; }}
                     type="text"
                     inputMode="numeric"
-                    maxLength={1}
+                    pattern="[0-9]*"
+                    maxLength={6}
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={handlePaste}
+                    onPaste={(e) => handlePaste(e, index)}
                     disabled={isSubmitting || isLoading}
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 bg-white text-center text-2xl font-mono font-semibold text-slate-900 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
-                      errors.otp ? 'border-rose-500' : 'border-slate-200'
+                    className={`w-11 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl border-2 bg-white text-center text-xl sm:text-2xl font-mono font-semibold text-slate-900 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+                      errors.otp ? 'border-rose-500' : digit ? 'border-blue-300 bg-blue-50' : 'border-slate-200'
                     }`}
                     aria-label={`Digit ${index + 1}`}
+                    autoComplete={index === 0 ? "one-time-code" : "off"}
                   />
                 ))}
               </div>

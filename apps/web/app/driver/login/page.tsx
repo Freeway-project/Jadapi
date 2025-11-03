@@ -77,15 +77,21 @@ export default function DriverLoginPage() {
                 <input
                   id="phone"
                   type="tel"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  maxLength={10}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1234567890"
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setPhone(digits);
+                  }}
+                  placeholder="6041234567"
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-gray-900 placeholder:text-gray-400"
                   disabled={isLoading}
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Enter phone in E.164 format (e.g., +16045551234)</p>
+              <p className="text-xs text-gray-500 mt-1">Enter 10-digit phone number</p>
             </div>
 
             {/* Password Input */}

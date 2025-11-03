@@ -88,6 +88,24 @@ export default function BookingFlow({
     notes: ''
   });
 
+  // Update dropoff coordinates when recipient address changes
+  useEffect(() => {
+    const updateDropoffCoords = async () => {
+      if (recipient.address && recipient.address !== initialDropoff.address) {
+        try {
+          const coords = await geocodeAddress(recipient.address);
+          if (coords) {
+            setDropoffCoords(coords);
+          }
+        } catch (error) {
+          console.error('Failed to geocode recipient address:', error);
+        }
+      }
+    };
+
+    updateDropoffCoords();
+  }, [recipient.address, initialDropoff.address]);
+
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number }>({
     lat: initialPickup.lat,
     lng: initialPickup.lng

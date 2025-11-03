@@ -140,23 +140,23 @@ export default function UserInfoForm({
                 type="tel"
                 inputMode="numeric"
                 pattern="\d*"
-                maxLength={15}
-                placeholder="e.g. 15551234567"
+                maxLength={10}
+                placeholder="e.g. 6041234567"
                 value={userDetails.phone}
                 onChange={(e) => {
                   // allow only digits (strip all non-digit characters)
                   const digits = e.target.value.replace(/\D/g, '');
-                  // optional: limit to 15 digits (E.164 max length)
-                  const limited = digits.slice(0, 15);
+                  // limit to 10 digits
+                  const limited = digits.slice(0, 10);
                   onUpdate({ ...userDetails, phone: limited });
                   // clear error while typing
                   if (phoneError) setPhoneError(null);
                 }}
                 onBlur={() => {
-                  // basic validation: require at least 7 digits (adjustable)
+                  // validation: require exactly 10 digits
                   const len = (userDetails.phone || '').replace(/\D/g, '').length;
-                  if (len > 0 && len < 7) {
-                    setPhoneError('Please enter a valid phone number (at least 7 digits)');
+                  if (len > 0 && len < 10) {
+                    setPhoneError('Please enter a valid 10-digit phone number');
                   } else {
                     setPhoneError(null);
                   }

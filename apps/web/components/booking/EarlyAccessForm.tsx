@@ -186,15 +186,20 @@ export default function EarlyAccessForm({
             <Input
               id="contactPhone"
               type="tel"
-              placeholder="+1 (555) 000-0000"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="6041234567"
               disabled={isSubmitting}
               className="pl-10"
               {...register('contactPhone', {
                 required: 'Phone number is required',
                 pattern: {
-                  value: /^[\d\s\-\+\(\)]+$/,
-                  message: 'Invalid phone number',
+                  value: /^[0-9]{10}$/,
+                  message: 'Phone number must be exactly 10 digits',
                 },
+                onChange: (e) => {
+                  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                }
               })}
             />
           </div>

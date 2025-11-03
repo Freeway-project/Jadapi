@@ -30,6 +30,7 @@ export default function IndividualSignupForm() {
       name: '',
       address: '',
       otp: '',
+      acceptTerms: false,
     },
   });
 
@@ -219,6 +220,47 @@ export default function IndividualSignupForm() {
           error={errors.address?.message}
           disabled={isSubmitting || isLoading}
         />
+
+        {/* Terms and Conditions Checkbox */}
+        <div className="space-y-3">
+          <div className="flex items-start space-x-3">
+            <input
+              id="acceptTerms"
+              type="checkbox"
+              disabled={isSubmitting || isLoading}
+              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
+              {...register('acceptTerms')}
+            />
+            <label htmlFor="acceptTerms" className="text-sm text-gray-700 leading-relaxed">
+              I agree to the{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 underline font-medium"
+              >
+                Terms and Conditions
+              </a>
+              {' '}and{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 underline font-medium"
+              >
+                Privacy Policy
+              </a>
+            </label>
+          </div>
+          {errors.acceptTerms && (
+            <div className="flex items-center space-x-2 text-red-600">
+              <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-xs font-bold">!</span>
+              </div>
+              <p className="text-sm">{errors.acceptTerms.message}</p>
+            </div>
+          )}
+        </div>
 
         <Button
           type="submit"
