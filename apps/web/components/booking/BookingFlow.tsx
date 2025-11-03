@@ -386,7 +386,7 @@ export default function BookingFlow({
                   title="Delivery Details"
                   userDetails={recipient}
                   onUpdate={setRecipient}
-                  addressEditable={true}
+                  addressEditable={false}
                 />
               )}
 
@@ -523,7 +523,7 @@ export default function BookingFlow({
                   title="Recipient Details"
                   userDetails={recipient}
                   onUpdate={setRecipient}
-                  addressEditable={true}
+                  addressEditable={false}
                 />
               )}
 
