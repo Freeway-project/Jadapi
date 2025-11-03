@@ -239,8 +239,10 @@ function CheckoutForm({
         const metadata = (paymentIntent as any).metadata as Record<string, string> | undefined;
         const orderIdFromIntent = metadata?.orderId;
         if (orderIdFromIntent) {
-          // Redirect to success page with orderId
-          window.location.href = `/booking/success?orderId=${orderIdFromIntent}`;
+          // Wait 3 seconds then redirect to booking success page with invoice
+          setTimeout(() => {
+            window.location.href = `/booking/success?orderId=${orderIdFromIntent}`;
+          }, 3000);
         }
       }
     } catch (err: any) {
@@ -256,10 +258,16 @@ function CheckoutForm({
 
   if (paymentStatus === 'succeeded') {
     return (
-      <div className="text-center py-6">
-        <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-        <h4 className="text-lg font-bold text-gray-900 mb-2">Payment Successful!</h4>
-        <p className="text-sm text-gray-600">Your order has been confirmed</p>
+      <div className="text-center py-8">
+        <div className="mb-4 animate-bounce">
+          <CheckCircle className="w-20 h-20 text-green-600 mx-auto" />
+        </div>
+        <h4 className="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h4>
+        <p className="text-sm text-gray-600 mb-4">Your order has been confirmed</p>
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Redirecting to invoice in 3 seconds...</span>
+        </div>
       </div>
     );
   }

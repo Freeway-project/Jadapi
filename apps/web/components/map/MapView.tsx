@@ -60,8 +60,14 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
 
   // Fetch directions when both locations are available
   useEffect(() => {
-    if (!pickupLocation || !dropoffLocation) {
+    if (!pickupLocation || !dropoffLocation || !isLoaded) {
       setDirectionsResponse(null);
+      return;
+    }
+
+    // Check if google maps API is available
+    if (typeof google === 'undefined' || !google.maps || !google.maps.DirectionsService) {
+      console.error('Google Maps API not loaded');
       return;
     }
 
@@ -82,11 +88,11 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
         }
       }
     );
-  }, [pickupLocation, dropoffLocation]);
+  }, [pickupLocation, dropoffLocation, isLoaded]);
 
   // Update map bounds when locations change
   useEffect(() => {
-    if (map && (pickupLocation || dropoffLocation)) {
+    if (map && (pickupLocation || dropoffLocation) && isLoaded && typeof google !== 'undefined') {
       // If we have directions, let DirectionsRenderer handle the bounds
       if (directionsResponse) {
         return;
@@ -126,7 +132,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
         }
       }
     }
-  }, [map, pickupLocation, dropoffLocation, directionsResponse]);
+  }, [map, pickupLocation, dropoffLocation, directionsResponse, isLoaded]);
 
   if (!isLoaded) {
     return (
@@ -161,8 +167,8 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
         />
       )}
 
-      {/* Pickup Marker (Blue) */}
-      {pickupLocation && (
+      {/* Pickup Marker (Green) */}
+      {pickupLocation && isLoaded && typeof google !== 'undefined' && (
         <Marker
           position={pickupLocation}
           icon={{
@@ -176,8 +182,8 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
         />
       )}
 
-      {/* Dropoff Marker (Green) */}
-      {dropoffLocation && (
+      {/* Dropoff Marker (Red) */}
+      {dropoffLocation && isLoaded && typeof google !== 'undefined' && (
         <Marker
           position={dropoffLocation}
           icon={{

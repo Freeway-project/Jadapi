@@ -178,8 +178,8 @@ export default function DriverDashboardPage() {
       setActionLoading(orderId);
       await driverAPI.acceptOrder(orderId);
       toast.success('Order accepted');
-      // Silent refresh after accepting
-      fetchOrders(false);
+      // Switch to In Progress tab automatically
+      setActiveStatus('in_progress');
     } catch (error: any) {
       console.error('Failed to accept order:', error);
       toast.error(error?.response?.data?.message || 'Failed to accept order');
@@ -193,7 +193,9 @@ export default function DriverDashboardPage() {
       setActionLoading(orderId);
       await driverAPI.updateOrderStatus(orderId, newStatus);
       toast.success(`Order marked as ${newStatus.replace('_', ' ')}`);
-      // Silent refresh after status update
+
+      // If order is completed (delivered), it should be removed from in-progress
+      // Silent refresh will handle this automatically
       fetchOrders(false);
     } catch (error: any) {
       console.error('Failed to update status:', error);

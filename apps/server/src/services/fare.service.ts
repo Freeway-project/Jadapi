@@ -3,9 +3,7 @@ import {
   FareEstimateResult,
   FareBreakdown,
   PricingConfig,
-  PackageSize,
-  DistanceBand,
-  ServiceCenter
+  PackageSize
 } from '../types/pricing.types';
 import { DistanceService } from './distance.service';
 import { ConfigService } from './config.service';
@@ -75,9 +73,15 @@ export class FareService {
 
   /**
    * Calculate simplified fare breakdown
-   * Formula: baseFare = base + (distance * per_km) + (duration * per_min)
+   * Formula: baseFare = base + (distance * per_km with configurable tier multipliers)
+   * Distance tiers are defined in config.bands (configurable):
+   * Default setup:
+   * - 0-5 km: base per_km rate × 1.0 (e.g., $0.99/km)
+   * - 5-10 km: base per_km rate × 1.1 (e.g., $1.09/km)
+   * - above 10 km: base per_km rate × 1.2 (e.g., $1.19/km)
    * Apply package size multiplier and minimum fare
    * Then add tax to get total
+   * Note: Time/duration does NOT affect pricing
    */
   private static calculateFareBreakdown(
     distanceKm: number,
@@ -87,13 +91,38 @@ export class FareService {
   ): FareBreakdown {
     const { rateCard, tax, ui } = config;
 
-    // Calculate base components
+    // Base component
     const baseComponent = rateCard.base_cents;
-    const distanceComponent = Math.round(distanceKm * rateCard.per_km_cents);
-    const durationComponent = Math.round(durationMinutes * rateCard.per_min_cents);
 
-    // Sum all components
-    let calculatedFare = baseComponent + distanceComponent + durationComponent;
+    // Distance-based calculation with tiered multipliers from config bands
+    let distanceComponent = 0;
+    const basePerKm = rateCard.per_km_cents; // 99 cents = $0.99 per km
+    const { bands } = config;
+
+    // Sort bands by km_max to ensure correct order
+    const sortedBands = [...bands].sort((a, b) => a.km_max - b.km_max);
+
+    let previousKm = 0;
+    let remainingDistance = distanceKm;
+
+    for (let i = 0; i < sortedBands.length; i++) {
+      const band = sortedBands[i];
+      const bandDistance = band.km_max - previousKm;
+
+      if (remainingDistance > 0) {
+        const distanceInBand = Math.min(remainingDistance, bandDistance);
+        distanceComponent += distanceInBand * basePerKm * band.multiplier;
+        remainingDistance -= distanceInBand;
+        previousKm = band.km_max;
+      } else {
+        break;
+      }
+    }
+
+    distanceComponent = Math.round(distanceComponent);
+
+    // Sum all components (no duration component)
+    let calculatedFare = baseComponent + distanceComponent;
 
     // Apply package size multiplier
     const sizeMultiplier = rateCard.size_multiplier[packageSize] || 1.0;
