@@ -187,12 +187,9 @@ export default function JaddpiLanding() {
       {/* Coverage Notice */}
       <section className="bg-blue-50 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm sm:text-base text-gray-700 mb-4">
-            Currently available <strong className="text-blue-700">only in Surrey and Langley, BC</strong>. Join the waitlist for nearby cities.
+          <p className="text-sm sm:text-base text-gray-700">
+            Deliveries are currently available <strong className="text-blue-700">only in Surrey and Langley, BC</strong>. Other regions will be added soon.
           </p>
-          {/* <a href="/waitlist" className="inline-block px-6 py-2 border-2 border-blue-300 text-blue-700 rounded-lg font-medium hover:bg-white transition">
-            Notify me when you expand
-          </a> */}
         </div>
       </section>
 
