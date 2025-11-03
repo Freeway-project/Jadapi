@@ -184,9 +184,15 @@ export default function DriverManagement() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+1234567890"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  maxLength={10}
+                  placeholder="6041234567"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setFormData({ ...formData, phone: digits });
+                  }}
                   className="mt-1 h-10 text-sm"
                 />
               </div>

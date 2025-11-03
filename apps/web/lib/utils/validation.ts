@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const phoneRegex = /^(\+1|1)?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/;
+export const phoneRegex = /^[0-9]{10}$/;
 
 // Vancouver address validation
 const isVancouverAddress = (address: string): boolean => {
@@ -19,7 +19,7 @@ const isVancouverAddress = (address: string): boolean => {
 const vancouverAddressSchema = z.string()
   .min(10, 'Please enter a complete address')
   .refine(isVancouverAddress, {
-    message: 'Address must be in Vancouver, BC. We currently only serve the Vancouver area.'
+    message: 'Address must be in Surrey or Langley, BC. We currently only serve the Surrey and Langley area.'
   });
 
 export const emailPhoneSchema = z.object({
