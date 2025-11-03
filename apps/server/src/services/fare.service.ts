@@ -3,9 +3,7 @@ import {
   FareEstimateResult,
   FareBreakdown,
   PricingConfig,
-  PackageSize,
-  DistanceBand,
-  ServiceCenter
+  PackageSize
 } from '../types/pricing.types';
 import { DistanceService } from './distance.service';
 import { ConfigService } from './config.service';

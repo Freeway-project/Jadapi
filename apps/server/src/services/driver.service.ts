@@ -165,17 +165,28 @@ export class DriverService {
       throw new ApiError(403, "Order not assigned to this driver");
     }
 
-    // Validate status transitions
+    // Validate status transitions (one-way flow)
     const validTransitions: Record<string, string[]> = {
       assigned: ["picked_up", "cancelled"],
       picked_up: ["in_transit", "cancelled"],
       in_transit: ["delivered", "cancelled"],
+      delivered: [], // Terminal state - no further transitions allowed
+      cancelled: [], // Terminal state - no further transitions allowed
     };
 
-    if (!validTransitions[order.status]?.includes(newStatus)) {
+    // Check if current status allows any transitions
+    if (!validTransitions[order.status]) {
       throw new ApiError(
         400,
-        `Cannot transition from ${order.status} to ${newStatus}`
+        `Invalid current status: ${order.status}`
+      );
+    }
+
+    // Check if transition is allowed
+    if (!validTransitions[order.status].includes(newStatus)) {
+      throw new ApiError(
+        400,
+        `Cannot change status from ${order.status} to ${newStatus}. ${order.status === 'delivered' || order.status === 'cancelled' ? 'This order is already completed.' : ''}`
       );
     }
 
