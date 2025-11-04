@@ -26,12 +26,14 @@ export interface DriverOrder {
     coordinates: { lat: number; lng: number };
     contactName: string;
     contactPhone: string;
+    notes?: string;
   };
   dropoff: {
     address: string;
     coordinates: { lat: number; lng: number };
     contactName: string;
     contactPhone: string;
+    notes?: string;
   };
   package: {
     size: string;

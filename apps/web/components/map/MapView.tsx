@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from '@react-google-maps/api';
+import { GoogleMap, Marker, DirectionsRenderer } from '@react-google-maps/api';
 
 interface Location {
   lat: number;
@@ -42,13 +42,9 @@ const mapOptions = {
 };
 
 export default function MapView({ pickupLocation, dropoffLocation, className = '' }: MapViewProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
-  });
-
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -56,6 +52,19 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
 
   const onUnmount = useCallback(() => {
     setMap(null);
+  }, []);
+
+  // Check if Google Maps is loaded
+  useEffect(() => {
+    const checkLoaded = () => {
+      if (typeof window !== 'undefined' && window.google?.maps) {
+        setIsLoaded(true);
+      } else {
+        // Retry after a short delay
+        setTimeout(checkLoaded, 100);
+      }
+    };
+    checkLoaded();
   }, []);
 
   // Fetch directions when both locations are available

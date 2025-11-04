@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { GoogleMap, useJsApiLoader, Marker, Polyline, DirectionsRenderer, Circle } from '@react-google-maps/api';
+import { GoogleMap, Marker, Polyline, DirectionsRenderer, Circle } from '@react-google-maps/api';
 import { 
   Package, 
   MapPin, 
@@ -47,16 +47,23 @@ export default function TrackOrderPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
   const [driverToDropoffDirections, setDriverToDropoffDirections] = useState<google.maps.DirectionsResult | null>(null);
-
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
-  });
-
+  const [isLoaded, setIsLoaded] = useState(false);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
+  }, []);
+
+  // Check if Google Maps is loaded
+  useEffect(() => {
+    const checkLoaded = () => {
+      if (typeof window !== 'undefined' && window.google?.maps) {
+        setIsLoaded(true);
+      } else {
+        setTimeout(checkLoaded, 100);
+      }
+    };
+    checkLoaded();
   }, []);
 
   // Fetch tracking info

@@ -5,7 +5,6 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Button } from '@workspace/ui/components/button';
 import { MapPin, Loader2 } from 'lucide-react';
-import { loadGoogleMaps, isGoogleMapsLoaded } from '../../lib/utils/googleMaps';
 
 interface AddressSuggestion {
   description: string;
@@ -57,16 +56,17 @@ export default function AddressAutocomplete({
   const [apiError, setApiError] = useState<string | null>(null);
   const debouncedValue = useDebounce(value, 300);
 
-  // Load Google Maps API on component mount
+  // Wait for Google Maps API to be loaded (loaded globally by LoadScript)
   useEffect(() => {
-    loadGoogleMaps()
-      .then(() => {
+    const checkGoogleMapsLoaded = () => {
+      if (typeof window !== 'undefined' && window.google?.maps?.places) {
         setApiError(null);
-      })
-      .catch((error) => {
-        console.error('Failed to load Google Maps API:', error);
-        setApiError('Address autocomplete is not available. Please type your address manually.');
-      });
+      } else {
+        // Retry after a short delay
+        setTimeout(checkGoogleMapsLoaded, 100);
+      }
+    };
+    checkGoogleMapsLoaded();
   }, []);
 
   // Google Places API call - restricted to Canada (using new AutocompleteSuggestion API)
@@ -80,7 +80,7 @@ export default function AddressAutocomplete({
 
     try {
       // Check if Google Maps API is available
-      if (isGoogleMapsLoaded()) {
+      if (typeof window !== 'undefined' && window.google?.maps?.places) {
         const { AutocompleteSuggestion } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
 
         const request: google.maps.places.AutocompleteRequest = {

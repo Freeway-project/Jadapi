@@ -439,12 +439,6 @@ export default function DriverDashboardPage() {
                       })}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900">
-                      ${((order.pricing?.total || 0) / 100).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-gray-500">{order.pricing?.currency || 'CAD'}</p>
-                  </div>
                 </div>
 
                 {/* Route Display */}
@@ -456,18 +450,38 @@ export default function DriverDashboardPage() {
                         <MapPin className="w-4 h-4 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-gray-500 mb-1">Pickup</p>
-                        <p className="text-sm text-gray-900 font-medium truncate">{order.pickup?.address}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <User className="w-3 h-3" />
-                            <span>{order.pickup?.contactName}</span>
+                        <p className="text-xs font-semibold text-blue-600 mb-1">PICKUP</p>
+                        <p className="text-sm text-gray-900 font-medium">{order.pickup?.address}</p>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium">{order.pickup?.contactName}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <Phone className="w-3 h-3" />
-                            <span>{order.pickup?.contactPhone}</span>
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-gray-500" />
+                            <a
+                              href={`tel:${order.pickup?.contactPhone}`}
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium underline"
+                            >
+                              {order.pickup?.contactPhone}
+                            </a>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="ml-auto h-8 px-3 text-xs bg-blue-50 hover:bg-blue-100 border-blue-300"
+                              onClick={() => window.location.href = `tel:${order.pickup?.contactPhone}`}
+                            >
+                              <Phone className="w-3 h-3 mr-1" />
+                              Call
+                            </Button>
                           </div>
                         </div>
+                        {order.pickup?.notes && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                            <p className="text-xs font-semibold text-blue-700 mb-1">Pickup Notes:</p>
+                            <p className="text-xs text-gray-700">{order.pickup.notes}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -480,18 +494,38 @@ export default function DriverDashboardPage() {
                         <MapPin className="w-4 h-4 text-green-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-gray-500 mb-1">Dropoff</p>
-                        <p className="text-sm text-gray-900 font-medium truncate">{order.dropoff?.address}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <User className="w-3 h-3" />
-                            <span>{order.dropoff?.contactName}</span>
+                        <p className="text-xs font-semibold text-green-600 mb-1">DROPOFF</p>
+                        <p className="text-sm text-gray-900 font-medium">{order.dropoff?.address}</p>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium">{order.dropoff?.contactName}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <Phone className="w-3 h-3" />
-                            <span>{order.dropoff?.contactPhone}</span>
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-gray-500" />
+                            <a
+                              href={`tel:${order.dropoff?.contactPhone}`}
+                              className="text-sm text-green-600 hover:text-green-700 font-medium underline"
+                            >
+                              {order.dropoff?.contactPhone}
+                            </a>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="ml-auto h-8 px-3 text-xs bg-green-50 hover:bg-green-100 border-green-300"
+                              onClick={() => window.location.href = `tel:${order.dropoff?.contactPhone}`}
+                            >
+                              <Phone className="w-3 h-3 mr-1" />
+                              Call
+                            </Button>
                           </div>
                         </div>
+                        {order.dropoff?.notes && (
+                          <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                            <p className="text-xs font-semibold text-green-700 mb-1">Dropoff Notes:</p>
+                            <p className="text-xs text-gray-700">{order.dropoff.notes}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
