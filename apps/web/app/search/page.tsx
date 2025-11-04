@@ -75,32 +75,32 @@ export default function SearchPage() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* ========== MOBILE LAYOUT ========== */}
-        <div className="flex-1 flex flex-col lg:hidden">
-          {/* Animation & Text - Top 50% */}
-          <div className="h-[50vh] relative bg-gradient-to-b from-blue-200 to-white flex flex-col items-center justify-center p-2">
-            <div className="w-full max-w-md">
-              <div className="text-center -mt-24">
+        <div className="flex-1 flex flex-col lg:hidden overflow-y-auto">
+          {/* Animation & Text - Top Section */}
+          <div className="min-h-[45vh] relative bg-gradient-to-b from-blue-100 to-white flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-sm">
+              <div className="text-center">
                 <BaseAnimation
                   animationFile="global-delivery.json"
-                  width={250}
-                  height={250}
-                  className="mx-auto"
+                  width={280}
+                  height={280}
+                  className="mx-auto mb-4"
                 />
-                <h2 className="text-2xl font-bold text-gray-900">Fast & Reliable Delivery</h2>
-                <p className="text-gray-600">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Fast & Reliable Delivery</h2>
+                <p className="text-sm sm:text-base text-gray-600">
                   Get instant price estimates and book your delivery in minutes
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Search Form - Bottom 50% */}
-          <div className="flex-1 bg-gray-50 flex items-center h-[50vh] p-1 overflow-hidden relative bottom-20 left-0 right-0 z-10">
+          {/* Search Form - Bottom Section */}
+          <div className="flex-1 bg-gray-50 px-4 py-6">
             <FromToSearch
               onEstimate={handleEstimate}
               showPackageDetails={true}
               prefillFromLastSearch={true}
-              className="w-full"
+              className="w-full max-w-md mx-auto"
               onAddressChange={handleAddressChange}
             />
           </div>

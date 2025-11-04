@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Package, CreditCard, Loader2, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Package, CreditCard, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { FareEstimateResponse } from '../../../lib/api/delivery';
 import { paymentAPI } from '../../../lib/api/payment';
 import { tokenManager } from '../../../lib/api/client';
@@ -111,61 +111,16 @@ export default function PaymentSection({
         <h3 className="text-lg font-semibold text-gray-900">Payment</h3>
       </div>
 
-      {/* Pricing Breakdown */}
+      {/* Total Amount */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="p-5 space-y-3">
-          {/* Subtotal (before tax) */}
-          <div className="flex items-center justify-between">
-            <span className="text-base text-gray-700">Subtotal</span>
-            <span className="text-lg font-semibold text-gray-900">
-              ${(((estimate?.data?.fare?.total || 0) - (estimate?.data?.fare?.tax || 0)) / 100).toFixed(2)}
-            </span>
-          </div>
-
-          {/* Tax */}
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-1.5 group relative">
-              <span className="text-gray-600">Taxes</span>
-              <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
-              {/* Tooltip */}
-              <div className="invisible group-hover:visible absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50">
-                <div className="space-y-1.5">
-                  <div className="font-semibold mb-2 border-b border-gray-700 pb-1">Tax & Fee Breakdown</div>
-                  <div className="flex justify-between">
-                    <span>BC Courier Fee (2%)</span>
-                    <span>${((estimate?.data?.fare?.fees?.bcCourierFee || 0) / 100).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>BC Carbon Green Fee (0.9%)</span>
-                    <span>${((estimate?.data?.fare?.fees?.bcCarbonFee || 0) / 100).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Service Fee (1%)</span>
-                    <span>${((estimate?.data?.fare?.fees?.serviceFee || 0) / 100).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-gray-700 pt-1.5 mt-1.5 font-medium">
-                    <span>GST (5%)</span>
-                    <span>${((estimate?.data?.fare?.fees?.gst || estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
-                  </div>
-                </div>
-                {/* Arrow */}
-                <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-              </div>
-            </div>
-            <span className="font-medium text-gray-900">
-              ${((estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        {/* Total Amount */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-5 py-4 border-t-2 border-blue-200">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-semibold text-gray-700 block">Total Amount</span>
+              <span className="text-base font-semibold text-gray-700 block">Total Amount</span>
               <span className="text-xs text-gray-600">{estimate?.data?.fare?.currency || 'CAD'} - Secure payment via Stripe</span>
+              <p className="text-xs text-gray-500 mt-1">Includes all taxes and fees</p>
             </div>
-            <span className="text-3xl font-bold text-blue-600">
+            <span className="text-4xl font-bold text-blue-600">
               ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
             </span>
           </div>
@@ -195,6 +150,7 @@ export default function PaymentSection({
           <Elements stripe={getStripe()} options={options}>
             <CheckoutForm
               clientSecret={clientSecret}
+              orderId={orderId}
               onSuccess={onPaymentSuccess}
               onError={onPaymentError}
             />
@@ -218,10 +174,12 @@ export default function PaymentSection({
  */
 function CheckoutForm({
   clientSecret,
+  orderId,
   onSuccess,
   onError,
 }: {
   clientSecret: string;
+  orderId?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }) {
@@ -262,14 +220,14 @@ function CheckoutForm({
         toast.success('Payment successful!');
         onSuccess?.();
 
-        // Get orderId from metadata or parent component
-        const metadata = (paymentIntent as any).metadata as Record<string, string> | undefined;
-        const orderIdFromIntent = metadata?.orderId;
-        if (orderIdFromIntent) {
-          // Wait 3 seconds then redirect to booking success page with invoice
+        // Redirect to booking success page with invoice
+        if (orderId) {
+          console.log('[Payment] Payment succeeded, redirecting to invoice:', orderId);
           setTimeout(() => {
-            window.location.href = `/booking/success?orderId=${orderIdFromIntent}`;
-          }, 3000);
+            window.location.href = `/booking/success?orderId=${orderId}`;
+          }, 2000);
+        } else {
+          console.error('[Payment] No orderId available for redirect');
         }
       }
     } catch (err: any) {
@@ -293,7 +251,7 @@ function CheckoutForm({
         <p className="text-sm text-gray-600 mb-4">Your order has been confirmed</p>
         <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Redirecting to invoice in 3 seconds...</span>
+          <span>Redirecting to invoice...</span>
         </div>
       </div>
     );

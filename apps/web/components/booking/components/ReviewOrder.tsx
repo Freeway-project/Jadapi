@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, Tag, Loader2, CheckCircle2, XCircle, Info } from 'lucide-react';
+import { Package, Tag, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FareEstimateResponse } from '../../../lib/api/delivery';
 import { UserDetails } from './UserInfoForm';
@@ -176,90 +176,26 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
           )}
         </div>
 
-        {/* Price Breakdown */}
+        {/* Price Summary */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h4 className="font-semibold text-gray-900 mb-3 text-sm">Price Summary</h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between text-gray-600">
-              <span>Base Fare ({estimate?.data?.fare?.durationMinutes || 0} min @ $0.88/min)</span>
-              <span>${((estimate?.data?.fare?.baseFare || 0) / 100).toFixed(2)}</span>
-            </div>
-            {estimate?.data?.fare?.distanceSurcharge > 0 && (
-              <div className="flex justify-between text-gray-600 text-xs">
-                <span>Distance Surcharge ({estimate?.data?.fare?.distanceKm > 10 ? '8%' : '5%'} for {estimate?.data?.fare?.distanceKm.toFixed(1)}km)</span>
-                <span>${((estimate?.data?.fare?.distanceSurcharge || 0) / 100).toFixed(2)}</span>
-              </div>
-            )}
-            {estimate?.data?.fare?.fees && (
-              <>
-                <div className="flex justify-between text-gray-600 text-xs">
-                  <span>BC Courier Fee (2%)</span>
-                  <span>${((estimate.data.fare.fees.bcCourierFee || 0) / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 text-xs">
-                  <span>BC Carbon Green Fee (0.9%)</span>
-                  <span>${((estimate.data.fare.fees.bcCarbonFee || 0) / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 text-xs">
-                  <span>Service Fee (1%)</span>
-                  <span>${((estimate.data.fare.fees.serviceFee || 0) / 100).toFixed(2)}</span>
-                </div>
-              </>
-            )}
+          <div className="space-y-3">
             {appliedCoupon && (
-              <div className="flex justify-between text-green-600 font-medium">
+              <div className="flex justify-between text-green-600 font-medium text-sm">
                 <span>Discount ({appliedCoupon.code})</span>
                 <span>-${(appliedCoupon.discount / 100).toFixed(2)}</span>
               </div>
             )}
-            {appliedCoupon && (
-              <div className="flex justify-between text-gray-600 text-xs">
-                <span>Subtotal after discount</span>
-                <span>${(appliedCoupon.discountedSubtotal / 100).toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-gray-600">
-              <div className="flex items-center gap-1.5 group relative">
-                <span>Taxes</span>
-                <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
-                {/* Tooltip */}
-                <div className="invisible group-hover:visible absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50">
-                  <div className="space-y-1.5">
-                    <div className="font-semibold mb-2 border-b border-gray-700 pb-1">Tax & Fee Breakdown</div>
-                    <div className="flex justify-between">
-                      <span>BC Courier Fee (2%)</span>
-                      <span>${((estimate?.data?.fare?.fees?.bcCourierFee || 0) / 100).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>BC Carbon Green Fee (0.9%)</span>
-                      <span>${((estimate?.data?.fare?.fees?.bcCarbonFee || 0) / 100).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Service Fee (1%)</span>
-                      <span>${((estimate?.data?.fare?.fees?.serviceFee || 0) / 100).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-gray-700 pt-1.5 mt-1.5 font-medium">
-                      <span>GST (5%)</span>
-                      <span>${((estimate?.data?.fare?.fees?.gst || estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
-                    </div>
-                  </div>
-                  {/* Arrow */}
-                  <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-              <span>${appliedCoupon
-                ? (appliedCoupon.gst / 100).toFixed(2)
-                : ((estimate?.data?.fare?.fees?.gst || estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
-            </div>
-            <div className="border-t border-gray-200 pt-2 mt-2">
+            <div className="border-t border-gray-200 pt-3">
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900">Total</span>
-                <span className="text-xl font-bold text-blue-600">
+                <span className="text-2xl font-bold text-blue-600">
                   ${appliedCoupon
                     ? (appliedCoupon.newTotal / 100).toFixed(2)
                     : ((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
                 </span>
               </div>
+              <p className="text-xs text-gray-500 mt-1 text-right">Includes all taxes and fees</p>
             </div>
           </div>
         </div>
