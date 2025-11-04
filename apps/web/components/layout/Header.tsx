@@ -128,14 +128,14 @@ export default function Header() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <Link href="/auth/signin">
-                  <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+                  <Button variant="ghost" size="sm" className="text-xs sm:text-base sm:px-6">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/auth/signup">
-                  <Button size="sm" className="text-xm sm:text-sm bg-blue-600 hover:bg-blue-700">
+                  <Button size="sm" className="text-xs sm:text-base bg-blue-600 hover:bg-blue-700 sm:px-6">
                     Sign Up
                   </Button>
                 </Link>

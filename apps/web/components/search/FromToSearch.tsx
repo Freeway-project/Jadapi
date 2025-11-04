@@ -72,13 +72,13 @@ export default function FromToSearch({
     }
   } | null>(null);
 
-  // Prefill from last search if enabled
+  // Prefill from last search if enabled (excluding dropoff)
   useEffect(() => {
     if (prefillFromLastSearch) {
       const lastSearch = getLastSearch();
       if (lastSearch) {
         setFromAddress(lastSearch.fromAddress);
-        setToAddress(lastSearch.toAddress);
+        // Keep dropoff blank for new search
         setPackageDetails({
           type: lastSearch.packageType,
           description: lastSearch.packageDescription
