@@ -19,8 +19,6 @@ export interface ValidateCouponResponse {
     discount: number;
     discountedSubtotal: number;
     gst: number;
-    pst: number;
-    totalTax: number;
     newTotal: number;
   };
   message?: string;

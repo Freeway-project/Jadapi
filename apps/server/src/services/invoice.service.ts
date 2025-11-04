@@ -36,7 +36,13 @@ export interface InvoiceData {
   // Pricing breakdown
   pricing: {
     baseFare: number;
-    distanceFare: number;
+    distanceSurcharge: number;
+    fees?: {
+      bcCourierFee: number;
+      bcCarbonFee: number;
+      serviceFee: number;
+      gst: number;
+    };
     subtotal: number;
     tax: number;
     taxRate: number;
@@ -115,7 +121,13 @@ export class InvoiceService {
 
       pricing: {
         baseFare: order.pricing.baseFare,
-        distanceFare: order.pricing.distanceFare,
+        distanceSurcharge: order.pricing.distanceSurcharge || 0,
+        fees: order.pricing.fees ? {
+          bcCourierFee: order.pricing.fees.bcCourierFee || 0,
+          bcCarbonFee: order.pricing.fees.bcCarbonFee || 0,
+          serviceFee: order.pricing.fees.serviceFee || 0,
+          gst: order.pricing.fees.gst || 0
+        } : undefined,
         subtotal: order.pricing.subtotal,
         tax: order.pricing.tax,
         taxRate: Math.round(taxRate * 100) / 100, // Round to 2 decimals
@@ -200,7 +212,11 @@ export class InvoiceService {
 
       // Pricing
       baseFare: formatCurrency(invoice.pricing.baseFare),
-      distanceFare: formatCurrency(invoice.pricing.distanceFare),
+      distanceSurcharge: formatCurrency(invoice.pricing.distanceSurcharge),
+      bcCourierFee: invoice.pricing.fees ? formatCurrency(invoice.pricing.fees.bcCourierFee) : formatCurrency(0),
+      bcCarbonFee: invoice.pricing.fees ? formatCurrency(invoice.pricing.fees.bcCarbonFee) : formatCurrency(0),
+      serviceFee: invoice.pricing.fees ? formatCurrency(invoice.pricing.fees.serviceFee) : formatCurrency(0),
+      gst: invoice.pricing.fees ? formatCurrency(invoice.pricing.fees.gst) : formatCurrency(0),
       subtotal: formatCurrency(invoice.pricing.subtotal),
       tax: formatCurrency(invoice.pricing.tax),
       taxRate: invoice.pricing.taxRate.toFixed(2),

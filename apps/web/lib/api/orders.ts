@@ -26,7 +26,13 @@ export interface Order {
   };
   pricing: {
     baseFare: number;
-    distanceFare: number;
+    distanceSurcharge: number;
+    fees?: {
+      bcCourierFee: number;
+      bcCarbonFee: number;
+      serviceFee: number;
+      gst: number;
+    };
     subtotal: number;
     tax: number;
     couponDiscount?: number;
@@ -93,7 +99,13 @@ export interface Invoice {
   };
   pricing: {
     baseFare: number;
-    distanceFare: number;
+    distanceSurcharge: number;
+    fees?: {
+      bcCourierFee: number;
+      bcCarbonFee: number;
+      serviceFee: number;
+      gst: number;
+    };
     subtotal: number;
     tax: number;
     taxRate: number;

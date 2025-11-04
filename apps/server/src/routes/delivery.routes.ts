@@ -192,27 +192,23 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       // Apply discount to subtotal
       const discountedSubtotal = normalizedPricing.subtotal - discount;
 
-      // Recalculate taxes on discounted subtotal: 5% GST + 7% PST
+      // Recalculate GST (5%) on discounted subtotal
       const gst = Math.round(discountedSubtotal * 0.05);
-      const pst = Math.round(discountedSubtotal * 0.07);
-      const tax = gst + pst;
 
       // Update pricing with discount and recalculated tax
       finalPricing.couponDiscount = discount;
       finalPricing.subtotal = discountedSubtotal;
-      finalPricing.baseFare = discountedSubtotal;
-      finalPricing.gst = gst;
-      finalPricing.pst = pst;
-      finalPricing.tax = tax;
-      finalPricing.total = discountedSubtotal + tax;
+      if (finalPricing.fees) {
+        finalPricing.fees.gst = gst;
+      }
+      finalPricing.tax = gst;
+      finalPricing.total = discountedSubtotal + gst;
 
       logger.info({
         discountedSubtotal,
         gst,
-        pst,
-        totalTax: tax,
         finalTotal: finalPricing.total
-      }, "Final pricing calculated");
+      }, "Final pricing calculated with coupon");
 
       // Store coupon info
       couponData = {
@@ -227,17 +223,16 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
         logger.error({ error: err }, "Failed to record coupon usage")
       );
     } else if (!code && normalizedPricing.tax === 0) {
-      // If no coupon but tax is 0, calculate taxes on original subtotal
+      // If no coupon but tax is 0, calculate GST (5%) on original subtotal
       const gst = Math.round(normalizedPricing.subtotal * 0.05);
-      const pst = Math.round(normalizedPricing.subtotal * 0.07);
-      const tax = gst + pst;
 
-      finalPricing.gst = gst;
-      finalPricing.pst = pst;
-      finalPricing.tax = tax;
-      finalPricing.total = normalizedPricing.subtotal + tax;
+      if (finalPricing.fees) {
+        finalPricing.fees.gst = gst;
+      }
+      finalPricing.tax = gst;
+      finalPricing.total = normalizedPricing.subtotal + gst;
 
-      logger.info({ subtotal: normalizedPricing.subtotal, gst, pst, tax, total: finalPricing.total }, "Tax calculated (no coupon)");
+      logger.info({ subtotal: normalizedPricing.subtotal, gst, total: finalPricing.total }, "Tax calculated (no coupon)");
     }
 
     // Generate unique order ID

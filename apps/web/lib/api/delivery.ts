@@ -12,13 +12,22 @@ export interface FareEstimateRequest {
   duration?: number;
 }
 
+export interface FeeBreakdown {
+  bcCourierFee: number;    // BC Courier Fee (2% of baseFare) (in cents)
+  bcCarbonFee: number;     // BC Carbon Green Fee (0.9% of baseFare) (in cents)
+  serviceFee: number;      // Service Fee (1% of baseFare) (in cents)
+  gst: number;             // GST (5%) (in cents)
+}
+
 export interface FareBreakdown {
-  baseFare: number;        // Total fare before tax (in cents)
-  tax: number;             // Tax amount (GST/HST) (in cents)
-  total: number;           // Final total (baseFare + tax) (in cents)
-  currency: string;        // Currency code (e.g., 'CAD')
-  distanceKm: number;      // Distance in kilometers
-  durationMinutes: number; // Duration in minutes
+  baseFare: number;          // Base fare (X = $0.88 * duration_minutes) (in cents)
+  distanceSurcharge: number; // Distance-based surcharge (0%, 5%, or 8% of baseFare) (in cents)
+  fees: FeeBreakdown;        // All taxes and fees breakdown
+  tax: number;               // Total tax (for backward compatibility) (in cents)
+  total: number;             // Final total (in cents)
+  currency: string;          // Currency code (e.g., 'CAD')
+  distanceKm: number;        // Distance in kilometers
+  durationMinutes: number;   // Duration in minutes
 }
 
 export interface FareEstimateResponse {

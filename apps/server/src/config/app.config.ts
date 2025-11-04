@@ -14,18 +14,18 @@ export default {
     },
     "rateCard": {
       "currency": "CAD",
-      "base_cents":0,
-      "per_km_cents": 99,
-      "per_min_cents": 0,
-      "min_fare_cents": 699,
-      "size_multiplier": { "XS": 1.00, "S": 1.10, "M": 1.15, "L": 1.20 }
+      "base_cents": 0,
+      "per_km_cents": 0,
+      "per_min_cents": 88,
+      "min_fare_cents": 0,
+      "size_multiplier": { "XS": 1.00, "S": 1.00, "M": 1.00, "L": 1.00 }
     },
     "bands": [
-      { "km_max": 5,  "multiplier": 1.00, "label": "0-5 km"  },
-      { "km_max": 10, "multiplier": 1.10, "label": "5-10 km" },
-      { "km_max": 999,"multiplier": 1.25, "label": ">10 km" }
+      { "km_max": 5,  "multiplier": 0.00, "label": "0-5 km"  },
+      { "km_max": 10, "multiplier": 0.05, "label": "5-10 km" },
+      { "km_max": 999,"multiplier": 0.08, "label": ">10 km" }
     ],
-    "tax": { "enabled": false, "rate": 0 },
+    "tax": { "enabled": true, "rate": 0.05 },
     "ui": { "show_band_label": true, "round_display_to_cents": true },
     "meta": { "notes": "Initial VAN/SUR/LAN", "updated_by": "harsh" }
   },

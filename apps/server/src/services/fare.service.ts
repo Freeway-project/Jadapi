@@ -72,16 +72,20 @@ export class FareService {
   }
 
   /**
-   * Calculate simplified fare breakdown
-   * Formula: baseFare = base + (distance * per_km with configurable tier multipliers)
-   * Distance tiers are defined in config.bands (configurable):
-   * Default setup:
-   * - 0-5 km: base per_km rate × 1.0 (e.g., $0.99/km)
-   * - 5-10 km: base per_km rate × 1.1 (e.g., $1.09/km)
-   * - above 10 km: base per_km rate × 1.2 (e.g., $1.19/km)
-   * Apply package size multiplier and minimum fare
-   * Then add tax to get total
-   * Note: Time/duration does NOT affect pricing
+   * Calculate fare breakdown with new BC pricing structure
+   * Formula:
+   * 1. X = $0.88 per minute * duration
+   * 2. Distance surcharge (based on X):
+   *    - 0-5 km: 0%
+   *    - 5-10 km: 5% of X
+   *    - 10+ km: 8% of X
+   * 3. Fees (calculated on X only):
+   *    - BC Courier Fee: 2% of X
+   *    - BC Carbon Green Fee: 0.9% of X
+   *    - Service Fee: 1% of X
+   * 4. Subtotal = X + distanceSurcharge + all fees
+   * 5. GST = 5% of subtotal
+   * 6. Total = subtotal + GST
    */
   private static calculateFareBreakdown(
     distanceKm: number,
@@ -89,58 +93,49 @@ export class FareService {
     packageSize: PackageSize,
     config: PricingConfig
   ): FareBreakdown {
-    const { rateCard, tax, ui } = config;
+    const { rateCard, ui } = config;
 
-    // Base component
-    const baseComponent = rateCard.base_cents;
+    // Step 1: X = $0.88 per minute (88 cents per minute)
+    const perMinuteCents = rateCard.per_min_cents || 88; // 88 cents = $0.88
+    const baseFareCents = Math.round(durationMinutes * perMinuteCents);
 
-    // Distance-based calculation with tiered multipliers from config bands
-    let distanceComponent = 0;
-    const basePerKm = rateCard.per_km_cents; // 99 cents = $0.99 per km
-    const { bands } = config;
-
-    // Sort bands by km_max to ensure correct order
-    const sortedBands = [...bands].sort((a, b) => a.km_max - b.km_max);
-
-    let previousKm = 0;
-    let remainingDistance = distanceKm;
-
-    for (let i = 0; i < sortedBands.length; i++) {
-      const band = sortedBands[i];
-      const bandDistance = band.km_max - previousKm;
-
-      if (remainingDistance > 0) {
-        const distanceInBand = Math.min(remainingDistance, bandDistance);
-        distanceComponent += distanceInBand * basePerKm * band.multiplier;
-        remainingDistance -= distanceInBand;
-        previousKm = band.km_max;
-      } else {
-        break;
-      }
+    // Step 2: Calculate distance surcharge based on distance
+    let distanceSurchargeRate = 0;
+    if (distanceKm <= 5) {
+      distanceSurchargeRate = 0;        // 0% for 0-5km
+    } else if (distanceKm <= 10) {
+      distanceSurchargeRate = 0.05;     // 5% for 5-10km
+    } else {
+      distanceSurchargeRate = 0.08;     // 8% for 10km+
     }
+    const distanceSurchargeCents = Math.round(baseFareCents * distanceSurchargeRate);
 
-    distanceComponent = Math.round(distanceComponent);
+    // Step 3: Calculate fees (all based on X, not X + surcharge)
+    const bcCourierFeeCents = Math.round(baseFareCents * 0.02);    // 2% of X
+    const bcCarbonFeeCents = Math.round(baseFareCents * 0.009);   // 0.9% of X
+    const serviceFeeCents = Math.round(baseFareCents * 0.01);     // 1% of X
 
-    // Sum all components (no duration component)
-    let calculatedFare = baseComponent + distanceComponent;
+    // Step 4: Calculate subtotal
+    const subtotalCents = baseFareCents + distanceSurchargeCents +
+                          bcCourierFeeCents + bcCarbonFeeCents + serviceFeeCents;
 
-    // Apply package size multiplier
-    const sizeMultiplier = rateCard.size_multiplier[packageSize] || 1.0;
-    calculatedFare = Math.round(calculatedFare * sizeMultiplier);
+    // Step 5: Calculate GST (5% of subtotal)
+    const gstCents = Math.round(subtotalCents * 0.05);
 
-    // Apply minimum fare
-    const baseFare = Math.max(calculatedFare, rateCard.min_fare_cents);
-
-    // Calculate tax (GST/HST)
-    const taxAmount = tax.enabled ? Math.round(baseFare * tax.rate) : 0;
-
-    // Total
-    const total = baseFare + taxAmount;
+    // Step 6: Calculate total
+    const totalCents = subtotalCents + gstCents;
 
     return {
-      baseFare: this.formatCents(baseFare, ui.round_display_to_cents),
-      tax: this.formatCents(taxAmount, ui.round_display_to_cents),
-      total: this.formatCents(total, ui.round_display_to_cents),
+      baseFare: this.formatCents(baseFareCents, ui.round_display_to_cents),
+      distanceSurcharge: this.formatCents(distanceSurchargeCents, ui.round_display_to_cents),
+      fees: {
+        bcCourierFee: this.formatCents(bcCourierFeeCents, ui.round_display_to_cents),
+        bcCarbonFee: this.formatCents(bcCarbonFeeCents, ui.round_display_to_cents),
+        serviceFee: this.formatCents(serviceFeeCents, ui.round_display_to_cents),
+        gst: this.formatCents(gstCents, ui.round_display_to_cents)
+      },
+      tax: this.formatCents(gstCents, ui.round_display_to_cents), // For backward compatibility
+      total: this.formatCents(totalCents, ui.round_display_to_cents),
       currency: rateCard.currency,
       distanceKm: Math.round(distanceKm * 100) / 100,
       durationMinutes: Math.round(durationMinutes)
