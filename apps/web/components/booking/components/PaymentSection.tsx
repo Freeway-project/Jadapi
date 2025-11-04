@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Package, CreditCard, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { FareEstimateResponse } from '../../../lib/api/delivery';
@@ -111,34 +111,16 @@ export default function PaymentSection({
         <h3 className="text-lg font-semibold text-gray-900">Payment</h3>
       </div>
 
-      {/* Pricing Breakdown */}
+      {/* Total Amount */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="p-5 space-y-3">
-          {/* Subtotal (before tax) */}
-          <div className="flex items-center justify-between">
-            <span className="text-base text-gray-700">Subtotal</span>
-            <span className="text-lg font-semibold text-gray-900">
-              ${(((estimate?.data?.fare?.total || 0) - (estimate?.data?.fare?.tax || 0)) / 100).toFixed(2)}
-            </span>
-          </div>
-
-          {/* Tax */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">GST (5%)</span>
-            <span className="font-medium text-gray-900">
-              ${((estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        {/* Total Amount */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-5 py-4 border-t-2 border-blue-200">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-semibold text-gray-700 block">Total Amount</span>
+              <span className="text-base font-semibold text-gray-700 block">Total Amount</span>
               <span className="text-xs text-gray-600">{estimate?.data?.fare?.currency || 'CAD'} - Secure payment via Stripe</span>
+              <p className="text-xs text-gray-500 mt-1">Includes all taxes and fees</p>
             </div>
-            <span className="text-3xl font-bold text-blue-600">
+            <span className="text-4xl font-bold text-blue-600">
               ${((estimate?.data?.fare?.total || 0) / 100).toFixed(2)}
             </span>
           </div>
@@ -168,6 +150,7 @@ export default function PaymentSection({
           <Elements stripe={getStripe()} options={options}>
             <CheckoutForm
               clientSecret={clientSecret}
+              orderId={orderId}
               onSuccess={onPaymentSuccess}
               onError={onPaymentError}
             />
@@ -191,10 +174,12 @@ export default function PaymentSection({
  */
 function CheckoutForm({
   clientSecret,
+  orderId,
   onSuccess,
   onError,
 }: {
   clientSecret: string;
+  orderId?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }) {
@@ -235,14 +220,14 @@ function CheckoutForm({
         toast.success('Payment successful!');
         onSuccess?.();
 
-        // Get orderId from metadata or parent component
-        const metadata = (paymentIntent as any).metadata as Record<string, string> | undefined;
-        const orderIdFromIntent = metadata?.orderId;
-        if (orderIdFromIntent) {
-          // Wait 3 seconds then redirect to booking success page with invoice
+        // Redirect to booking success page with invoice
+        if (orderId) {
+          console.log('[Payment] Payment succeeded, redirecting to invoice:', orderId);
           setTimeout(() => {
-            window.location.href = `/booking/success?orderId=${orderIdFromIntent}`;
-          }, 3000);
+            window.location.href = `/booking/success?orderId=${orderId}`;
+          }, 2000);
+        } else {
+          console.error('[Payment] No orderId available for redirect');
         }
       }
     } catch (err: any) {
@@ -266,7 +251,7 @@ function CheckoutForm({
         <p className="text-sm text-gray-600 mb-4">Your order has been confirmed</p>
         <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Redirecting to invoice in 3 seconds...</span>
+          <span>Redirecting to invoice...</span>
         </div>
       </div>
     );

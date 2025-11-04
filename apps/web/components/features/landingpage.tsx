@@ -56,7 +56,7 @@ export default function JaddpiLanding() {
           </h1>
 
           <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 px-4">
-            Create an order in minutes.  Live tracking with photo proof.
+            Create an order in minutes.  Live tracking 
           </p>
           
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
@@ -164,7 +164,7 @@ export default function JaddpiLanding() {
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-green-900 font-semibold mb-1">Photo Proof</p>
+                    <p className="text-xs sm:text-sm text-green-900 font-semibold mb-1"></p>
                     <p className="text-[11px] sm:text-xs text-green-700">
                       Get instant delivery confirmation with photos
                     </p>
@@ -224,7 +224,7 @@ export default function JaddpiLanding() {
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 px-2">Live tracking + photo proof</h3>
+            <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 px-2">Live tracking + </h3>
             <p className="text-gray-600 text-xs sm:text-sm px-2">Real-time updates with delivery confirmation photos</p>
           </div>
         </div>
@@ -312,7 +312,7 @@ export default function JaddpiLanding() {
               </li>
               <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span>Photo proof of delivery</span>
+                <span> of delivery</span>
               </li>
             </ul>
             <a href="/search" className="block w-full text-center px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30 text-sm sm:text-base">
@@ -368,7 +368,7 @@ export default function JaddpiLanding() {
               <span>What if the recipient isn't home?</span>
               <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
             </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Our driver will attempt contact via the provided phone number. If unsuccessful, we can leave the parcel in a safe location (with photo proof) if authorized, or arrange a redelivery at no extra charge.</p>
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Our driver will attempt contact via the provided phone number. If unsuccessful, we can leave the parcel in a safe location (with ) if authorized, or arrange a redelivery at no extra charge.</p>
           </details>
         </div>
       </section>

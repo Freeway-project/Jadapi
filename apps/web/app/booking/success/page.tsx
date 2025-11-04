@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle, Download, Home, Package, MapPin, User, CreditCard, FileText, Loader2 } from 'lucide-react';
+import { CheckCircle, Home, Package, MapPin, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { ordersAPI, Invoice, Order } from '../../../lib/api/orders';
 import toast from 'react-hot-toast';
@@ -210,52 +210,6 @@ function BookingSuccessContent() {
           {order.paymentStatus === 'paid' ? (
             <>
               <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Base Fare</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(invoice?.pricing?.baseFare || order.pricing.baseFare, invoice?.pricing?.currency || order.pricing.currency)}
-                  </span>
-                </div>
-
-                {(invoice?.pricing?.distanceSurcharge || order.pricing.distanceSurcharge) > 0 && (
-                  <div className="flex justify-between text-sm text-xs">
-                    <span className="text-gray-600">Distance Surcharge</span>
-                    <span className="font-medium text-gray-900">
-                      {formatCurrency(invoice?.pricing?.distanceSurcharge || order.pricing.distanceSurcharge, invoice?.pricing?.currency || order.pricing.currency)}
-                    </span>
-                  </div>
-                )}
-
-                {(invoice?.pricing?.fees || order.pricing.fees) && (
-                  <>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">BC Courier Fee (2%)</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(invoice?.pricing?.fees?.bcCourierFee || order.pricing.fees?.bcCourierFee || 0, invoice?.pricing?.currency || order.pricing.currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">BC Carbon Green Fee (0.9%)</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(invoice?.pricing?.fees?.bcCarbonFee || order.pricing.fees?.bcCarbonFee || 0, invoice?.pricing?.currency || order.pricing.currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Service Fee (1%)</span>
-                      <span className="font-medium text-gray-900">
-                        {formatCurrency(invoice?.pricing?.fees?.serviceFee || order.pricing.fees?.serviceFee || 0, invoice?.pricing?.currency || order.pricing.currency)}
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(invoice?.pricing?.subtotal || order.pricing.subtotal, invoice?.pricing?.currency || order.pricing.currency)}
-                  </span>
-                </div>
-
                 {(invoice?.pricing?.couponDiscount || order.pricing.couponDiscount) && (invoice?.pricing?.couponDiscount || order.pricing.couponDiscount || 0) > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount ({invoice?.pricing?.couponCode || order.coupon?.code})</span>
@@ -265,16 +219,12 @@ function BookingSuccessContent() {
                   </div>
                 )}
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">GST (5%)</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(invoice?.pricing?.tax || order.pricing.tax, invoice?.pricing?.currency || order.pricing.currency)}
-                  </span>
-                </div>
-
-                <div className="pt-3 border-t border-gray-200 flex justify-between">
-                  <span className="text-lg font-bold text-gray-900">Total</span>
-                  <span className="text-lg font-bold text-blue-600">
+                <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
+                  <div>
+                    <span className="text-lg font-bold text-gray-900 block">Total Paid</span>
+                    <span className="text-xs text-gray-500">Includes all taxes and fees</span>
+                  </div>
+                  <span className="text-2xl font-bold text-blue-600">
                     {formatCurrency(invoice?.pricing?.total || order.pricing.total, invoice?.pricing?.currency || order.pricing.currency)}
                   </span>
                 </div>

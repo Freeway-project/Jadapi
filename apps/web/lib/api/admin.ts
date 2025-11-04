@@ -42,22 +42,76 @@ export interface Order {
   _id: string;
   orderId: string;
   status: string;
+  paymentStatus?: string;
   userId: {
+    _id: string;
+    profile: { name: string };
+    auth: { phone?: string; email?: string };
+  };
+  driver?: {
     _id: string;
     profile: { name: string };
     auth: { phone?: string };
   };
   pickup: {
     address: string;
+    contactName?: string;
+    contactPhone?: string;
+    coordinates?: { lat: number; lng: number };
   };
   dropoff: {
     address: string;
+    contactName?: string;
+    contactPhone?: string;
+    coordinates?: { lat: number; lng: number };
+  };
+  package?: {
+    size: string;
+    description?: string;
+    weight?: string;
+  };
+  distance?: {
+    distanceKm: number;
+    durationMinutes: number;
   };
   pricing: {
     total: number;
     currency: string;
+    baseFare?: number;
+    tax?: number;
+  };
+  coupon?: {
+    code: string;
+    discount: number;
   };
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface User {
+  _id: string;
+  uuid: string;
+  accountType: 'individual' | 'business';
+  profile: {
+    name: string;
+    address?: string;
+    businessName?: string;
+    gstNumber?: string;
+  };
+  auth: {
+    email?: string;
+    phone?: string;
+    emailVerifiedAt?: string;
+    phoneVerifiedAt?: string;
+  };
+  status: 'active' | 'suspended' | 'deleted';
+  roles: string[];
+  createdAt: string;
+  updatedAt: string;
+  stats?: {
+    totalOrders: number;
+    totalSpent: number;
+  };
 }
 
 export interface SystemMetrics {
@@ -182,6 +236,40 @@ export const adminAPI = {
   }> {
     const res = await apiClient.get('/admin/orders/active', {
       params: { limit, skip }
+    });
+    return res.data.data;
+  },
+
+  async getAllOrders(filters: {
+    status?: string;
+    paymentStatus?: string;
+    search?: string;
+    limit?: number;
+    skip?: number;
+  } = {}): Promise<{
+    orders: Order[];
+    total: number;
+    pagination: any;
+  }> {
+    const res = await apiClient.get('/admin/orders', {
+      params: filters
+    });
+    return res.data.data;
+  },
+
+  async getAllUsers(filters: {
+    status?: string;
+    accountType?: string;
+    search?: string;
+    limit?: number;
+    skip?: number;
+  } = {}): Promise<{
+    users: User[];
+    total: number;
+    pagination: any;
+  }> {
+    const res = await apiClient.get('/admin/users', {
+      params: filters
     });
     return res.data.data;
   },

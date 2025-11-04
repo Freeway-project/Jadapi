@@ -176,8 +176,8 @@ export default function FromToSearch({
 
   const packageTypes = [
     { id: 'envelope', label: 'Envelope', icon: '📄', size: 'Up to 5kg', dimensions: '' },
-    { id: 'small', label: 'Small', icon: '📦', size: '10×10×10 in', dimensions: '' },
-    { id: 'medium', label: 'Medium', icon: '📦', size: '14×14×14 in', dimensions: '' },
+    { id: 'small', label: 'Small', icon: '📦', size: '10×10×10 in', dimensions: 'Up to 15kg' },
+    { id: 'medium', label: 'Medium', icon: '📦', size: '14×14×14 in', dimensions: 'Up to 15kg' },
     { id: 'large', label: 'Large', icon: '📦', size: '16×16×16 in', dimensions: 'Up to 15kg max' },
   ];
 
