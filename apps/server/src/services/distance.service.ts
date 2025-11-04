@@ -5,6 +5,21 @@ import { logger } from '../utils/logger';
 
 /**
  * Distance calculation service using Google Maps Distance Matrix API
+ *
+ * TRAFFIC-AWARE DURATION CALCULATION:
+ * - Uses 'departure_time: now' to get traffic-aware estimates
+ * - Google Maps considers:
+ *   1. Current real-time traffic conditions (live traffic data from users)
+ *   2. Historical traffic patterns for the current day/time
+ *   3. Road closures, construction, accidents
+ *   4. Speed limits and road types
+ *
+ * DURATION TYPES:
+ * - duration: Baseline time without traffic (speed limits only)
+ * - duration_in_traffic: Traffic-aware time (what we use for pricing)
+ *
+ * IMPORTANT: Since we charge by TIME ($0.88/min), using traffic-aware
+ * duration ensures fair pricing that reflects actual delivery time.
  */
 export class DistanceService {
 
@@ -12,6 +27,7 @@ export class DistanceService {
 
   /**
    * Calculate distance and estimated time using Google Maps Distance Matrix API
+   * Uses traffic-aware duration for accurate pricing based on current/typical traffic conditions
    */
   static async calculate(
     pickup: Coordinates,
@@ -21,10 +37,13 @@ export class DistanceService {
       throw new Error('Google Maps API key not configured');
     }
 
+    // Use current time for traffic-aware duration
+    // This gives real-time or typical traffic conditions
     const params = {
       origins: `${pickup.lat},${pickup.lng}`,
       destinations: `${dropoff.lat},${dropoff.lng}`,
       mode: 'driving',
+      departure_time: 'now', // Enable traffic-aware duration
       key: ENV.GOOGLE_MAPS_API_KEY
     };
 
@@ -42,7 +61,19 @@ export class DistanceService {
 
     // Google returns distance in meters and duration in seconds
     const distanceKm = element.distance.value / 1000;
-    const durationMinutes = Math.ceil(element.duration.value / 60);
+
+    // Prefer duration_in_traffic (traffic-aware) over baseline duration
+    // duration_in_traffic is available when departure_time is set
+    // Falls back to baseline duration if traffic data unavailable
+    const durationSeconds = element.duration_in_traffic?.value || element.duration.value;
+    const durationMinutes = Math.ceil(durationSeconds / 60);
+
+    logger.debug({
+      distanceKm,
+      baselineDuration: Math.ceil(element.duration.value / 60),
+      trafficDuration: element.duration_in_traffic?.value ? Math.ceil(element.duration_in_traffic.value / 60) : null,
+      usedDuration: durationMinutes
+    }, 'Distance calculation with traffic');
 
     return {
       distanceKm: Math.round(distanceKm * 100) / 100,

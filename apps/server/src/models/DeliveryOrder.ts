@@ -42,7 +42,13 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
 
   pricing: {
     baseFare: number;
-    distanceFare: number;
+    distanceSurcharge: number;
+    fees?: {
+      bcCourierFee: number;
+      bcCarbonFee: number;
+      serviceFee: number;
+      gst: number;
+    };
     subtotal: number;
     tax: number;
     couponDiscount?: number;
@@ -138,7 +144,13 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
 
     pricing: {
       baseFare: { type: Number, required: true },
-
+      distanceSurcharge: { type: Number, default: 0 },
+      fees: {
+        bcCourierFee: { type: Number, default: 0 },
+        bcCarbonFee: { type: Number, default: 0 },
+        serviceFee: { type: Number, default: 0 },
+        gst: { type: Number, default: 0 }
+      },
       subtotal: { type: Number, required: true },
       tax: { type: Number, required: true },
       couponDiscount: { type: Number, default: 0 },

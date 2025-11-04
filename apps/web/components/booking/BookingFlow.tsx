@@ -121,8 +121,6 @@ export default function BookingFlow({
     discount: number;
     discountedSubtotal: number;
     gst: number;
-    pst: number;
-    totalTax: number;
     newTotal: number;
   } | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -133,7 +131,14 @@ export default function BookingFlow({
     success: true,
     data: {
       fare: {
-        baseFare: initialFareEstimate.baseFare || initialFareEstimate.total,
+        baseFare: initialFareEstimate.baseFare || 0,
+        distanceSurcharge: (initialFareEstimate as any).distanceSurcharge || 0,
+        fees: (initialFareEstimate as any).fees || {
+          bcCourierFee: 0,
+          bcCarbonFee: 0,
+          serviceFee: 0,
+          gst: initialFareEstimate.tax || 0
+        },
         tax: initialFareEstimate.tax || 0,
         total: initialFareEstimate.total,
         currency: initialFareEstimate.currency || 'CAD',
@@ -244,7 +249,7 @@ export default function BookingFlow({
     }
   };
 
-  const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; discountedSubtotal: number; gst: number; pst: number; totalTax: number; newTotal: number } | null) => {
+  const handleCouponApplied = (couponData: { couponId: string; code: string; discount: number; discountedSubtotal: number; gst: number; newTotal: number } | null) => {
     setAppliedCoupon(couponData);
   };
 

@@ -114,17 +114,17 @@ export default function PaymentSection({
       {/* Pricing Breakdown */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="p-5 space-y-3">
-          {/* Base Fare */}
+          {/* Subtotal (before tax) */}
           <div className="flex items-center justify-between">
-            <span className="text-base text-gray-700">Delivery Fee</span>
+            <span className="text-base text-gray-700">Subtotal</span>
             <span className="text-lg font-semibold text-gray-900">
-              ${((estimate?.data?.fare?.baseFare || 0) / 100).toFixed(2)}
+              ${(((estimate?.data?.fare?.total || 0) - (estimate?.data?.fare?.tax || 0)) / 100).toFixed(2)}
             </span>
           </div>
 
           {/* Tax */}
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Tax (GST/HST)</span>
+            <span className="text-gray-600">GST (5%)</span>
             <span className="font-medium text-gray-900">
               ${((estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}
             </span>
