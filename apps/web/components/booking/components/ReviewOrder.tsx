@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, Tag, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Package, Tag, Loader2, CheckCircle2, XCircle, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FareEstimateResponse } from '../../../lib/api/delivery';
 import { UserDetails } from './UserInfoForm';
@@ -219,7 +219,34 @@ export default function ReviewOrder({ sender, recipient, estimate, appliedCoupon
               </div>
             )}
             <div className="flex justify-between text-gray-600">
-              <span>GST (5%)</span>
+              <div className="flex items-center gap-1.5 group relative">
+                <span>Taxes</span>
+                <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                {/* Tooltip */}
+                <div className="invisible group-hover:visible absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg z-50">
+                  <div className="space-y-1.5">
+                    <div className="font-semibold mb-2 border-b border-gray-700 pb-1">Tax & Fee Breakdown</div>
+                    <div className="flex justify-between">
+                      <span>BC Courier Fee (2%)</span>
+                      <span>${((estimate?.data?.fare?.fees?.bcCourierFee || 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>BC Carbon Green Fee (0.9%)</span>
+                      <span>${((estimate?.data?.fare?.fees?.bcCarbonFee || 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Service Fee (1%)</span>
+                      <span>${((estimate?.data?.fare?.fees?.serviceFee || 0) / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-700 pt-1.5 mt-1.5 font-medium">
+                      <span>GST (5%)</span>
+                      <span>${((estimate?.data?.fare?.fees?.gst || estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  {/* Arrow */}
+                  <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
               <span>${appliedCoupon
                 ? (appliedCoupon.gst / 100).toFixed(2)
                 : ((estimate?.data?.fare?.fees?.gst || estimate?.data?.fare?.tax || 0) / 100).toFixed(2)}</span>
