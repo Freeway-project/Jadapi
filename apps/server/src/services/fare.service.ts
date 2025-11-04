@@ -124,9 +124,9 @@ export class FareService {
 
     // Step 6: Calculate total
     const totalCents = subtotalCents + gstCents;
-
-    return {
-      baseFare: this.formatCents(baseFareCents, ui.round_display_to_cents),
+    
+    const PriceData = {
+  baseFare: this.formatCents(baseFareCents, ui.round_display_to_cents),
       distanceSurcharge: this.formatCents(distanceSurchargeCents, ui.round_display_to_cents),
       fees: {
         bcCourierFee: this.formatCents(bcCourierFeeCents, ui.round_display_to_cents),
@@ -139,7 +139,8 @@ export class FareService {
       currency: rateCard.currency,
       distanceKm: Math.round(distanceKm * 100) / 100,
       durationMinutes: Math.round(durationMinutes)
-    };
+    }
+    return PriceData
   }
 
   /**

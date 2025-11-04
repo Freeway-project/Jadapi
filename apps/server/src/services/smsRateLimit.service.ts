@@ -10,7 +10,7 @@ export class SmsRateLimitService {
   private static readonly LIMITS = {
     // Per phone number limits
     perPhone: {
-      otp: { count: 12, windowSeconds: 3600 }, // 3 OTPs per hour per phone
+      otp: { count: 20, windowSeconds: 3600 }, // 20 OTPs per hour per phone
       delivery: { count: 110, windowSeconds: 86400 }, // 10 delivery SMS per day
       booking: { count: 51, windowSeconds: 86400 }, // 5 booking SMS per day
       promotional: { count: 21, windowSeconds: 86400 }, // 2 promotional per day
