@@ -8,7 +8,7 @@ import { individualSignupSchema, IndividualSignupFormData } from '../../lib/util
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { Shield } from 'lucide-react';
+import { Shield, Mail, Phone } from 'lucide-react';
 import AddressAutocomplete from './AddressAutocomplete';
 import toast from 'react-hot-toast';
 
@@ -29,7 +29,8 @@ export default function IndividualSignupForm() {
       phoneNumber,
       name: '',
       address: '',
-      otp: '',
+      emailOtp: '',
+      phoneOtp: '',
       acceptTerms: false,
     },
   });
@@ -46,11 +47,20 @@ export default function IndividualSignupForm() {
       // Import authAPI and tokenManager dynamically to avoid SSR issues
       const { authAPI, tokenManager } = await import('../../lib/api/auth');
 
-      // Step 1: Verify OTP
-      const identifier = data.email || data.phoneNumber;
+      // Step 1: Verify OTP(s)
+      // If email is provided, verify both email and phone OTPs separately
+      if (data.email && data.emailOtp) {
+        await authAPI.verifyOTP({
+          identifier: data.email,
+          code: data.emailOtp,
+          type: 'signup'
+        });
+      }
+
+      // Always verify phone OTP
       await authAPI.verifyOTP({
-        identifier,
-        code: data.otp,
+        identifier: data.phoneNumber,
+        code: data.phoneOtp,
         type: 'signup'
       });
 
@@ -78,7 +88,7 @@ export default function IndividualSignupForm() {
     } catch (error: any) {
       console.error('Signup failed:', error);
 
-      if (error.message?.includes('OTP')) {
+      if (error.message?.includes('OTP') || error.message?.includes('verification')) {
         toast.error('Invalid verification code. Please check and try again.');
       } else if (error.message?.includes('already registered')) {
         toast.error('An account with this email or phone already exists.');
@@ -113,33 +123,37 @@ export default function IndividualSignupForm() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* OTP Verification */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Shield className="w-5 h-5 text-blue-600" />
-            <Label htmlFor="otp" className="text-base font-medium text-black">
-              Enter verification code sent to your phone{email ? ' or email' : ''}
-            </Label>
-          </div>
-          <Input
-            id="otp"
-            type="text"
-            placeholder="000000"
-            maxLength={6}
-            disabled={isSubmitting || isLoading}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black text-center text-lg font-mono tracking-widest placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
-            {...register('otp')}
-          />
-          {errors.otp && (
-            <div className="flex items-center space-x-2 text-red-600">
-              <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
-                <span className="text-xs font-bold">!</span>
+        {/* OTP Verification - Conditional based on email */}
+        {email ? (
+          <>
+            {/* Email OTP */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <Label htmlFor="emailOtp" className="text-base font-medium text-black">
+                  Email verification code
+                </Label>
               </div>
-              <p className="text-sm">{errors.otp.message}</p>
-            </div>
-          )}
-          <div className="flex space-x-4">
-            {email && (
+              <Input
+                id="emailOtp"
+                type="text"
+                placeholder="000000"
+                maxLength={6}
+                disabled={isSubmitting || isLoading}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black text-center text-lg font-mono tracking-widest placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
+                {...register('emailOtp')}
+              />
+              {errors.emailOtp && (
+                <div className="flex items-center space-x-2 text-red-600">
+                  <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-xs font-bold">!</span>
+                  </div>
+                  <p className="text-sm">{errors.emailOtp.message}</p>
+                </div>
+              )}
+              <div className="text-xs text-gray-600">
+                Code sent to: <span className="font-medium">{email}</span>
+              </div>
               <Button
                 type="button"
                 variant="link"
@@ -147,20 +161,86 @@ export default function IndividualSignupForm() {
                 onClick={() => handleResendOTP('email')}
                 className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
-                Resend to email
+                Resend email code
               </Button>
+            </div>
+
+            {/* Phone OTP */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Phone className="w-5 h-5 text-green-600" />
+                <Label htmlFor="phoneOtp" className="text-base font-medium text-black">
+                  Phone verification code
+                </Label>
+              </div>
+              <Input
+                id="phoneOtp"
+                type="text"
+                placeholder="000000"
+                maxLength={6}
+                disabled={isSubmitting || isLoading}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black text-center text-lg font-mono tracking-widest placeholder-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
+                {...register('phoneOtp')}
+              />
+              {errors.phoneOtp && (
+                <div className="flex items-center space-x-2 text-red-600">
+                  <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-xs font-bold">!</span>
+                  </div>
+                  <p className="text-sm">{errors.phoneOtp.message}</p>
+                </div>
+              )}
+              <div className="text-xs text-gray-600">
+                Code sent to: <span className="font-medium">{phoneNumber}</span>
+              </div>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => handleResendOTP('sms')}
+                className="p-0 h-auto text-sm text-green-600 hover:text-green-700 font-medium"
+              >
+                Resend SMS code
+              </Button>
+            </div>
+          </>
+        ) : (
+          /* Phone OTP only when no email */
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <Label htmlFor="phoneOtp" className="text-base font-medium text-black">
+                Enter verification code sent to your phone
+              </Label>
+            </div>
+            <Input
+              id="phoneOtp"
+              type="text"
+              placeholder="000000"
+              maxLength={6}
+              disabled={isSubmitting || isLoading}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black text-center text-lg font-mono tracking-widest placeholder-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
+              {...register('phoneOtp')}
+            />
+            {errors.phoneOtp && (
+              <div className="flex items-center space-x-2 text-red-600">
+                <div className="w-4 h-4 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-xs font-bold">!</span>
+                </div>
+                <p className="text-sm">{errors.phoneOtp.message}</p>
+              </div>
             )}
             <Button
               type="button"
               variant="link"
               size="sm"
               onClick={() => handleResendOTP('sms')}
-              className="p-0 h-auto text-sm text-green-600 hover:text-green-700 font-medium"
+              className="p-0 h-auto text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               Resend to phone
             </Button>
           </div>
-        </div>
+        )}
 
         {/* Email (prefilled and readonly) - only show if email exists */}
         {email && (

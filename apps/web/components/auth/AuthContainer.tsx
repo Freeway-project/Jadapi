@@ -32,7 +32,7 @@ export default function AuthContainer() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-y-hidden">
       <Header />
       <div className="flex-1 overflow-y-auto">
         <div className="min-h-full flex items-center justify-center px-4 py-4 sm:py-8">

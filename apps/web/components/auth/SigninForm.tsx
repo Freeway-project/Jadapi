@@ -69,7 +69,7 @@ export default function SigninForm() {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-gradient-to-b from-white to-slate-50 flex items-center">
+    <div className="max-h-screen w-full bg-gradient-to-b from-white to-slate-100 flex overflow-y-hidden items-center">
       <div className="w-full px-4 py-6 sm:px-6 sm:py-10">
         <div className="mx-auto w-full max-w-[28rem] rounded-3xl border border-slate-200 bg-white p-5 sm:p-7 shadow-md">
           {/* Header */}
@@ -97,7 +97,7 @@ export default function SigninForm() {
                   type="text"
                   inputMode={isEmail ? 'email' : 'tel'}
                   autoComplete={isEmail ? 'email' : 'tel'}
-                  placeholder={isEmail ? 'you@example.com' : '+1 604 555 1234'}
+                  placeholder={isEmail ? 'you@example.com' : '604 555 1234'}
                   disabled={isSubmitting || isLoading}
                   className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3.5 text-[1rem] sm:text-[1rem] text-slate-900 placeholder-slate-400 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
                   {...register('identifier')}
