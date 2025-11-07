@@ -39,6 +39,12 @@ export default function DriverDashboardPage() {
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState<boolean>(!!fcmToken);
   const [showNotifModal, setShowNotifModal] = useState(false);
 
+  // Check if push notifications are supported
+  const isPushSupported = typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator;
+  const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isIOSChrome = isIOS && /CriOS/.test(navigator.userAgent);
+  const isIOSSafari = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS/.test(navigator.userAgent);
+
   // Get current active order ID for location tracking
   const activeOrderId = orders.find(o => ['assigned', 'picked_up', 'in_transit'].includes(o.status))?._id;
 
@@ -338,7 +344,7 @@ export default function DriverDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      {showNotifModal && (
+      {showNotifModal && !isIOSChrome && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-11/12 max-w-md bg-white rounded-lg p-5">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Enable notifications?</h3>
@@ -416,17 +422,34 @@ export default function DriverDashboardPage() {
           </div>
           {/* Notifications Card */}
           <div className={`mt-3 p-4 rounded-lg border-2 transition-all ${
-            isNotificationsEnabled ? 'bg-indigo-50 border-indigo-500' : 'bg-gray-50 border-gray-300'
+            isNotificationsEnabled ? 'bg-indigo-50 border-indigo-500' :
+            isIOSChrome ? 'bg-yellow-50 border-yellow-500' :
+            'bg-gray-50 border-gray-300'
           }`}>
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold text-gray-900">Push Notifications</p>
-                <p className="text-xs text-gray-600">{isNotificationsEnabled ? 'Enabled' : 'Disabled'}</p>
-                {fcmLoading && <p className="text-xs text-gray-500">Enabling...</p>}
+                {isIOSChrome ? (
+                  <div className="mt-1">
+                    <p className="text-xs text-yellow-800 font-medium">⚠️ Not supported in Chrome on iOS</p>
+                    <p className="text-xs text-yellow-700 mt-1">Please open this page in <strong>Safari</strong> to enable notifications</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-600">{isNotificationsEnabled ? 'Enabled' : 'Disabled'}</p>
+                    {fcmLoading && <p className="text-xs text-gray-500">Enabling...</p>}
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <Button
                   onClick={async () => {
+                    // Block iOS Chrome users
+                    if (isIOSChrome) {
+                      toast.error('Push notifications are not supported in Chrome on iOS. Please use Safari.', { duration: 4000 });
+                      return;
+                    }
+
                     if (isNotificationsEnabled) {
                       // Disable: remove token from server (and optionally delete client token)
                       try {
@@ -485,13 +508,20 @@ export default function DriverDashboardPage() {
                   }}
                   variant={isNotificationsEnabled ? 'default' : 'outline'}
                   size="sm"
-                  className={isNotificationsEnabled ? 'bg-indigo-600 hover:bg-indigo-700' : ''}
+                  disabled={isIOSChrome}
+                  className={
+                    isIOSChrome
+                      ? 'opacity-50 cursor-not-allowed'
+                      : isNotificationsEnabled
+                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                        : ''
+                  }
                 >
-                  {isNotificationsEnabled ? 'Disable' : 'Enable'}
+                  {isIOSChrome ? 'Unsupported' : isNotificationsEnabled ? 'Disable' : 'Enable'}
                 </Button>
 
                 {/* Quick copy token button for debugging */}
-                {fcmToken && (
+                {/* {fcmToken && !isIOSChrome && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -503,7 +533,7 @@ export default function DriverDashboardPage() {
                   >
                     Copy token
                   </Button>
-                )}
+                )} */}
               </div>
             </div>
           </div>

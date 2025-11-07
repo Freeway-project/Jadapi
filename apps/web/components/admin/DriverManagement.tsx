@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { adminAPI, Driver, CreateDriverData } from '../../lib/api/admin';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Label } from '@workspace/ui/components/label';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { UserPlus, Search, CheckCircle, XCircle, AlertCircle, Car, Bell, X } from 'lucide-react';
 
 export default function DriverManagement() {
@@ -430,7 +430,7 @@ export default function DriverManagement() {
 
       {/* Notification Modal */}
       {showNotifyModal && selectedDriver && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-transparent bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center space-x-2">
@@ -477,7 +477,7 @@ export default function DriverManagement() {
                   placeholder="e.g., You have a new ride request nearby"
                   value={notifyData.body}
                   onChange={(e) => setNotifyData({ ...notifyData, body: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder:text-gray-400"
+                className="mt-1 h-10 text-sm"
                   rows={3}
                   required
                   disabled={notifyLoading}
