@@ -26,7 +26,18 @@ export async function sendDriverNotification(
   }
 
   if (!fcm) {
-    console.warn('FCM not configured. Skipping push notification.');
+    console.error('========================================');
+    console.error('⚠ FCM NOT CONFIGURED - Cannot send notification');
+    console.error('========================================');
+    console.error('Attempted to send notification to driver:', driverId);
+    console.error('Title:', options.title);
+    console.error('Body:', options.body);
+    console.error('\nFCM is null. Check Firebase Admin SDK initialization.');
+    console.error('Environment variables should be set:');
+    console.error('  - FIREBASE_PROJECT_ID');
+    console.error('  - FIREBASE_CLIENT_EMAIL');
+    console.error('  - FIREBASE_PRIVATE_KEY');
+    console.error('========================================\n');
     return;
   }
 
@@ -102,8 +113,16 @@ export async function sendNotificationToToken(
   }
 
   if (!fcm) {
-    console.warn('FCM not configured. Skipping push notification.');
-    return;
+    console.error('========================================');
+    console.error('⚠ FCM NOT CONFIGURED - Cannot send test notification');
+    console.error('========================================');
+    console.error('Attempted to send to token:', token?.substring(0, 30) + '...');
+    console.error('Title:', options.title);
+    console.error('Body:', options.body);
+    console.error('\nFCM is null. Check Firebase Admin SDK initialization.');
+    console.error('Restart the server and check logs for Firebase initialization status.');
+    console.error('========================================\n');
+    return { success: false, error: 'FCM_NOT_CONFIGURED', message: 'Firebase Admin SDK not initialized' };
   }
 
   const message = {
@@ -114,7 +133,7 @@ export async function sendNotificationToToken(
     },
     data: {
       ...(options.data || {}),
-      url: options.url || `${ENV.FRONTEND_URL}/driver/requests`,
+      url: options.url || `${ENV.FRONTEND_URL}/api/driver/requests`,
     },
   };
 
