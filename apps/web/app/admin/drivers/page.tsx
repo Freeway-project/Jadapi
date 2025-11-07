@@ -1,7 +1,7 @@
 'use client';
 
-import DriverManagementDesktop from '../../../components/admin/DriverManagementDesktop';
+import DriverManagement from '../../../components/admin/DriverManagement';
 
 export default function DriversPage() {
-  return <DriverManagementDesktop />;
+  return <DriverManagement />;
 }
