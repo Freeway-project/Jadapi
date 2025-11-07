@@ -477,7 +477,7 @@ export default function DriverManagement() {
                   placeholder="e.g., You have a new ride request nearby"
                   value={notifyData.body}
                   onChange={(e) => setNotifyData({ ...notifyData, body: e.target.value })}
-                  className="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="mt-1 w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder:text-gray-400"
                   rows={3}
                   required
                   disabled={notifyLoading}

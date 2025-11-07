@@ -53,47 +53,85 @@ export async function sendDriverNotification(
   };
 
   try {
-    // sendMulticast handles multiple tokens and provides per-token responses
-    const response = await (fcm as any).sendMulticast({ tokens, ...message });
-    console.log("FCM multicast response:", response);
+    // Prefer the efficient sendMulticast API when available
+    if (typeof (fcm as any).sendMulticast === 'function') {
+      const response = await (fcm as any).sendMulticast({ tokens, ...message });
+      console.log("FCM multicast response:", response);
 
-    // Collect tokens that failed with unrecoverable errors and remove them
-    const invalidTokens: string[] = [];
-    let successCount = 0;
-    let failCount = 0;
+      // Collect tokens that failed with unrecoverable errors and remove them
+      const invalidTokens: string[] = [];
+      let successCount = 0;
+      let failCount = 0;
 
-    response.responses.forEach((resp: any, idx: number) => {
-      if (resp.success) {
-        successCount++;
-      } else {
-        failCount++;
-        const err = resp.error as any;
-        const code = err?.code || '';
+      response.responses.forEach((resp: any, idx: number) => {
+        if (resp.success) {
+          successCount++;
+        } else {
+          failCount++;
+          const err = resp.error as any;
+          const code = err?.code || '';
 
-        console.log(`Token ${idx} failed with code: ${code}`, {
-          token: tokens[idx]?.substring(0, 20) + '...',
-          error: err?.message
-        });
+          console.log(`Token ${idx} failed with code: ${code}`, {
+            token: tokens[idx]?.substring(0, 20) + '...',
+            error: err?.message
+          });
 
-        // Codes indicating token invalidation
-        if (
-          code === 'messaging/registration-token-not-registered' ||
-          code === 'messaging/invalid-registration-token'
-        ) {
-          invalidTokens.push(tokens[idx]);
+          // Codes indicating token invalidation
+          if (
+            code === 'messaging/registration-token-not-registered' ||
+            code === 'messaging/invalid-registration-token'
+          ) {
+            invalidTokens.push(tokens[idx]);
+          }
         }
+      });
+
+      console.log(`FCM send results: ${successCount} success, ${failCount} failed`);
+
+      if (invalidTokens.length > 0) {
+        // Remove invalid tokens from the user's document
+        await User.findByIdAndUpdate(driverId, { $pull: { pushTokens: { $in: invalidTokens } } });
+        console.log(`✓ Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
       }
-    });
+    } else {
+      // Fall back: send messages individually if sendMulticast is not available
+      console.warn('FCM sendMulticast is not available on this SDK instance; falling back to individual sends');
+      const results = await Promise.allSettled(tokens.map((t) => fcm!.send({ token: t, ...message })));
 
-    console.log(`FCM send results: ${successCount} success, ${failCount} failed`);
+      const invalidTokens: string[] = [];
+      let successCount = 0;
+      let failCount = 0;
 
-    if (invalidTokens.length > 0) {
-      // Remove invalid tokens from the user's document
-      await User.findByIdAndUpdate(driverId, { $pull: { pushTokens: { $in: invalidTokens } } });
-      console.log(`✓ Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
+      results.forEach((res, idx) => {
+        if (res.status === 'fulfilled') {
+          successCount++;
+        } else {
+          failCount++;
+          const err: any = res.reason;
+          const code = err?.code || '';
+          console.log(`Token ${idx} failed (individual send) with code: ${code}`, {
+            token: tokens[idx]?.substring(0, 20) + '...',
+            error: err?.message
+          });
+
+          if (
+            code === 'messaging/registration-token-not-registered' ||
+            code === 'messaging/invalid-registration-token'
+          ) {
+            invalidTokens.push(tokens[idx]);
+          }
+        }
+      });
+
+      console.log(`FCM fallback send results: ${successCount} success, ${failCount} failed`);
+
+      if (invalidTokens.length > 0) {
+        await User.findByIdAndUpdate(driverId, { $pull: { pushTokens: { $in: invalidTokens } } });
+        console.log(`✓ Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
+      }
     }
   } catch (err) {
-    console.error('Error sending FCM multicast message:', err);
+    console.error('Error sending FCM multicast message or fallback sends:', err);
   }
 }
 
@@ -138,7 +176,7 @@ export async function sendNotificationToToken(
   };
 
   try {
-    const response = await fcm.send(message);
+    const response = await fcm!.send(message);
     console.log('✓ FCM notification sent successfully:', response);
     return { success: true, messageId: response };
   } catch (err: any) {

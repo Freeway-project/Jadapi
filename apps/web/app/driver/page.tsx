@@ -341,11 +341,11 @@ export default function DriverDashboardPage() {
       {showNotifModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-11/12 max-w-md bg-white rounded-lg p-5">
-            <h3 className="text-lg font-semibold mb-2">Enable notifications?</h3>
-            <p className="text-sm text-gray-600 mb-4">Allow notifications so we can send you new job requests and route updates even when the app is closed.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Enable notifications?</h3>
+            <p className="text-sm text-gray-700 mb-4">Allow notifications so we can send you new job requests and route updates even when the app is closed.</p>
             <div className="flex gap-3 justify-end">
-              <button className="px-4 py-2 rounded bg-gray-100" onClick={() => setShowNotifModal(false)}>Not now</button>
-              <button className="px-4 py-2 rounded bg-indigo-600 text-white" onClick={async () => {
+              <button className="px-4 py-2 rounded bg-gray-100 text-gray-900 hover:bg-gray-200" onClick={() => setShowNotifModal(false)}>Not now</button>
+              <button className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700" onClick={async () => {
                 setShowNotifModal(false);
                 const t = await requestToken();
                 if (t) {
