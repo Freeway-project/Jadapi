@@ -48,7 +48,7 @@ export async function sendDriverNotification(
     },
     data: {
       ...(options.data || {}),
-      url: options.url || `${ENV.FRONTEND_URL}/api/driver/requests`,
+      url: options.url || `${ENV.FRONTEND_URL}/driver/requests`,
     },
   };
 
