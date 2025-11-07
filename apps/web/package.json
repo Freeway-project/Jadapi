@@ -4,9 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+  "dev": "next dev --turbopack",
+  "generate-sw": "node ./scripts/generate-firebase-sw.mjs",
+  "build": "node ./scripts/generate-firebase-sw.mjs && next build",
+  "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit"
