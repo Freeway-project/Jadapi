@@ -60,6 +60,15 @@ export function useFcmToken(driverId?: string) {
       // Foreground message handler
       onMessage(messaging, (payload) => {
         console.log("Message in foreground:", payload);
+        try {
+          const title = payload.notification?.title || 'Notification';
+          const body = payload.notification?.body || '';
+          if (Notification.permission === 'granted') {
+            new Notification(title, { body });
+          }
+        } catch (e) {
+          console.warn('foreground notification display failed', e);
+        }
       });
 
       setLoading(false);

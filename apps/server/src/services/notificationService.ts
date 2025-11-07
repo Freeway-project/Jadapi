@@ -1,5 +1,6 @@
 import { fcm } from "../firebaseAdmin";
 import { User } from "../models/user.model";
+import { ENV } from "../config/env";
 
 
 export async function sendDriverNotification(
@@ -36,7 +37,7 @@ export async function sendDriverNotification(
     },
     data: {
       ...(options.data || {}),
-      url: options.url || "/driver/requests",
+      url: options.url || `${ENV.FRONTEND_URL}/api/driver/requests`,
     },
   };
 
@@ -100,7 +101,7 @@ export async function sendNotificationToToken(
     },
     data: {
       ...(options.data || {}),
-      url: options.url || '/driver/requests',
+      url: options.url || `${ENV.FRONTEND_URL}/driver/requests`,
     },
   };
 

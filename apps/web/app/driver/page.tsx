@@ -37,6 +37,7 @@ export default function DriverDashboardPage() {
   // FCM token management
   const { token: fcmToken, loading: fcmLoading, requestToken } = useFcmToken(user?._id || user?.id);
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState<boolean>(!!fcmToken);
+  const [showNotifModal, setShowNotifModal] = useState(false);
 
   // Get current active order ID for location tracking
   const activeOrderId = orders.find(o => ['assigned', 'picked_up', 'in_transit'].includes(o.status))?._id;
@@ -337,6 +338,28 @@ export default function DriverDashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
+      {showNotifModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-11/12 max-w-md bg-white rounded-lg p-5">
+            <h3 className="text-lg font-semibold mb-2">Enable notifications?</h3>
+            <p className="text-sm text-gray-600 mb-4">Allow notifications so we can send you new job requests and route updates even when the app is closed.</p>
+            <div className="flex gap-3 justify-end">
+              <button className="px-4 py-2 rounded bg-gray-100" onClick={() => setShowNotifModal(false)}>Not now</button>
+              <button className="px-4 py-2 rounded bg-indigo-600 text-white" onClick={async () => {
+                setShowNotifModal(false);
+                const t = await requestToken();
+                if (t) {
+                  setIsNotificationsEnabled(true);
+                  toast.success('Push notifications enabled');
+                } else {
+                  toast.error('Failed to enable notifications');
+                }
+              }}>Enable</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
         {/* Header with Location Toggle */}
         <div className="mb-4 sm:mb-6">
@@ -401,38 +424,87 @@ export default function DriverDashboardPage() {
                 <p className="text-xs text-gray-600">{isNotificationsEnabled ? 'Enabled' : 'Disabled'}</p>
                 {fcmLoading && <p className="text-xs text-gray-500">Enabling...</p>}
               </div>
-              <Button
-                onClick={async () => {
-                  if (isNotificationsEnabled) {
-                    // Disable: remove token from server
-                    try {
-                      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api';
-                      await fetch(`${apiUrl}/fcm-token`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ driverId: user?._id || user?.id }),
-                      });
-                      setIsNotificationsEnabled(false);
-                      toast.success('Push notifications disabled');
-                    } catch (err) {
-                      console.error('Failed to remove FCM token', err);
-                      toast.error('Failed to disable notifications');
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={async () => {
+                    if (isNotificationsEnabled) {
+                      // Disable: remove token from server (and optionally delete client token)
+                      try {
+                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api';
+                        // If we have a token, remove that specific token; otherwise clear all
+                        const body: any = { driverId: user?._id || user?.id };
+                        if (fcmToken) body.token = fcmToken;
+                        else body.all = true;
+
+                        await fetch(`${apiUrl}/fcm-token`, {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(body),
+                        });
+
+                        // Attempt to delete token client-side if messaging available
+                        try {
+                          if (typeof window !== 'undefined' && (window as any).navigator?.serviceWorker && fcmToken) {
+                            const { deleteToken } = await import('firebase/messaging');
+                            const { messaging } = await import('../../lib/utils/firebaseConfig');
+                            if (messaging) {
+                              await deleteToken(messaging);
+                            }
+                          }
+                        } catch (e) {
+                          // ignore client-side delete errors
+                          console.warn('client deleteToken failed', e);
+                        }
+
+                        setIsNotificationsEnabled(false);
+                        toast.success('Push notifications disabled');
+                      } catch (err) {
+                        console.error('Failed to remove FCM token', err);
+                        toast.error('Failed to disable notifications');
+                      }
+                    } else {
+                      // Enable: prompt flow
+                      if (Notification.permission === 'denied') {
+                        toast.error('Notifications are blocked. Please enable them in your browser settings.');
+                        return;
+                      }
+
+                      if (Notification.permission === 'default') {
+                        // show a brief explainer modal before requesting permission
+                        setShowNotifModal(true);
+                        return;
+                      }
+
+                      // Permission already granted
+                      const t = await requestToken();
+                      if (t) {
+                        setIsNotificationsEnabled(true);
+                        toast.success('Push notifications enabled');
+                      }
                     }
-                  } else {
-                    // Enable: request token
-                    const t = await requestToken();
-                    if (t) {
-                      setIsNotificationsEnabled(true);
-                      toast.success('Push notifications enabled');
-                    }
-                  }
-                }}
-                variant={isNotificationsEnabled ? 'default' : 'outline'}
-                size="sm"
-                className={isNotificationsEnabled ? 'bg-indigo-600 hover:bg-indigo-700' : ''}
-              >
-                {isNotificationsEnabled ? 'Disable' : 'Enable'}
-              </Button>
+                  }}
+                  variant={isNotificationsEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  className={isNotificationsEnabled ? 'bg-indigo-600 hover:bg-indigo-700' : ''}
+                >
+                  {isNotificationsEnabled ? 'Disable' : 'Enable'}
+                </Button>
+
+                {/* Quick copy token button for debugging */}
+                {fcmToken && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(fcmToken).then(() => {
+                        toast.success('FCM token copied');
+                      }).catch(() => toast.error('Failed to copy token'));
+                    }}
+                  >
+                    Copy token
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

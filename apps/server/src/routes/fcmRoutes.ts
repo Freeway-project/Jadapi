@@ -1,5 +1,6 @@
 import express from "express";
 import { User } from "../models/user.model";
+import { sendNotificationToToken } from "../services/notificationService";
 
 const router = express.Router();
 
@@ -52,3 +53,33 @@ router.delete("/api/fcm-token", async (req, res) => {
 });
 
 export default router;
+
+// Dev-only endpoint to send a notification to a raw token (convenience)
+// Useful for testing from Postman/curl without needing ts-node or env var.
+// Always register the endpoint but require a short dev auth header to avoid accidental public use.
+router.post('/dev/send-fcm', async (req, res) => {
+  try {
+    const devKey = process.env.DEV_SEND_FCM_KEY;
+    const provided = req.header('X-DEV-AUTH');
+
+    if (devKey) {
+      if (!provided || provided !== devKey) {
+        return res.status(403).json({ message: 'forbidden' });
+      }
+    } else {
+      // If no DEV_SEND_FCM_KEY is configured, require a placeholder header value to be 'your-secret'
+      if (!provided || provided !== 'your-secret') {
+        return res.status(403).json({ message: 'forbidden — set DEV_SEND_FCM_KEY or use header X-DEV-AUTH: your-secret' });
+      }
+    }
+
+    const { token, title, body, url, data } = req.body;
+    if (!token) return res.status(400).json({ message: 'token required' });
+
+    await sendNotificationToToken(token, { title: title || 'Test', body: body || 'Test body', url, data });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Dev send-fcm error:', err);
+    return res.status(500).json({ message: 'error' });
+  }
+});
