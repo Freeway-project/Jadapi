@@ -70,3 +70,5 @@ temp/
 *.bak
 *.tmp
 .vercel
+
+firebase-service-account.json

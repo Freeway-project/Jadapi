@@ -7,6 +7,7 @@ import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { authenticate } from "./middlewares/auth";
 import webhookRoutes from "./routes/webhook.routes";
+import fcmRoutes from "./routes/fcmRoutes";
 
 const app = express();
 
@@ -23,6 +24,8 @@ app.use("/api/webhooks", webhookRoutes);
 
 // JSON body parser for all other routes
 app.use(express.json());
+
+app.use(fcmRoutes);
 
 // Health check endpoint (no auth required)
 app.get("/health", (_req, res) => {

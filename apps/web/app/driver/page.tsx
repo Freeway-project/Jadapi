@@ -8,6 +8,7 @@ import { useDriverLocation } from '../../hooks/useDriverLocation';
 import Header from '../../components/layout/Header';
 import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, ExternalLink, Radio } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
+import { useFcmToken } from '../../hooks/useFcmToken';
 import toast from 'react-hot-toast';
 
 type OrderStatus = 'available' | 'in_progress';
@@ -32,6 +33,10 @@ export default function DriverDashboardPage() {
   const [activeStatus, setActiveStatus] = useState<OrderStatus>('available');
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied'>('prompt');
+
+  // FCM token management
+  const { token: fcmToken, loading: fcmLoading, requestToken } = useFcmToken(user?._id || user?.id);
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState<boolean>(!!fcmToken);
 
   // Get current active order ID for location tracking
   const activeOrderId = orders.find(o => ['assigned', 'picked_up', 'in_transit'].includes(o.status))?._id;
@@ -127,6 +132,10 @@ export default function DriverDashboardPage() {
     // Cleanup interval on unmount or when dependencies change
     return () => clearInterval(pollInterval);
   }, [activeStatus, user, router]);
+
+  useEffect(() => {
+    setIsNotificationsEnabled(!!fcmToken);
+  }, [fcmToken]);
 
   const fetchOrders = async (showLoader = false) => {
     try {
@@ -379,6 +388,50 @@ export default function DriverDashboardPage() {
                 className={isTracking ? 'bg-green-600 hover:bg-green-700' : ''}
               >
                 {isTracking ? 'Turn Off' : 'Turn On'}
+              </Button>
+            </div>
+          </div>
+          {/* Notifications Card */}
+          <div className={`mt-3 p-4 rounded-lg border-2 transition-all ${
+            isNotificationsEnabled ? 'bg-indigo-50 border-indigo-500' : 'bg-gray-50 border-gray-300'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-gray-900">Push Notifications</p>
+                <p className="text-xs text-gray-600">{isNotificationsEnabled ? 'Enabled' : 'Disabled'}</p>
+                {fcmLoading && <p className="text-xs text-gray-500">Enabling...</p>}
+              </div>
+              <Button
+                onClick={async () => {
+                  if (isNotificationsEnabled) {
+                    // Disable: remove token from server
+                    try {
+                      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api';
+                      await fetch(`${apiUrl}/fcm-token`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ driverId: user?._id || user?.id }),
+                      });
+                      setIsNotificationsEnabled(false);
+                      toast.success('Push notifications disabled');
+                    } catch (err) {
+                      console.error('Failed to remove FCM token', err);
+                      toast.error('Failed to disable notifications');
+                    }
+                  } else {
+                    // Enable: request token
+                    const t = await requestToken();
+                    if (t) {
+                      setIsNotificationsEnabled(true);
+                      toast.success('Push notifications enabled');
+                    }
+                  }
+                }}
+                variant={isNotificationsEnabled ? 'default' : 'outline'}
+                size="sm"
+                className={isNotificationsEnabled ? 'bg-indigo-600 hover:bg-indigo-700' : ''}
+              >
+                {isNotificationsEnabled ? 'Disable' : 'Enable'}
               </Button>
             </div>
           </div>

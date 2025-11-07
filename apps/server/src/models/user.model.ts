@@ -26,6 +26,8 @@ export interface UserDoc extends Document<Types.ObjectId> {
     lastLoginAt?: Date | null;
   };
 
+  pushTokens?: string[];
+
   profile: {
     name: string;                     // User's name (individual or business) - REQUIRED
     address: string;                  // Primary address - REQUIRED
@@ -82,6 +84,9 @@ const UserSchema = new Schema<UserDoc>(
       phoneVerifiedAt: { type: Date, default: null },
       lastLoginAt: { type: Date, default: null },
     },
+
+  // support multiple device tokens per user (drivers often log in from multiple devices)
+  pushTokens: { type: [String], default: [] },
 
     profile: {
       name: { type: String, required: true, trim: true },

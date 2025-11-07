@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { DriverService } from "../services/driver.service";
+import { sendDriverNotification } from "../services/notificationService";
 import { Types } from "mongoose";
 
 export class DriverController {
@@ -138,6 +139,36 @@ export class DriverController {
         success: true,
         data: { order },
         message: `Order marked as ${status.replace("_", " ")}`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Assign a parcel to a driver and send notification
+   */
+  static async assignOrderToDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { driverId, parcelId } = req.body;
+
+      // In a real application, you would have logic here to:
+      // 1. Validate driverId and parcelId
+      // 2. Update the order in the database to assign it to the driver
+      // 3. Potentially fetch order details for the notification
+
+      console.log(`Simulating assignment of parcel ${parcelId} to driver ${driverId}`);
+
+      await sendDriverNotification(driverId, {
+        title: "New Delivery Request",
+        body: `You have been assigned a new parcel: #${parcelId}. Tap to view details.`,
+        url: `/driver/parcels/${parcelId}`,
+        data: { parcelId: String(parcelId) },
+      });
+
+      res.json({
+        success: true,
+        message: "Parcel assigned and notification sent successfully",
       });
     } catch (error) {
       next(error);

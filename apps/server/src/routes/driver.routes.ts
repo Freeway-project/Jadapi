@@ -87,4 +87,12 @@ router.post('/orders/:orderId/accept', requireAuth, driverAuth, DriverController
  */
 router.patch('/orders/:orderId/status', requireAuth, driverAuth, DriverController.updateOrderStatus);
 
+/**
+ * Assign a parcel to a driver (for testing/admin purposes)
+ * POST /api/driver/assign-parcel
+ * Body: { driverId, parcelId }
+ * Requires: Driver authentication (or admin auth in real scenario)
+ */
+router.post('/assign-parcel', requireAuth, driverAuth, DriverController.assignOrderToDriver);
+
 export default router;
