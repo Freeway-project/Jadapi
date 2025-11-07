@@ -32,52 +32,34 @@ export default function EmailStep() {
       // Import authAPI dynamically to avoid SSR issues
       const { authAPI } = await import('../../lib/api/auth');
 
-      // For business users, send separate different OTPs to email and phone
-      if (userType === 'business') {
-        // Send separate OTP to email
-        if (data.email) {
-          await authAPI.requestOTP({
-            email: data.email,
-            type: 'signup' as const,
-            deliveryMethod: 'email',
-            userType: 'business',
-          });
-        }
-
-        // Send separate different OTP to phone
-        if (data.phoneNumber) {
-          await authAPI.requestOTP({
-            phoneNumber: data.phoneNumber,
-            type: 'signup' as const,
-            deliveryMethod: 'sms',
-            userType: 'business',
-          });
-        }
-      } else {
-        // Individual users - send OTP to phone (and email if provided)
-        const deliveryMethod = data.email ? 'both' : 'sms';
+      // Send separate OTPs to email and phone when both are provided
+      // This applies to both business and individual users
+      if (data.email) {
+        // Send OTP to email
         await authAPI.requestOTP({
           email: data.email,
-          phoneNumber: data.phoneNumber,
           type: 'signup' as const,
-          deliveryMethod,
-          userType: 'individual',
+          deliveryMethod: 'email',
+          userType: userType || undefined,
         });
       }
+
+      // Always send OTP to phone
+      await authAPI.requestOTP({
+        phoneNumber: data.phoneNumber,
+        type: 'signup' as const,
+        deliveryMethod: 'sms',
+        userType: userType || undefined,
+      });
 
       // Store email and phone in state
       setEmail(data.email || '');
       setPhoneNumber(data.phoneNumber);
       setStep('verification');
 
-      let deliveryText = '';
-      if (userType === 'business') {
-        deliveryText = 'Separate verification codes sent to your email and phone!';
-      } else {
-        deliveryText = data.email
-          ? 'Verification codes sent to your email and phone!'
-          : 'Verification code sent via SMS!';
-      }
+      const deliveryText = data.email
+        ? 'Separate verification codes sent to your email and phone!'
+        : 'Verification code sent via SMS!';
       toast.success(deliveryText);
     } catch (error: any) {
       console.error('Failed to send OTP:', error);

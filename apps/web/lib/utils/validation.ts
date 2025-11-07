@@ -44,7 +44,8 @@ export const individualSignupSchema = z.object({
   address: vancouverAddressSchema.refine(val => val && val.trim().length >= 10, {
     message: 'Address is required',
   }),
-  otp: z.string().length(6, 'OTP must be 6 digits').regex(/^\d+$/, 'OTP must contain only numbers'),
+  emailOtp: z.string().length(6, 'Email OTP must be 6 digits').regex(/^\d+$/, 'Email OTP must contain only numbers').optional(),
+  phoneOtp: z.string().length(6, 'Phone OTP must be 6 digits').regex(/^\d+$/, 'Phone OTP must contain only numbers'),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'You must accept the terms and conditions',
   }),
