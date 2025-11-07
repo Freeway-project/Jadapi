@@ -48,12 +48,23 @@ export async function sendDriverNotification(
 
     // Collect tokens that failed with unrecoverable errors and remove them
     const invalidTokens: string[] = [];
+    let successCount = 0;
+    let failCount = 0;
+
     response.responses.forEach((resp: any, idx: number) => {
-      if (!resp.success) {
+      if (resp.success) {
+        successCount++;
+      } else {
+        failCount++;
         const err = resp.error as any;
-        // firebase-admin error structure contains error.code
         const code = err?.code || '';
-        // codes indicating token invalidation
+
+        console.log(`Token ${idx} failed with code: ${code}`, {
+          token: tokens[idx]?.substring(0, 20) + '...',
+          error: err?.message
+        });
+
+        // Codes indicating token invalidation
         if (
           code === 'messaging/registration-token-not-registered' ||
           code === 'messaging/invalid-registration-token'
@@ -63,10 +74,12 @@ export async function sendDriverNotification(
       }
     });
 
+    console.log(`FCM send results: ${successCount} success, ${failCount} failed`);
+
     if (invalidTokens.length > 0) {
-      // remove invalid tokens from the user's document
+      // Remove invalid tokens from the user's document
       await User.findByIdAndUpdate(driverId, { $pull: { pushTokens: { $in: invalidTokens } } });
-      console.log('Removed invalid push tokens for', driverId, invalidTokens);
+      console.log(`✓ Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
     }
   } catch (err) {
     console.error('Error sending FCM multicast message:', err);
@@ -107,8 +120,21 @@ export async function sendNotificationToToken(
 
   try {
     const response = await fcm.send(message);
-    console.log('FCM response:', response);
-  } catch (err) {
-    console.error('Error sending FCM message (to token):', err);
+    console.log('✓ FCM notification sent successfully:', response);
+    return { success: true, messageId: response };
+  } catch (err: any) {
+    const errorCode = err?.code || err?.errorInfo?.code || '';
+    console.error('✗ Failed to send FCM notification:', {
+      code: errorCode,
+      message: err?.message,
+      token: token?.substring(0, 20) + '...'
+    });
+
+    // Return error info for caller to handle
+    return {
+      success: false,
+      error: errorCode,
+      message: err?.message
+    };
   }
 }

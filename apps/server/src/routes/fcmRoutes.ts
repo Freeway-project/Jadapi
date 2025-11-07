@@ -76,10 +76,19 @@ router.post('/dev/send-fcm', async (req, res) => {
     const { token, title, body, url, data } = req.body;
     if (!token) return res.status(400).json({ message: 'token required' });
 
-    await sendNotificationToToken(token, { title: title || 'Test', body: body || 'Test body', url, data });
-    return res.json({ success: true });
-  } catch (err) {
+    const result = await sendNotificationToToken(token, { title: title || 'Test', body: body || 'Test body', url, data });
+
+    if (result?.success) {
+      return res.json({ success: true, messageId: result.messageId });
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: result?.error || 'unknown',
+        message: result?.message || 'Failed to send notification'
+      });
+    }
+  } catch (err: any) {
     console.error('Dev send-fcm error:', err);
-    return res.status(500).json({ message: 'error' });
+    return res.status(500).json({ message: err?.message || 'error' });
   }
 });
