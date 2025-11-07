@@ -4,6 +4,7 @@ import { AppConfigService } from "../services/appConfig.service";
 import { SmsRateLimitService } from "../services/smsRateLimit.service";
 import { ApiError } from "../utils/ApiError";
 import { EarlyAccessRequest } from "../models/EarlyAccessRequest";
+import { sendDriverNotification } from "../services/notificationService";
 
 export class AdminController {
   /**
@@ -325,6 +326,35 @@ export class AdminController {
         success: true,
         data: request,
         message: `Request status updated to ${status}`,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/admin/drivers/:driverId/notify
+   * Send push notification to a driver
+   */
+  static async notifyDriver(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { driverId } = req.params;
+      const { title, body, url, data } = req.body;
+
+      if (!title || !body) {
+        throw new ApiError(400, 'Title and body are required');
+      }
+
+      await sendDriverNotification(driverId, {
+        title,
+        body,
+        url,
+        data,
+      });
+
+      res.json({
+        success: true,
+        message: 'Notification sent successfully',
       });
     } catch (error) {
       next(error);

@@ -5,7 +5,7 @@ import { adminAPI, Driver, CreateDriverData } from '../../lib/api/admin';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { UserPlus, Search, CheckCircle, XCircle, AlertCircle, Car } from 'lucide-react';
+import { UserPlus, Search, CheckCircle, XCircle, AlertCircle, Car, Bell, X } from 'lucide-react';
 
 export default function DriverManagement() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -26,6 +26,14 @@ export default function DriverManagement() {
 
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+
+  // Notification modal state
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [notifyData, setNotifyData] = useState({ title: '', body: '' });
+  const [notifyLoading, setNotifyLoading] = useState(false);
+  const [notifyError, setNotifyError] = useState<string | null>(null);
+  const [notifySuccess, setNotifySuccess] = useState<string | null>(null);
 
   useEffect(() => {
     loadDrivers();
@@ -97,6 +105,51 @@ export default function DriverManagement() {
       loadDrivers();
     } catch (error: any) {
       alert(error.message || 'Failed to update driver status');
+    }
+  };
+
+  const handleOpenNotifyModal = (driver: Driver) => {
+    setSelectedDriver(driver);
+    setNotifyData({ title: '', body: '' });
+    setNotifyError(null);
+    setNotifySuccess(null);
+    setShowNotifyModal(true);
+  };
+
+  const handleCloseNotifyModal = () => {
+    setShowNotifyModal(false);
+    setSelectedDriver(null);
+    setNotifyData({ title: '', body: '' });
+    setNotifyError(null);
+    setNotifySuccess(null);
+  };
+
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDriver) return;
+
+    setNotifyError(null);
+    setNotifySuccess(null);
+
+    if (!notifyData.title || !notifyData.body) {
+      setNotifyError('Title and message are required');
+      return;
+    }
+
+    try {
+      setNotifyLoading(true);
+      await adminAPI.notifyDriver(selectedDriver._id, {
+        title: notifyData.title,
+        body: notifyData.body,
+      });
+      setNotifySuccess('Notification sent successfully!');
+      setTimeout(() => {
+        handleCloseNotifyModal();
+      }, 1500);
+    } catch (error: any) {
+      setNotifyError(error.message || 'Failed to send notification');
+    } finally {
+      setNotifyLoading(false);
     }
   };
 
@@ -356,6 +409,15 @@ export default function DriverManagement() {
                             Suspend
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenNotifyModal(driver)}
+                          className="text-xs h-8 text-blue-700 border-blue-300 hover:bg-blue-50"
+                          title="Send notification"
+                        >
+                          <Bell className="w-3 h-3" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -365,6 +427,97 @@ export default function DriverManagement() {
           </div>
         )}
       </div>
+
+      {/* Notification Modal */}
+      {showNotifyModal && selectedDriver && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center space-x-2">
+                <Bell className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Send Notification</h3>
+              </div>
+              <button
+                onClick={handleCloseNotifyModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendNotification} className="p-4 space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-3">
+                  Send notification to: <span className="font-medium text-gray-900">{selectedDriver.profile?.name}</span>
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="notif-title" className="text-sm font-medium text-gray-700">
+                  Title *
+                </Label>
+                <Input
+                  id="notif-title"
+                  type="text"
+                  placeholder="e.g., New ride request"
+                  value={notifyData.title}
+                  onChange={(e) => setNotifyData({ ...notifyData, title: e.target.value })}
+                  className="mt-1 h-10 text-sm"
+                  required
+                  disabled={notifyLoading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="notif-body" className="text-sm font-medium text-gray-700">
+                  Message *
+                </Label>
+                <textarea
+                  id="notif-body"
+                  placeholder="e.g., You have a new ride request nearby"
+                  value={notifyData.body}
+                  onChange={(e) => setNotifyData({ ...notifyData, body: e.target.value })}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  rows={3}
+                  required
+                  disabled={notifyLoading}
+                />
+              </div>
+
+              {notifySuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">{notifySuccess}</p>
+                </div>
+              )}
+
+              {notifyError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-sm text-red-800">{notifyError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseNotifyModal}
+                  className="flex-1 text-sm"
+                  disabled={notifyLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm"
+                  disabled={notifyLoading}
+                >
+                  {notifyLoading ? 'Sending...' : 'Send Notification'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

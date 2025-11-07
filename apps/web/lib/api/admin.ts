@@ -304,6 +304,16 @@ export const adminAPI = {
     return res.data.data;
   },
 
+  async notifyDriver(driverId: string, notification: {
+    title: string;
+    body: string;
+    url?: string;
+    data?: Record<string, string>;
+  }): Promise<void> {
+    const res = await apiClient.post(`/admin/drivers/${driverId}/notify`, notification);
+    return res.data;
+  },
+
   async getCoupons(filters: {
     isActive?: boolean;
     limit?: number;

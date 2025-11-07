@@ -79,6 +79,12 @@ router.put(
   AdminController.updateDriverStatus
 );
 
+router.post(
+  "/drivers/:driverId/notify",
+  activityLogger,
+  AdminController.notifyDriver
+);
+
 // App configuration routes
 router.get(
   "/config",
