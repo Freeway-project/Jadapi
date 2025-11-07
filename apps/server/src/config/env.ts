@@ -34,5 +34,5 @@ export const ENV = {
   REDIS_URL: process.env.REDIS_URL ?? "redis://localhost:6379",
 
   // Frontend URL for tracking links, emails, etc.
-  FRONTEND_URL: process.env.FRONTEND_URL ,
+  FRONTEND_URL: process.env.FRONTEND_URL  ?? "http://localhost:3000",
 };
