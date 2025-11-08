@@ -11,29 +11,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
-    let audio: HTMLAudioElement | null = null;
-
     function handleSWMessage(event: MessageEvent) {
       try {
         const data = event.data || {};
-        if (data?.type === 'play-sound' && data?.sound) {
-          // Create or reuse audio element
-          try {
-            if (!audio) {
-              audio = new Audio(data.sound);
-              audio.preload = 'auto';
-            } else {
-              audio.src = data.sound;
-            }
-            // Attempt to play; browsers may block autoplay unless user interacted
-            audio.play().catch((err) => {
-              // Ignore autoplay errors; optional: show UI alert instead
-              console.debug('Audio play prevented by browser autoplay policy', err);
-            });
-          } catch (err) {
-            console.error('Failed to play notification sound', err);
-          }
-        }
 
         if (data?.type === 'route' && data?.url) {
           // When service worker asks client to route, use client-side navigation
@@ -52,7 +32,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleSWMessage as any);
-      audio = null;
     };
   }, []);
   return (

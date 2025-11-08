@@ -23,33 +23,19 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || "New notification";
   const notificationOptions = {
     body: payload.notification?.body || "",
-    icon: "/icon-192x192.png", // optional - provide a 192x192 icon in /public if you like
-    badge: "/icon-72x72.png", // optional small monochrome badge
-    data: payload.data || {},   // e.g. { url: "/driver/requests", playSound: 'true' }
-    // Keep notification visible until user interacts (useful for important alerts)
+    icon: "/icon-192x192.png",
+    badge: "/icon-72x72.png",
+    data: payload.data || {},
     requireInteraction: true,
-    // Add actions (optional buttons shown on some platforms)
+    // Browser will use default notification sound
+    silent: false,
     actions: payload.data?.actions || [
       { action: 'open', title: 'Open App' }
     ],
   };
 
-  // Show the notification
+  // Show the notification with default system sound
   self.registration.showNotification(notificationTitle, notificationOptions);
-
-  // If payload requests sound (or by default), ask focused clients to play a sound.
-  // Note: service workers can't play audio directly; we postMessage to any open client
-  // which can then play the audio (autoplay policies usually allow sound in response
-  // to user gesture or if the page has been interacted with previously).
-  const shouldPlaySound = payload.data?.playSound === 'true' || payload.data?.playSound === true;
-  const soundFile = payload.data?.sound || '/notification.mp3';
-  if (shouldPlaySound) {
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        client.postMessage({ type: 'play-sound', sound: soundFile });
-      }
-    });
-  }
 });
 
 // When user clicks the notification
