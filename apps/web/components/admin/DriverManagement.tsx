@@ -167,9 +167,10 @@ export default function DriverManagement() {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center space-x-2">
           <Car className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600" />
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Management</h2>
@@ -430,7 +431,7 @@ export default function DriverManagement() {
 
       {/* Notification Modal */}
       {showNotifyModal && selectedDriver && (
-        <div className="fixed inset-0 bg-transparent bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-blur-50  bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center space-x-2">
@@ -462,7 +463,7 @@ export default function DriverManagement() {
                   placeholder="e.g., New ride request"
                   value={notifyData.title}
                   onChange={(e) => setNotifyData({ ...notifyData, title: e.target.value })}
-                  className="mt-1 h-10 text-sm"
+                  className="mt-1 h-10 text-sm text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" 
                   required
                   disabled={notifyLoading}
                 />
@@ -477,7 +478,7 @@ export default function DriverManagement() {
                   placeholder="e.g., You have a new ride request nearby"
                   value={notifyData.body}
                   onChange={(e) => setNotifyData({ ...notifyData, body: e.target.value })}
-                className="mt-1 h-10 text-sm"
+                  className="mt-1 w-full px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
                   rows={3}
                   required
                   disabled={notifyLoading}
@@ -518,6 +519,7 @@ export default function DriverManagement() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
