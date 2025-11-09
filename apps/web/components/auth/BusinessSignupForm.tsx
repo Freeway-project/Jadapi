@@ -8,12 +8,12 @@ import { businessSignupSchema, BusinessSignupFormData } from '../../lib/utils/va
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, ArrowLeft } from 'lucide-react';
 import AddressAutocomplete from './AddressAutocomplete';
 import toast from 'react-hot-toast';
 
 export default function BusinessSignupForm() {
-  const { email, phoneNumber, setLoading, isLoading } = useAuthStore();
+  const { email: storeEmail, phoneNumber: storePhone, setLoading, isLoading, setUser, setStep } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -25,8 +25,8 @@ export default function BusinessSignupForm() {
   } = useForm<BusinessSignupFormData>({
     resolver: zodResolver(businessSignupSchema),
     defaultValues: {
-      email,
-      phoneNumber,
+      email: storeEmail || '',
+      phoneNumber: storePhone || '',
       businessName: '',
       address: '',
       emailOtp: '',
@@ -36,197 +36,120 @@ export default function BusinessSignupForm() {
   });
 
   const watchedAddress = watch('address');
+  const watchedBusinessName = watch('businessName');
 
-  const { setUser, setStep } = useAuthStore();
-
+  // Complete Business Signup
   const onSubmit = async (data: BusinessSignupFormData) => {
     setIsSubmitting(true);
     setLoading(true);
 
     try {
-      // Import authAPI and tokenManager dynamically to avoid SSR issues
+      // Validation
+      if (!storeEmail || !storePhone) {
+        throw new Error('Both email and phone number are required for business accounts');
+      }
+
+      if (!data.businessName || data.businessName.trim().length < 2) {
+        throw new Error('Business name is required (minimum 2 characters)');
+      }
+
+      if (!data.address || data.address.trim().length < 10) {
+        throw new Error('Address is required (minimum 10 characters)');
+      }
+
+      if (!data.acceptTerms) {
+        throw new Error('You must accept the Terms and Conditions');
+      }
+
       const { authAPI, tokenManager } = await import('../../lib/api/auth');
 
-      // Step 1: Verify both email and phone OTPs
-      await authAPI.verifyOTP({
-        identifier: data.email,
-        code: data.emailOtp,
-        type: 'signup'
-      });
-
-      await authAPI.verifyOTP({
-        identifier: data.phoneNumber,
-        code: data.phoneOtp,
-        type: 'signup'
-      });
-
-      // Step 2: Create business account
+      // Create business account with verified email and phone from EmailStep
       const signupData = {
         accountType: 'business' as const,
-        email: data.email,
-        phone: data.phoneNumber,
-        name: data.businessName,  // Business name becomes the profile name
-        address: data.address,
-        businessName: data.businessName,  // Also store in businessProfile
+        email: storeEmail,
+        phone: storePhone,
+        name: data.businessName.trim(),
+        address: data.address.trim(),
+        businessName: data.businessName.trim(),
       };
+
+      console.log('📤 [BusinessSignup] Sending signup data:', signupData);
 
       const response = await authAPI.signup(signupData);
 
-      // Store JWT token if provided
+      console.log('✅ [BusinessSignup] Signup response:', response);
+
       if (response?.token) {
         tokenManager.setToken(response.token);
       }
 
-      // Set user data in store
       const user = response?.user || response;
       setUser(user);
       setStep('success');
       toast.success('Business account created successfully!');
     } catch (error: any) {
-      console.error('Business signup failed:', error);
-
-      if (error.message?.includes('OTP') || error.message?.includes('verification')) {
-        toast.error('Invalid verification code. Please check both email and phone codes and try again.');
-      } else if (error.message?.includes('already registered')) {
-        toast.error('A business with this email or phone already exists.');
-      } else {
-        toast.error(error.message || 'Failed to create business account. Please try again.');
-      }
+      console.error('❌ Business signup failed:', error);
+      toast.error(error.message || 'Failed to create business account. Please try again.');
     } finally {
       setIsSubmitting(false);
       setLoading(false);
     }
   };
 
-  const handleResendOTP = async (method: 'email' | 'sms' = 'email') => {
-    try {
-      const { authAPI } = await import('../../lib/api/auth');
-
-      if (method === 'email') {
-        await authAPI.requestOTP({
-          email: email,
-          type: 'signup' as const,
-          deliveryMethod: 'email',
-          userType: 'business' as const,
-        });
-        toast.success('Email verification code resent!');
-      } else {
-        await authAPI.requestOTP({
-          phoneNumber: phoneNumber,
-          type: 'signup' as const,
-          deliveryMethod: 'sms',
-          userType: 'business' as const,
-        });
-        toast.success('SMS verification code resent!');
-      }
-    } catch (error: any) {
-      console.error('Failed to resend OTP:', error);
-      toast.error('Failed to resend code. Please try again.');
-    }
+  const handleBack = () => {
+    setStep('email');
   };
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Email OTP Verification */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
+    <div className="w-full max-w-md mx-auto space-y-6">
+      {/* Progress indicator */}
+      <div className="flex justify-center mb-6">
+        <div className="flex items-center space-x-2">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium">✓</div>
+          <div className="w-8 sm:w-12 h-0.5 bg-blue-600"></div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium">✓</div>
+          <div className="w-8 sm:w-12 h-0.5 bg-blue-600"></div>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium">3</div>
+        </div>
+      </div>
+
+      <div className="text-center space-y-3">
+        <h2 className="text-2xl sm:text-3xl font-bold text-black">Complete Your Business Profile</h2>
+        <p className="text-gray-600 text-sm sm:text-base">Enter your business name and address to finish creating your account</p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Display Email (Non-editable) */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-gray-600 flex items-center space-x-2">
             <Mail className="w-4 h-4 text-blue-600" />
-            <Label htmlFor="emailOtp" className="text-sm font-medium text-black">Email verification code</Label>
+            <span>Business Email</span>
+          </Label>
+          <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-700 font-medium">
+            {storeEmail}
           </div>
-          <Input
-            id="emailOtp"
-            type="text"
-            placeholder="Enter email OTP"
-            maxLength={6}
-            disabled={isSubmitting || isLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-500"
-            {...register('emailOtp')}
-          />
-          {errors.emailOtp && (
-            <p className="text-sm text-red-600">{errors.emailOtp.message}</p>
-          )}
-          <div className="text-xs text-gray-600">
-            Code sent to: <span className="font-medium">{email}</span>
-          </div>
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => handleResendOTP('email')}
-            className="p-0 h-auto text-xs text-blue-600 hover:text-blue-700"
-          >
-            Resend email code
-          </Button>
         </div>
 
-        {/* Phone OTP Verification */}
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
+        {/* Display Phone (Non-editable) */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-gray-600 flex items-center space-x-2">
             <Phone className="w-4 h-4 text-green-600" />
-            <Label htmlFor="phoneOtp" className="text-sm font-medium text-black">Phone verification code</Label>
+            <span>Business Phone Number</span>
+          </Label>
+          <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-700 font-medium">
+            {storePhone}
           </div>
-          <Input
-            id="phoneOtp"
-            type="text"
-            placeholder="Enter phone OTP"
-            maxLength={6}
-            disabled={isSubmitting || isLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-green-600 focus:ring-1 focus:ring-green-600 disabled:bg-gray-50 disabled:text-gray-500"
-            {...register('phoneOtp')}
-          />
-          {errors.phoneOtp && (
-            <p className="text-sm text-red-600">{errors.phoneOtp.message}</p>
-          )}
-          <div className="text-xs text-gray-600">
-            Code sent to: <span className="font-medium">{phoneNumber}</span>
-          </div>
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => handleResendOTP('sms')}
-            className="p-0 h-auto text-xs text-green-600 hover:text-green-700"
-          >
-            Resend SMS code
-          </Button>
         </div>
 
-        {/* Email (prefilled and readonly) */}
+        {/* Business Name */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-black">Business Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-            {...register('email')}
-          />
-        </div>
-
-        {/* Phone Number (prefilled and readonly) */}
-        <div className="space-y-2">
-          <Label htmlFor="phoneNumber" className="text-sm font-medium text-black">Business Phone Number</Label>
-          <Input
-            id="phoneNumber"
-            type="tel"
-            value={phoneNumber}
-            disabled
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-            {...register('phoneNumber')}
-          />
-        </div>
-
-        {/* Business Name field */}
-        <div className="space-y-2">
-          <Label htmlFor="businessName" className="text-sm font-medium text-black">Business Name</Label>
+          <Label htmlFor="businessName" className="text-sm font-medium text-black">Business Name *</Label>
           <Input
             id="businessName"
             type="text"
             placeholder="Enter your business name"
             disabled={isSubmitting || isLoading}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-500"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white text-black placeholder-gray-500 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-50 disabled:text-gray-500 transition-all duration-200"
             {...register('businessName')}
           />
           {errors.businessName && (
@@ -234,18 +157,21 @@ export default function BusinessSignupForm() {
           )}
         </div>
 
-        {/* Address with Google Maps Autocomplete */}
-        <AddressAutocomplete
-          value={watchedAddress || ''}
-          onChange={(value) => setValue('address', value)}
-          label="Business Address"
-          placeholder="Enter your business address"
-          error={errors.address?.message}
-          disabled={isSubmitting || isLoading}
-        />
-
-        {/* Terms and Conditions Checkbox */}
+        {/* Address */}
         <div className="space-y-2">
+          <Label htmlFor="address" className="text-sm font-medium text-black">Business Address *</Label>
+          <AddressAutocomplete
+            value={watchedAddress || ''}
+            onChange={(value) => setValue('address', value)}
+            label=""
+            placeholder="Enter your business address"
+            error={errors.address?.message}
+            disabled={isSubmitting || isLoading}
+          />
+        </div>
+
+        {/* Terms */}
+        <div className="space-y-3">
           <div className="flex items-start space-x-3">
             <input
               id="acceptTerms"
@@ -283,7 +209,7 @@ export default function BusinessSignupForm() {
         <Button
           type="submit"
           disabled={isSubmitting || isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
           size="lg"
         >
           {isSubmitting ? (
@@ -294,6 +220,16 @@ export default function BusinessSignupForm() {
           ) : (
             'Create Business Account'
           )}
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={handleBack}
+          className="w-full text-gray-600 hover:text-gray-800 py-3 rounded-xl transition-colors duration-200"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Verification
         </Button>
       </form>
     </div>

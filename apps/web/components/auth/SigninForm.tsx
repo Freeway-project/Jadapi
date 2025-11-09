@@ -35,12 +35,17 @@ export default function SigninForm() {
     try {
       const isEmailInput = data.identifier.includes('@');
 
-      await authAPI.requestOTP({
-        email: isEmailInput ? data.identifier : undefined,
-        phoneNumber: isEmailInput ? undefined : data.identifier,
-        type: 'login',
-        deliveryMethod: isEmailInput ? 'email' : 'sms',
-      });
+      if (isEmailInput) {
+        await authAPI.requestEmailOTP({
+          email: data.identifier,
+          type: 'login',
+        });
+      } else {
+        await authAPI.requestPhoneOTP({
+          phoneNumber: data.identifier,
+          type: 'login',
+        });
+      }
 
       if (isEmailInput) {
         setEmail(data.identifier);

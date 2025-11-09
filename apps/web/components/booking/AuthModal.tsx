@@ -31,18 +31,20 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
     setIsLoading(true);
     try {
-      const response = await authAPI.requestOTP({
-        email: identifier.includes('@') ? identifier.trim() : undefined,
-        phoneNumber: !identifier.includes('@') ? identifier.trim() : undefined,
-        type: 'login',
-      });
-
-      if (response.success) {
-        toast.success('OTP sent successfully');
-        setStep('otp');
+      const isEmail = identifier.includes('@');
+      if (isEmail) {
+        await authAPI.requestEmailOTP({
+          email: identifier.trim(),
+          type: 'login',
+        });
       } else {
-        toast.error(response.message || 'Failed to send OTP');
+        await authAPI.requestPhoneOTP({
+          phoneNumber: identifier.trim(),
+          type: 'login',
+        });
       }
+      toast.success('OTP sent successfully');
+      setStep('otp');
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to send OTP');
     } finally {

@@ -135,7 +135,7 @@ export default function Header() {
                   </Button>
                 </Link>
                 <Link href="/auth/signup">
-                  <Button size="sm" className="text-xs sm:text-base bg-blue-600 hover:bg-blue-700 sm:px-6">
+                  <Button size="sm" className="text-xm sm:text-base bg-blue-600 hover:bg-blue-700 sm:px-6">
                     Sign Up
                   </Button>
                 </Link>

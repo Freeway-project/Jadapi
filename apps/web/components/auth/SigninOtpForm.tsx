@@ -158,12 +158,17 @@ export default function SigninOtpForm() {
 
   const handleResendOTP = async () => {
     try {
-      await authAPI.requestOTP({
-        email: email || undefined,
-        phoneNumber: phoneNumber || undefined,
-        type: 'login',
-        deliveryMethod: isEmailLogin ? 'email' : 'sms'
-      });
+      if (isEmailLogin) {
+        await authAPI.requestEmailOTP({
+          email: email!,
+          type: 'login',
+        });
+      } else {
+        await authAPI.requestPhoneOTP({
+          phoneNumber: phoneNumber!,
+          type: 'login',
+        });
+      }
       toast.success(`OTP resent to your ${identifierType}!`);
     } catch (error) {
       console.error('Failed to resend OTP:', error);

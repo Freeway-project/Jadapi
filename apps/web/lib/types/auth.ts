@@ -1,7 +1,7 @@
 export type UserType = 'individual' | 'business';
 
 export interface AuthState {
-  step: 'userType' | 'email' | 'verification' | 'success' | 'signin' | 'signinOtp';
+  step: 'userType' | 'email' | 'individualSignup' | 'businessSignup' | 'success' | 'signin' | 'signinOtp' | 'verification';
   userType: UserType | null;
   authMode: 'signup' | 'signin';
   email: string;

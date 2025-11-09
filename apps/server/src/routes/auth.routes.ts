@@ -3,7 +3,8 @@ import { OtpController } from "../controllers/otp.controller";
 import { AuthController } from "../controllers/auth.controller";
 import { UserController } from "../controllers/user.controller";
 import {
-  validateOtpRequest,
+  validateEmailOtpRequest,
+  validatePhoneOtpRequest,
   validateOtpVerification,
   validateSignup
 } from "../middlewares/validation";
@@ -11,7 +12,8 @@ import {
 const router = Router();
 
 // OTP routes
-router.post("/otp/request", validateOtpRequest, OtpController.requestOtp);
+router.post("/otp/request-email", validateEmailOtpRequest, OtpController.requestEmailOtp);
+router.post("/otp/request-phone", validatePhoneOtpRequest, OtpController.requestPhoneOtp);
 router.post("/otp/verify", validateOtpVerification, OtpController.verifyOtp);
 router.get("/otp/status", OtpController.checkVerificationStatus);
 

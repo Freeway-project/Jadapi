@@ -204,7 +204,7 @@ function CheckoutForm({
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/booking/success`,
+          return_url: `${window.location.origin}/track/${orderId}`,
         },
         redirect: 'if_required',
       });
@@ -220,11 +220,11 @@ function CheckoutForm({
         toast.success('Payment successful!');
         onSuccess?.();
 
-        // Redirect to booking success page with invoice
+        // Redirect to tracking page instead of success page
         if (orderId) {
-          console.log('[Payment] Payment succeeded, redirecting to invoice:', orderId);
+          console.log('[Payment] Payment succeeded, redirecting to tracking:', orderId);
           setTimeout(() => {
-            window.location.href = `/booking/success?orderId=${orderId}`;
+            window.location.href = `/track/${orderId}`;
           }, 2000);
         } else {
           console.error('[Payment] No orderId available for redirect');

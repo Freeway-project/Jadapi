@@ -377,13 +377,24 @@ export const UserController = {
 
       const { orderId } = req.params;
 
+      console.log(`🔍 [getOrder] Searching for orderId: "${orderId}" with userId: "${userId}"`);
+
       // Find order - ensure it belongs to the authenticated user
       const order = await DeliveryOrder.findOne({
         orderId,
         userId
       }).lean();
 
+      console.log(`📦 [getOrder] Order found: ${order ? 'YES' : 'NO'}`);
+      
+      // Debug: Check if order exists with this orderId (any user)
       if (!order) {
+        const anyOrder = await DeliveryOrder.findOne({ orderId }).lean();
+        if (anyOrder) {
+          console.log(`⚠️  [getOrder] Order exists but belongs to different user. Order userId: "${anyOrder.userId}", Requested userId: "${userId}"`);
+        } else {
+          console.log(`❌ [getOrder] Order does not exist in database with orderId: "${orderId}"`);
+        }
         throw new ApiError(404, "Order not found");
       }
 
@@ -391,6 +402,8 @@ export const UserController = {
       const payment = await Payment.findOne({ orderId: order._id })
         .select('status amount currency paymentMethod createdAt updatedAt')
         .lean();
+
+      console.log(`✅ [getOrder] Returning order: ${order.orderId}, Payment status: ${payment?.status || 'NOT_FOUND'}`);
 
       res.json({
         success: true,
@@ -400,6 +413,7 @@ export const UserController = {
         }
       });
     } catch (err) {
+      console.error(`❌ [getOrder] Error:`, err);
       next(err);
     }
   },
@@ -417,6 +431,8 @@ export const UserController = {
 
       const { orderId } = req.params;
 
+      console.log(`📄 [getOrderInvoice] Fetching invoice for orderId: "${orderId}", userId: "${userId}"`);
+
       // Find order - ensure it belongs to the authenticated user
       const order = await DeliveryOrder.findOne({
         orderId,
@@ -424,11 +440,13 @@ export const UserController = {
       });
 
       if (!order) {
+        console.log(`❌ [getOrderInvoice] Order not found for orderId: "${orderId}", userId: "${userId}"`);
         throw new ApiError(404, "Order not found");
       }
 
       // Only generate invoice for paid orders
       if (order.paymentStatus !== 'paid') {
+        console.log(`⚠️  [getOrderInvoice] Order payment status is "${order.paymentStatus}", not "paid"`);
         throw new ApiError(400, "Invoice is only available for paid orders");
       }
 

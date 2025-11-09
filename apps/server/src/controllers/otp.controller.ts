@@ -8,94 +8,100 @@ import { jwtUtils } from "../utils/jwt";
 import { ApiError } from "../utils/ApiError";
 
 export const OtpController = {
-  async requestOtp(req: Request, res: Response, next: NextFunction) {
+  async requestEmailOtp(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, phoneNumber, type = "signup", deliveryMethod = "both" } = req.body;
+      const { email, type = "signup" } = req.body;
       if (process.env.NODE_ENV === 'development') {
-        console.log("Received OTP request:", { email, phoneNumber, type, deliveryMethod });
+        console.log("Received Email OTP request:", { email, type });
       }
-      if (!email && !phoneNumber) {
-        throw new ApiError(400, "Either email or phone number is required");
-      }
-
-      // Validate email format if provided
-      if (email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          throw new ApiError(400, "Invalid email format");
-        }
+      if (!email) {
+        throw new ApiError(400, "Email is required");
       }
 
-      // Validate phone number format if provided
-      if (phoneNumber) {
-        const digitsOnly = phoneNumber.replace(/\D/g, '');
-        if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-          throw new ApiError(400, "Phone number must have 10-15 digits");
-        }
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new ApiError(400, "Invalid email format");
       }
 
-      // For signup, check if email or phone already exists
+      // For signup, check if email already exists
       if (type === "signup") {
-        if (email) {
-          const existingUser = await UserRepository.findByEmail(email);
-          if (existingUser) {
-            throw new ApiError(409, "Email already registered");
-          }
+        const existingUser = await UserRepository.findByEmail(email);
+        if (existingUser) {
+          throw new ApiError(409, "Email already registered");
         }
-        if (phoneNumber) {
-          const existingUser = await UserRepository.findByPhoneNumber(phoneNumber);
-          if (existingUser) {
-            throw new ApiError(409, "Phone number already registered");
-          }
-        }
-        
-
       }
 
       // Generate OTP
-      const otpData: GenerateOtpData = { email, phoneNumber, type, deliveryMethod };
+      const otpData: GenerateOtpData = { email, type, deliveryMethod: "email" };
       const otp = await OtpService.generateOtp(otpData);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ requestOtp ~ otp generated:', { id: otp._id, expiresAt: otp.expiresAt });
+        console.log('🚀 ~ requestEmailOtp ~ otp generated:', { id: otp._id, expiresAt: otp.expiresAt });
       }
-
 
       // Send response immediately, then send OTP asynchronously
       res.status(200).json({
-        message: "OTP sent successfully",
-        email: email || null,
-        phoneNumber: phoneNumber || null,
-        deliveryMethod,
+        message: "OTP sent successfully to email",
+        email: email,
         expiresAt: otp.expiresAt,
       });
 
-      // Send OTP via email and/or SMS based on deliveryMethod (non-blocking)
-      const sendPromises = [];
+      // Send OTP via email (non-blocking)
+      EmailService.sendOtpEmail({
+        email,
+        code: otp.code,
+        type,
+      }).catch(err => {
+        console.error('Failed to send OTP email:', err);
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 
-      if ((deliveryMethod === "email" || deliveryMethod === "both") && email) {
-        sendPromises.push(
-          EmailService.sendOtpEmail({
-            email,
-            code: otp.code,
-            type,
-          }).catch(err => {
-            console.error('Failed to send OTP email:', err);
-          })
-        );
+  async requestPhoneOtp(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { phoneNumber, type = "signup" } = req.body;
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Received Phone OTP request:", { phoneNumber, type });
+      }
+      if (!phoneNumber) {
+        throw new ApiError(400, "Phone number is required");
       }
 
-      if ((deliveryMethod === "sms" || deliveryMethod === "both") && phoneNumber) {
-        sendPromises.push(
-          NotificationService.sendVerificationOtp(phoneNumber, otp.code).catch(err => {
-            console.error('Failed to send OTP SMS:', err);
-          })
-        );
+      // Validate phone number format
+      const digitsOnly = phoneNumber.replace(/\D/g, '');
+      if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+        throw new ApiError(400, "Phone number must have 10-15 digits");
       }
 
-      // Send in background (fire and forget)
-      Promise.all(sendPromises).catch(err => {
-        console.error('OTP sending failed:', err);
+      // For signup, check if phone already exists
+      if (type === "signup") {
+        const existingUser = await UserRepository.findByPhoneNumber(phoneNumber);
+        if (existingUser) {
+          throw new ApiError(409, "Phone number already registered");
+        }
+      }
+
+      // Generate OTP
+      const otpData: GenerateOtpData = { phoneNumber, type, deliveryMethod: "sms" };
+      const otp = await OtpService.generateOtp(otpData);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 ~ requestPhoneOtp ~ otp generated:', { id: otp._id, expiresAt: otp.expiresAt });
+      }
+
+      // Send response immediately, then send OTP asynchronously
+      res.status(200).json({
+        message: "OTP sent successfully to phone",
+        phoneNumber: phoneNumber,
+        expiresAt: otp.expiresAt,
+      });
+
+      // Send OTP via SMS (non-blocking)
+      NotificationService.sendVerificationOtp(phoneNumber, otp.code).catch(err => {
+        console.error('Failed to send OTP SMS:', err);
       });
     } catch (err) {
       next(err);

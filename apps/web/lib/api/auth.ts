@@ -1,15 +1,16 @@
-import { UserSignupData, BusinessSignupData } from '../types/auth';
 import { apiClient, tokenManager } from './client';
 
 // Re-export tokenManager for external use
 export { tokenManager };
 
-export interface OTPRequestData {
-  email?: string;
-  phoneNumber?: string;
+export interface EmailOTPRequestData {
+  email: string;
   type?: 'signup' | 'login' | 'password_reset';
-  deliveryMethod?: 'email' | 'sms' | 'both';
-  userType?: 'individual' | 'business';
+}
+
+export interface PhoneOTPRequestData {
+  phoneNumber: string;
+  type?: 'signup' | 'login' | 'password_reset';
 }
 
 export interface OTPVerifyData {
@@ -29,9 +30,19 @@ export interface SignupData {
 }
 
 export const authAPI = {
-  // Request OTP (supports both email and phone)
-  requestOTP: async (data: OTPRequestData) => {
-    const response = await apiClient.post('/auth/otp/request', data);
+  // Request OTP for email
+  requestEmailOTP: async (data: EmailOTPRequestData) => {
+    console.log('🚀 [authAPI.requestEmailOTP] Payload being sent:', JSON.stringify(data, null, 2));
+    const response = await apiClient.post('/auth/otp/request-email', data);
+    console.log('✅ [authAPI.requestEmailOTP] Response received:', response.data);
+    return response.data;
+  },
+
+  // Request OTP for phone
+  requestPhoneOTP: async (data: PhoneOTPRequestData) => {
+    console.log('🚀 [authAPI.requestPhoneOTP] Payload being sent:', JSON.stringify(data, null, 2));
+    const response = await apiClient.post('/auth/otp/request-phone', data);
+    console.log('✅ [authAPI.requestPhoneOTP] Response received:', response.data);
     return response.data;
   },
 
@@ -51,6 +62,7 @@ export const authAPI = {
 
   // Unified signup endpoint
   signup: async (data: SignupData) => {
+    console.log('🚀 [authAPI.signup] Payload being sent:', JSON.stringify(data, null, 2));
     const response = await apiClient.post('/auth/signup', data);
     return response.data;
   },

@@ -5,6 +5,8 @@ import Header from '../layout/Header';
 import UserTypeSelector from './UserTypeSelector';
 import EmailStep from './EmailStep';
 import VerificationStep from './VerificationStep';
+import IndividualSignupForm from './IndividualSignupForm';
+import BusinessSignupForm from './BusinessSignupForm';
 import SuccessStep from './SuccessStep';
 import SigninForm from './SigninForm';
 import SigninOtpForm from './SigninOtpForm';
@@ -20,6 +22,10 @@ export default function AuthContainer() {
         return <EmailStep />;
       case 'verification':
         return <VerificationStep />;
+      case 'individualSignup':
+        return <IndividualSignupForm />;
+      case 'businessSignup':
+        return <BusinessSignupForm />;
       case 'success':
         return <SuccessStep />;
       case 'signin':
