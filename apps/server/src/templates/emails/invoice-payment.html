@@ -271,14 +271,38 @@
             <td>Base Fare</td>
             <td class="amount">{{baseFare}}</td>
           </tr>
+          {{#fees}}
+          {{#bcCourierFee}}
+          <tr>
+            <td>BC Courier Fee (2%)</td>
+            <td class="amount">{{fees.bcCourierFee}}</td>
+          </tr>
+          {{/bcCourierFee}}
+          {{#bcCarbonFee}}
+          <tr>
+            <td>BC Carbon Green Fee (0.9%)</td>
+            <td class="amount">{{fees.bcCarbonFee}}</td>
+          </tr>
+          {{/bcCarbonFee}}
+          {{#serviceFee}}
+          <tr>
+            <td>Service Fee (1%)</td>
+            <td class="amount">{{fees.serviceFee}}</td>
+          </tr>
+          {{/serviceFee}}
+          {{/fees}}
           <tr class="subtotal-row">
             <td><strong>Subtotal</strong></td>
             <td class="amount"><strong>{{subtotal}}</strong></td>
           </tr>
+          {{#fees}}
+          {{#gst}}
           <tr>
-            <td>Tax ({{taxRate}}%)</td>
-            <td class="amount">{{tax}}</td>
+            <td>GST (5%)</td>
+            <td class="amount">{{fees.gst}}</td>
           </tr>
+          {{/gst}}
+          {{/fees}}
           {{#hasDiscount}}
           <tr class="discount-row">
             <td>Discount {{#couponCode}}({{couponCode}}){{/couponCode}}</td>

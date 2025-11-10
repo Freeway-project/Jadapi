@@ -23,10 +23,12 @@ Distance: {{distance}} km
 
 PRICING BREAKDOWN:
 Base Fare                    {{baseFare}}
-Distance Charge              {{distanceFare}}
-Subtotal                     {{subtotal}}
-Tax ({{taxRate}}%)                  {{tax}}
-{{#hasDiscount}}Discount                     -{{discount}}
+{{#fees}}{{#bcCourierFee}}BC Courier Fee (2%)          {{fees.bcCourierFee}}
+{{/bcCourierFee}}{{#bcCarbonFee}}BC Carbon Green Fee (0.9%)  {{fees.bcCarbonFee}}
+{{/bcCarbonFee}}{{#serviceFee}}Service Fee (1%)              {{fees.serviceFee}}
+{{/serviceFee}}{{/fees}}Subtotal                     {{subtotal}}
+{{#fees}}{{#gst}}GST (5%)                       {{fees.gst}}
+{{/gst}}{{/fees}}{{#hasDiscount}}Discount                     -{{discount}}
 {{/hasDiscount}}----------------------------------------
 TOTAL PAID                   {{total}}
 
