@@ -180,13 +180,23 @@ export default function SigninForm() {
           <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-center text-[0.92rem] text-slate-500">
             <p className="leading-relaxed">
               By signing in, you agree to our{' '}
-              <span className="text-blue-600 underline decoration-blue-200 underline-offset-2 hover:text-blue-700 cursor-pointer">
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline decoration-blue-200 underline-offset-2 hover:text-blue-700"
+              >
                 Terms of Service
-              </span>{' '}
+              </a>{' '}
               and{' '}
-              <span className="text-blue-600 underline decoration-blue-200 underline-offset-2 hover:text-blue-700 cursor-pointer">
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline decoration-blue-200 underline-offset-2 hover:text-blue-700"
+              >
                 Privacy Policy
-              </span>
+              </a>
             </p>
           </div>
         </div>
