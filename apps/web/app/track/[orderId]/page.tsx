@@ -14,10 +14,13 @@ import {
   Navigation,
   Loader2,
   AlertCircle,
-  Home
+  Home,
+  MessageCircle,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { trackingAPI, TrackingInfo } from '../../../lib/api/tracking';
+import { useTawkChat, toggleTawkChat } from '../../../hooks/useTawkChat';
 import toast from 'react-hot-toast';
 
 const containerStyle = {
@@ -65,6 +68,9 @@ export default function TrackOrderPage() {
     };
     checkLoaded();
   }, []);
+
+  // Initialize Tawk Chat
+  useTawkChat({ enableLogging: true });
 
   // Fetch tracking info
   const fetchTrackingInfo = useCallback(async (showLoader = false) => {
@@ -366,6 +372,24 @@ export default function TrackOrderPage() {
               </div>
             )}
 
+            {/* Contact Support */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-blue-600" />
+                Contact Support
+              </h3>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">Need help? Chat with our support team</p>
+                <Button 
+                  onClick={() => toggleTawkChat()}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Open Chat
+                </Button>
+              </div>
+            </div>
+
             {/* Delivery Details */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -538,7 +562,7 @@ export default function TrackOrderPage() {
                         icon={{
                           path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
                           scale: 6,
-                          fillColor: '#10B981',
+                          fillColor: '#07ec9fff',
                           fillOpacity: 1,
                           strokeColor: '#FFFFFF',
                           strokeWeight: 2,
@@ -574,7 +598,7 @@ export default function TrackOrderPage() {
                       options={{
                         suppressMarkers: true, // We're using custom markers
                         polylineOptions: {
-                          strokeColor: '#3B82F6',
+                          strokeColor: '#e10ff5ff',
                           strokeOpacity: 0.6,
                           strokeWeight: 4,
                         },
