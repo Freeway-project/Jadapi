@@ -168,7 +168,7 @@ export default function MapView({ pickupLocation, dropoffLocation, className = '
           options={{
             suppressMarkers: true,
             polylineOptions: {
-              strokeColor: '#3811d5ff',
+              strokeColor: '#390de9ff',
               strokeOpacity: 0.8,
               strokeWeight: 5,
             },

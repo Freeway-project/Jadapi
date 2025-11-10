@@ -247,7 +247,6 @@
             {{#isSmall}}Small (10×10×10 in){{/isSmall}}
             {{#isMedium}}Medium (14×14×14 in){{/isMedium}}
             {{#isLarge}}Large (16×16×16 in, up to 15kg){{/isLarge}}
-            {{^isEnvelope}}{{^isSmall}}{{^isMedium}}{{^isLarge}}{{packageSize}}{{/isLarge}}{{/isMedium}}{{/isSmall}}{{/isEnvelope}}
           </div>
         </div>
         <div class="info-box">
@@ -271,10 +270,6 @@
           <tr>
             <td>Base Fare</td>
             <td class="amount">{{baseFare}}</td>
-          </tr>
-          <tr>
-            <td>Distance Charge ({{distance}} km)</td>
-            <td class="amount">{{distanceFare}}</td>
           </tr>
           <tr class="subtotal-row">
             <td><strong>Subtotal</strong></td>
