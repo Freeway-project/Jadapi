@@ -319,7 +319,7 @@ function OverviewTab({ stats, activities, orders, metrics }: {
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-900">
-                      {order.pricing.currency} ${order.pricing.total.toFixed(2)}
+                      {order.pricing.currency} ${(order.pricing.total / 100).toFixed(2)}
                     </span>
                     <span className="text-xs text-gray-400">
                       {new Date(order.createdAt).toLocaleTimeString()}

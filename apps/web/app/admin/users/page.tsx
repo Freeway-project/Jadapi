@@ -218,7 +218,7 @@ export default function UsersPage() {
                           </div>
                           <div className="flex items-center text-green-600">
                             <DollarSign className="w-3 h-3 mr-0.5" />
-                            {user.stats.totalSpent?.toFixed(2) || '0.00'}
+                            {((user.stats.totalSpent || 0) / 100).toFixed(2)}
                           </div>
                         </div>
                       ) : (

@@ -190,7 +190,7 @@ export default function OrdersPage() {
                     <td className="px-4 sm:px-6 py-4">
                       <div className="flex items-center text-sm font-medium text-gray-900">
                         <DollarSign className="w-4 h-4 text-green-600 mr-1" />
-                        {order.pricing?.total?.toFixed(2) || '0.00'}
+                        {((order.pricing?.total || 0) / 100).toFixed(2)}
                       </div>
                       {order.distance && (
                         <div className="text-xs text-gray-500 mt-1">

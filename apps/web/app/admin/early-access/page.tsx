@@ -203,7 +203,7 @@ export default function EarlyAccessPage() {
                     )}
                     {request.estimatedFare.total && (
                       <span className="text-sm text-gray-900">
-                        <strong>{request.estimatedFare.currency || 'CAD'} ${request.estimatedFare.total.toFixed(2)}</strong>
+                        <strong>{request.estimatedFare.currency || 'CAD'} ${(request.estimatedFare.total / 100).toFixed(2)}</strong>
                       </span>
                     )}
                   </div>
