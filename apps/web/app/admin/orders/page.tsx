@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { adminAPI, Order } from '../../../lib/api/admin';
-import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
-import { Package, Search, CheckCircle, Clock, XCircle, MapPin, User, DollarSign } from 'lucide-react';
+import { Package, Search, CheckCircle, Clock, XCircle, MapPin, User, DollarSign, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+
+type SortField = 'createdAt' | 'orderId' | 'total' | 'status';
+type SortOrder = 'asc' | 'desc';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -13,6 +15,8 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [paymentFilter, setPaymentFilter] = useState<string>('');
   const [total, setTotal] = useState(0);
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   useEffect(() => {
     loadOrders();
@@ -74,6 +78,54 @@ export default function OrdersPage() {
       </span>
     );
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />;
+    }
+    return sortOrder === 'asc'
+      ? <ArrowUp className="w-3.5 h-3.5 text-blue-600" />
+      : <ArrowDown className="w-3.5 h-3.5 text-blue-600" />;
+  };
+
+  const sortedOrders = [...orders].sort((a, b) => {
+    let compareA: any;
+    let compareB: any;
+
+    switch (sortField) {
+      case 'createdAt':
+        compareA = new Date(a.createdAt).getTime();
+        compareB = new Date(b.createdAt).getTime();
+        break;
+      case 'orderId':
+        compareA = a.orderId.toLowerCase();
+        compareB = b.orderId.toLowerCase();
+        break;
+      case 'total':
+        compareA = a.pricing?.total || 0;
+        compareB = b.pricing?.total || 0;
+        break;
+      case 'status':
+        compareA = a.status.toLowerCase();
+        compareB = b.status.toLowerCase();
+        break;
+      default:
+        return 0;
+    }
+
+    if (compareA < compareB) return sortOrder === 'asc' ? -1 : 1;
+    if (compareA > compareB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -145,17 +197,49 @@ export default function OrdersPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                  <th
+                    className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('orderId')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Order ID
+                      {getSortIcon('orderId')}
+                    </div>
+                  </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Route</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th
+                    className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </th>
                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Payment</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Date</th>
+                  <th
+                    className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('total')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Amount
+                      {getSortIcon('total')}
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Date
+                      {getSortIcon('createdAt')}
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {orders.map((order) => (
+                {sortedOrders.map((order) => (
                   <tr key={order._id} className="hover:bg-gray-50">
                     <td className="px-4 sm:px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{order.orderId}</div>
