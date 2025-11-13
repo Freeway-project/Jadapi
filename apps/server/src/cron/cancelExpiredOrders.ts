@@ -6,7 +6,7 @@
  * and automatically cancel them.
  *
  * Usage:
- * 1. Add to crontab: */5 * * * * /usr/bin/node /path/to/cancelExpiredOrders.js
+ * 1. Add to crontab: (every 5 minutes) /usr/bin/node /path/to/cancelExpiredOrders.js
  * 2. Call via HTTP endpoint: POST /api/delivery/admin/cancel-expired-orders
  * 3. Use a scheduler like node-cron in the main app
  */
