@@ -212,4 +212,43 @@ export const OtpController = {
       next(err);
     }
   },
+
+  async checkAccountExists(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, phoneNumber } = req.body;
+
+      if (!email && !phoneNumber) {
+        throw new ApiError(400, "Email or phone number is required");
+      }
+
+      const checks: { email?: boolean; phone?: boolean } = {};
+
+      // Check email if provided
+      if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          throw new ApiError(400, "Invalid email format");
+        }
+        const existingEmail = await UserRepository.findByEmail(email);
+        checks.email = !!existingEmail;
+      }
+
+      // Check phone if provided
+      if (phoneNumber) {
+        const digitsOnly = phoneNumber.replace(/\D/g, '');
+        if (digitsOnly.length < 10 || digitsOnly.length > 15) {
+          throw new ApiError(400, "Phone number must have 10-15 digits");
+        }
+        const existingPhone = await UserRepository.findByPhoneNumber(phoneNumber);
+        checks.phone = !!existingPhone;
+      }
+
+      res.status(200).json({
+        exists: checks.email || checks.phone,
+        details: checks,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
 };

@@ -136,9 +136,9 @@ export default function DriverDashboardPage() {
       fetchOrders(false); // Silent refresh
     }, 5000);
 
-    // Cleanup interval on unmount or when dependencies change
+    // Cleanup interval on unmount or when tab changes
     return () => clearInterval(pollInterval);
-  }, [activeStatus, user, router]);
+  }, [activeStatus]); // Only re-run when activeStatus changes
 
   useEffect(() => {
     setIsNotificationsEnabled(!!fcmToken);
@@ -543,25 +543,31 @@ export default function DriverDashboardPage() {
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-3">
             {[
-              { key: 'available' as OrderStatus, label: 'Pending', icon: Package, count: activeStatus === 'available' ? orders.length : null },
-              { key: 'in_progress' as OrderStatus, label: 'In Progress', icon: Navigation, count: activeStatus === 'in_progress' ? orders.length : null },
-            ].map(({ key, label, icon: Icon, count }) => (
+              { key: 'available' as OrderStatus, label: 'Available', icon: Package, count: activeStatus === 'available' ? orders.length : null, color: 'orange' },
+              { key: 'in_progress' as OrderStatus, label: 'In Progress', icon: Navigation, count: activeStatus === 'in_progress' ? orders.length : null, color: 'blue' },
+            ].map(({ key, label, icon: Icon, count, color }) => (
               <button
                 key={key}
                 onClick={() => setActiveStatus(key)}
                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl font-semibold transition-all ${
                   activeStatus === key
-                    ? 'bg-blue-600 text-white shadow-lg scale-[1.02]'
-                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                    ? color === 'orange'
+                      ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200 scale-[1.02]'
+                      : 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200 scale-[1.02]'
+                    : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <Icon className="w-6 h-6" />
                 <span className="text-base">{label}</span>
                 {count !== null && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    activeStatus === key ? 'bg-blue-500' : 'bg-gray-100'
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                    activeStatus === key
+                      ? color === 'orange'
+                        ? 'bg-orange-400 text-white'
+                        : 'bg-blue-400 text-white'
+                      : 'bg-gray-200 text-gray-700'
                   }`}>
-                    {count} orders
+                    {count}
                   </span>
                 )}
               </button>

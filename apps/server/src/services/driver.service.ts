@@ -37,11 +37,16 @@ export class DriverService {
     skip?: number;
   }) {
     const { limit = 20, skip = 0 } = filters || {};
+    const now = new Date();
 
     const orders = await DeliveryOrder.find({
       status: "pending",
       driverId: { $exists: false },
       paymentStatus: "paid", // Only show paid orders
+      $or: [
+        { expiresAt: { $exists: false } }, // No expiry set
+        { expiresAt: { $gt: now } } // Not yet expired
+      ]
     })
       .populate("userId", "uuid profile.name auth.phone")
       .sort({ createdAt: -1 })
@@ -52,6 +57,10 @@ export class DriverService {
       status: "pending",
       driverId: { $exists: false },
       paymentStatus: "paid",
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: { $gt: now } }
+      ]
     });
 
     return {
@@ -112,6 +121,16 @@ export class DriverService {
       throw new ApiError(404, "Order not found");
     }
 
+    // Check if order is cancelled
+    if (order.status === "cancelled") {
+      throw new ApiError(400, "This order has been cancelled and cannot be accepted");
+    }
+
+    // Check if order has expired (past 30-minute window)
+    if (order.expiresAt && new Date() > order.expiresAt) {
+      throw new ApiError(400, "This order has expired and is no longer available");
+    }
+
     if (order.status !== "pending") {
       throw new ApiError(400, "Order is not available for assignment");
     }
@@ -134,6 +153,7 @@ export class DriverService {
     order.driverId = driverId;
     order.status = "assigned";
     order.timeline.assignedAt = new Date();
+    order.expiresAt = undefined; // Clear expiry since order is now assigned
 
     await order.save();
 

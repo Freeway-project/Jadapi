@@ -79,6 +79,8 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
     cancelledAt?: Date;
   };
 
+  expiresAt?: Date; // Auto-cancel if not assigned by this time (30 minutes from creation)
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -179,7 +181,9 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       pickedUpAt: Date,
       deliveredAt: Date,
       cancelledAt: Date
-    }
+    },
+
+    expiresAt: { type: Date, index: true } // Auto-cancel pending orders after 30 minutes
   },
   { timestamps: true }
 );

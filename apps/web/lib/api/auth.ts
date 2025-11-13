@@ -107,4 +107,10 @@ export const authAPI = {
   isAuthenticated: () => {
     return !!tokenManager.getToken();
   },
+
+  // Check if account exists with email/phone
+  checkAccountExists: async (data: { email?: string; phoneNumber?: string }) => {
+    const response = await apiClient.post('/auth/check-account', data);
+    return response.data;
+  },
 };

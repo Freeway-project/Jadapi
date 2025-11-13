@@ -16,6 +16,7 @@ router.post("/otp/request-email", validateEmailOtpRequest, OtpController.request
 router.post("/otp/request-phone", validatePhoneOtpRequest, OtpController.requestPhoneOtp);
 router.post("/otp/verify", validateOtpVerification, OtpController.verifyOtp);
 router.get("/otp/status", OtpController.checkVerificationStatus);
+router.post("/check-account", OtpController.checkAccountExists);
 
 // Auth routes
 router.post("/signup", validateSignup, UserController.signup);
