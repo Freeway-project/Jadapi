@@ -38,6 +38,23 @@ export default function EmailStep() {
     try {
       const { authAPI } = await import('../../lib/api/auth');
 
+      // Check if account already exists BEFORE sending OTPs
+      const existingAccount = await authAPI.checkAccountExists({
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+      });
+
+      if (existingAccount.exists) {
+        const messages = [];
+        if (existingAccount.details.email) {
+          messages.push('Email already registered');
+        }
+        if (existingAccount.details.phone) {
+          messages.push('Phone number already registered');
+        }
+        throw new Error(messages.join(' and ') + '. Please sign in instead.');
+      }
+
       // Always send to phone
       await authAPI.requestPhoneOTP({
         phoneNumber: data.phoneNumber,

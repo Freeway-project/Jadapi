@@ -166,7 +166,7 @@ export default function JaddpiLanding() {
                   <div>
                     <p className="text-xs sm:text-sm text-green-900 font-semibold mb-1"></p>
                     <p className="text-[11px] sm:text-xs text-green-700">
-                      Get instant delivery confirmation with photos
+                      Get instant delivery confirmation 
                     </p>
                   </div>
                 </div>
@@ -225,7 +225,7 @@ export default function JaddpiLanding() {
               <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
             <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 px-2">Live tracking + </h3>
-            <p className="text-gray-600 text-xs sm:text-sm px-2">Real-time updates with delivery confirmation photos</p>
+            <p className="text-gray-600 text-xs sm:text-sm px-2">Real-time updates with delivery confirmation </p>
           </div>
         </div>
       </section>
@@ -244,8 +244,8 @@ export default function JaddpiLanding() {
 
             <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
               <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mb-4">2</div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Get scheduled</h3>
-              <p className="text-sm sm:text-base text-gray-600">We batch pickups at <strong>10:00</strong> and <strong>12:00</strong> for efficient routing</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Instant or scheduled</h3>
+              <p className="text-sm sm:text-base text-gray-600">Instant delivery or we batch pickups for efficient routing</p>
             </div>
 
             <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
@@ -278,7 +278,7 @@ export default function JaddpiLanding() {
               <span className="font-medium">Bulk ordering</span>
             </div>
           </div>
-          <a href="/contact" className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30 text-sm sm:text-base">
+          <a href="https://wa.me/12363397355" target="_blank" rel="noopener noreferrer" className="inline-block px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30 text-sm sm:text-base">
             Talk to dispatch
           </a>
         </div>
@@ -289,7 +289,7 @@ export default function JaddpiLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-3 sm:mb-4">Simple, transparent pricing</h2>
           <p className="text-center text-sm sm:text-base text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto px-4">
-            Transparent base fare plus per-kilometer rate within Surrey and Langley. Optional insurance add-on for extra peace of mind.
+            Transparent base fare plus per-kilometer rate within Surrey and Langley.
           </p>
 
           <div className="max-w-md mx-auto bg-white rounded-xl p-6 sm:p-8 border-2 border-blue-600 shadow-xl">
@@ -305,10 +305,6 @@ export default function JaddpiLanding() {
               <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <span>Per-km rate within Surrey & Langley</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span>Optional insurance add-on</span>
               </li>
               <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
                 <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
@@ -349,14 +345,6 @@ export default function JaddpiLanding() {
 
           <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
             <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
-              <span>Do you offer insurance?</span>
-              <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
-            </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Yes, we offer optional insurance as an add-on during order creation. This provides additional coverage for valuable items beyond our standard handling guarantees.</p>
-          </details>
-
-          <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
-            <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
               <span>Can I share tracking links?</span>
               <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
             </summary>
@@ -368,7 +356,7 @@ export default function JaddpiLanding() {
               <span>What if the recipient isn't home?</span>
               <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
             </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Our driver will attempt contact via the provided phone number. If unsuccessful, we can leave the parcel in a safe location (with ) if authorized, or arrange a redelivery at no extra charge.</p>
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">If the recipient isn't available at the delivery address, our driver will attempt contact using the provided phone number. If unsuccessful, the parcel will be returned to the sender on the same day, and additional charges may apply.</p>
           </details>
         </div>
       </section>
