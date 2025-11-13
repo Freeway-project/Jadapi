@@ -134,6 +134,7 @@ export class DriverService {
     order.driverId = driverId;
     order.status = "assigned";
     order.timeline.assignedAt = new Date();
+    order.expiresAt = undefined; // Clear expiry since order is now assigned
 
     await order.save();
 

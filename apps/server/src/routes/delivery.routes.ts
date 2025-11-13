@@ -7,6 +7,7 @@ import { requireAuth } from "../middlewares/auth";
 import { CouponService } from "../services/coupon.service";
 import { checkAppActive } from "../middlewares/appActive";
 import { logger } from "../utils/logger";
+import { OrderExpiryService } from "../services/orderExpiry.service";
 
 const router = Router();
 
@@ -238,6 +239,10 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
     // Generate unique order ID
     const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
 
+    // Set expiry time: 30 minutes from now for pending orders
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes
+
     // Create order
     const order = await DeliveryOrder.create({
       orderId,
@@ -286,8 +291,9 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
         durationMinutes: distance.durationMinutes
       },
       timeline: {
-        createdAt: new Date()
-      }
+        createdAt: now
+      },
+      expiresAt // Auto-cancel if not assigned within 30 minutes
     });
 
     res.status(201).json({
@@ -419,7 +425,7 @@ router.put("/admin/service-areas/:id/toggle", async (req: Request, res: Response
     const { isActive } = req.body;
 
     const serviceArea = await CityServiceAreaService.toggleServiceArea(id, isActive);
-    
+
     if (!serviceArea) {
       throw new ApiError(404, "Service area not found");
     }
@@ -434,6 +440,28 @@ router.put("/admin/service-areas/:id/toggle", async (req: Request, res: Response
     res.status(500).json({
       success: false,
       message: "Failed to toggle service area"
+    });
+  }
+});
+
+/**
+ * POST /api/delivery/admin/cancel-expired-orders
+ * Manually trigger auto-cancellation of expired orders (can be called by cron)
+ */
+router.post("/admin/cancel-expired-orders", async (_req: Request, res: Response) => {
+  try {
+    const cancelledCount = await OrderExpiryService.cancelExpiredOrders();
+
+    res.json({
+      success: true,
+      data: { cancelledCount },
+      message: `Auto-cancelled ${cancelledCount} expired order(s)`
+    });
+  } catch (error) {
+    logger.error({ error }, "delivery.routes - Cancel expired orders error");
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel expired orders"
     });
   }
 });
