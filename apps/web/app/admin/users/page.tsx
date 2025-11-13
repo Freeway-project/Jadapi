@@ -54,11 +54,11 @@ export default function UsersPage() {
       business: { bg: 'bg-purple-100', text: 'text-purple-800', icon: Building2 },
     };
 
-    const style = styles[type] || styles.individual;
-    const Icon = style.icon;
+    const style = styles[type] ?? styles.individual;
+    const Icon = style?.icon ?? UserIcon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${style?.bg ?? 'bg-blue-100'} ${style?.text ?? 'text-blue-800'}`}>
         <Icon className="w-3 h-3 mr-1" />
         {type}
       </span>
