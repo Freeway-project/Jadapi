@@ -335,13 +335,7 @@ export default function JaddpiLanding() {
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Currently, jaddpi operates exclusively within Surrey and Langley, BC. We do not ship hazardous items or materials. Join our waitlist to be notified when we expand to nearby cities.</p>
           </details>
 
-          <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
-            <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
-              <span>What are the delivery windows?</span>
-              <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
-            </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">We batch pickups at 10:00 AM and 12:00 PM daily. Typical delivery ETAs are 2-4 hours from pickup, depending on route optimization and traffic conditions within Surrey and Langley.</p>
-          </details>
+  
 
           <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
             <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
