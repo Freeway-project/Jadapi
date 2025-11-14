@@ -8,7 +8,7 @@ export default function Footer() {
     <footer className="bg-gray-900 text-white mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Content */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Company Info */}
           <div className="space-y-4">
             <h3 className="text-lg font-bold">Jaddpi</h3>
@@ -18,33 +18,6 @@ export default function Footer() {
             <p className="text-gray-500 text-xs">
               © 2025 Bluecodes Inc. All rights reserved.
             </p>
-          </div>
-
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wide">Quick Links</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/search" className="text-gray-400 hover:text-blue-400 transition-colors">
-                  Book a Delivery
-                </Link>
-              </li>
-              <li>
-                <Link href="/tracking" className="text-gray-400 hover:text-blue-400 transition-colors">
-                  Track Orders
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth/signup" className="text-gray-400 hover:text-blue-400 transition-colors">
-                  Sign Up
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth/signin" className="text-gray-400 hover:text-blue-400 transition-colors">
-                  Sign In
-                </Link>
-              </li>
-            </ul>
           </div>
 
           {/* Legal & Policies */}

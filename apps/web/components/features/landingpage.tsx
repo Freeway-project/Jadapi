@@ -144,19 +144,7 @@ export default function JaddpiLanding() {
 
             {/* Info Cards */}
             <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-3 sm:p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="flex gap-2 sm:gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-blue-900 font-semibold mb-1">Real-time Updates</p>
-                    <p className="text-[11px] sm:text-xs text-blue-700">
-                      See your driver's live location and estimated arrival time
-                    </p>
-                  </div>
-                </div>
-              </div>
+         
 
               <div className="p-3 sm:p-4 bg-green-50 rounded-xl border border-green-100">
                 <div className="flex gap-2 sm:gap-3">
@@ -292,96 +280,48 @@ export default function JaddpiLanding() {
             Transparent base fare plus per-kilometer rate within Surrey and Langley.
           </p>
 
-          <div className="max-w-md mx-auto bg-white rounded-xl p-6 sm:p-8 border-2 border-blue-600 shadow-xl">
-            <div className="text-center mb-6">
-              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Base + Distance</div>
-              <p className="text-sm sm:text-base text-gray-600">Pay only for what you need</p>
-            </div>
-            <ul className="space-y-3 mb-6 sm:mb-8">
-              <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span>Transparent base fare</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span>Per-km rate within Surrey & Langley</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm sm:text-base text-gray-700">
-                <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span> of delivery</span>
-              </li>
-            </ul>
-            <a href="/search" className="block w-full text-center px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-600/30 text-sm sm:text-base">
-              Get started
-            </a>
-          </div>
+         
 
           <div className="mt-8 flex justify-center">
             <BaseAnimation animationFile="truck-delivery-service.json" width={200} height={120} className="sm:w-[300px] sm:h-[180px] md:w-[450px] md:h-[250px]" />
           </div>
         </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-8 sm:mb-12">Frequently asked questions</h2>
-
-        <div className="space-y-3 sm:space-y-4">
-          <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
-            <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
-              <span>What area do you serve?</span>
-              <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
-            </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Currently, jaddpi operates exclusively within Surrey and Langley, BC. We do not ship hazardous items or materials. Join our waitlist to be notified when we expand to nearby cities.</p>
-          </details>
-
-          <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
-            <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
-              <span>What are the delivery windows?</span>
-              <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
-            </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">We batch pickups at 10:00 AM and 12:00 PM daily. Typical delivery ETAs are 2-4 hours from pickup, depending on route optimization and traffic conditions within Surrey and Langley.</p>
-          </details>
-
-          <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
-            <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
-              <span>Can I share tracking links?</span>
-              <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
-            </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Absolutely. Every order receives a unique tracking link that can be shared with anyone. Recipients can view real-time status updates without creating an account.</p>
-          </details>
-
-          <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
-            <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
-              <span>What if the recipient isn't home?</span>
-              <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
-            </summary>
-            <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">If the recipient isn't available at the delivery address, our driver will attempt contact using the provided phone number. If unsuccessful, the parcel will be returned to the sender on the same day, and additional charges may apply.</p>
-          </details>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 sm:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-              <div className="text-xl sm:text-2xl font-bold text-white">jaddpi</div>
-              <span className="px-2 sm:px-3 py-1 bg-blue-900 text-blue-300 rounded-full text-[10px] sm:text-xs font-medium">Local to Surrey & Langley, BC</span>
-            </div>
-
-            <nav className="flex gap-6 sm:gap-8 text-xs sm:text-sm">
-              <a href="/terms" className="hover:text-white transition">Terms</a>
-              <a href="/privacy" className="hover:text-white transition">Privacy</a>
-              <a href="/contact" className="hover:text-white transition">Contact</a>
-            </nav>
+            </section>
+      
+            {/* FAQ */}
+            <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-8 sm:mb-12">Frequently asked questions</h2>
+      
+              <div className="space-y-3 sm:space-y-4">
+                <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
+                  <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
+                    <span>What area do you serve?</span>
+                    <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
+                  </summary>
+                  <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Currently, jaddpi operates exclusively within Surrey and Langley, BC. We do not ship hazardous items or materials. Join our waitlist to be notified when we expand to nearby cities.</p>
+                </details>
+      
+        
+      
+                <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
+                  <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
+                    <span>Can I share tracking links?</span>
+                    <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
+                  </summary>
+                  <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">Absolutely. Every order receives a unique tracking link that can be shared with anyone. Recipients can view real-time status updates without creating an account.</p>
+                </details>
+      
+                <details className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 group">
+                  <summary className="font-semibold text-sm sm:text-base text-gray-900 cursor-pointer list-none flex items-center justify-between">
+                    <span>What if the recipient isn't home?</span>
+                    <span className="text-blue-600 group-open:rotate-180 transition-transform text-sm">▼</span>
+                  </summary>
+                  <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">If the recipient isn't available at the delivery address, our driver will attempt contact using the provided phone number. If unsuccessful, the parcel will be returned to the sender on the same day, and additional charges may apply.</p>
+                </details>
+              </div>
+            </section>
+      
           </div>
-
-          <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-800 text-center text-xs sm:text-sm">
-            © 2025 jaddpi. All rights reserved.
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
+        );
+      }
+      

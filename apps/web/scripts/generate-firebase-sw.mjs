@@ -1,9 +1,14 @@
 #!/usr/bin/env node
+import { config } from 'dotenv';
 import { writeFile } from 'fs/promises';
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Load .env files (Next.js priority order)
+config({ path: resolve(__dirname, '../.env.local') });
+config({ path: resolve(__dirname, '../.env') });
 
 function requiredEnv(key) {
   const v = process.env[key];

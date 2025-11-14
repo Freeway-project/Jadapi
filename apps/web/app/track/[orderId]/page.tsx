@@ -584,7 +584,7 @@ export default function TrackOrderPage() {
                   </GoogleMap>
 
                   {/* Map Legend */}
-                  <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+                  <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
                     <h4 className="font-semibold text-gray-900 mb-2 text-sm">Map Legend</h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">

@@ -222,13 +222,13 @@ export default function SigninOtpForm() {
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    maxLength={6}
+                    maxLength={1}
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={(e) => handlePaste(e, index)}
                     disabled={isSubmitting || isLoading}
-                    className={`w-11 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl border-2 bg-white text-center text-xl sm:text-2xl font-mono font-semibold text-slate-900 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+                    className={`w-11 h-12 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl border-2 bg-white text-center text-xl sm:text-2xl font-mono font-semibold text-slate-900 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
                       errors.otp ? 'border-rose-500' : digit ? 'border-blue-300 bg-blue-50' : 'border-slate-200'
                     }`}
                     aria-label={`Digit ${index + 1}`}

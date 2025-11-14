@@ -1,6 +1,7 @@
 import { fcm } from "../firebaseAdmin";
 import { User } from "../models/user.model";
 import { ENV } from "../config/env";
+import { logger } from "../utils/logger";
 
 
 export async function sendDriverNotification(
@@ -12,32 +13,38 @@ export async function sendDriverNotification(
     data?: Record<string, string>;
   }
 ) {
-  // const driver = await Driver.findById(driverId);
-  // const token = driver?.fcmToken;
-  // const token = "FETCH_FROM_DB_FOR_DRIVER"; // replace with real lookup
+  logger.info({
+    driverId,
+    title: options.title,
+    body: options.body,
+    url: options.url,
+    data: options.data
+  }, '📨 Attempting to send driver notification');
 
-  const driver = await User.findById(driverId).select('pushTokens');
+  const driver = await User.findById(driverId).select('pushTokens profile.name');
   const tokens = driver?.pushTokens || [];
-  // const tokenFromDb = null; // placeholder - replace with actual lookup
+
+  logger.info({
+    driverId,
+    driverName: driver?.profile?.name,
+    tokenCount: tokens.length
+  }, `Driver has ${tokens.length} FCM token(s)`);
 
   if (!tokens || tokens.length === 0) {
-    console.log("No FCM tokens for driver:", driverId);
+    logger.warn({
+      driverId,
+      driverName: driver?.profile?.name
+    }, "❌ No FCM tokens for driver - notification NOT sent");
     return;
   }
 
   if (!fcm) {
-    console.error('========================================');
-    console.error('⚠ FCM NOT CONFIGURED - Cannot send notification');
-    console.error('========================================');
-    console.error('Attempted to send notification to driver:', driverId);
-    console.error('Title:', options.title);
-    console.error('Body:', options.body);
-    console.error('\nFCM is null. Check Firebase Admin SDK initialization.');
-    console.error('Environment variables should be set:');
-    console.error('  - FIREBASE_PROJECT_ID');
-    console.error('  - FIREBASE_CLIENT_EMAIL');
-    console.error('  - FIREBASE_PRIVATE_KEY');
-    console.error('========================================\n');
+    logger.error({
+      driverId,
+      driverName: driver?.profile?.name,
+      title: options.title,
+      body: options.body
+    }, '⚠️  FCM NOT CONFIGURED - Cannot send notification. Check Firebase Admin SDK initialization (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)');
     return;
   }
 
@@ -53,10 +60,11 @@ export async function sendDriverNotification(
   };
 
   try {
+    logger.info({ driverId, tokenCount: tokens.length }, '🚀 Sending FCM notification via sendMulticast');
+
     // Prefer the efficient sendMulticast API when available
     if (typeof (fcm as any).sendMulticast === 'function') {
       const response = await (fcm as any).sendMulticast({ tokens, ...message });
-      console.log("FCM multicast response:", response);
 
       // Collect tokens that failed with unrecoverable errors and remove them
       const invalidTokens: string[] = [];
@@ -71,10 +79,13 @@ export async function sendDriverNotification(
           const err = resp.error as any;
           const code = err?.code || '';
 
-          console.log(`Token ${idx} failed with code: ${code}`, {
-            token: tokens[idx]?.substring(0, 20) + '...',
-            error: err?.message
-          });
+          logger.warn({
+            driverId,
+            tokenIndex: idx,
+            errorCode: code,
+            errorMessage: err?.message,
+            token: tokens[idx]?.substring(0, 20) + '...'
+          }, `❌ Token ${idx} failed with code: ${code}`);
 
           // Codes indicating token invalidation
           if (
@@ -86,16 +97,26 @@ export async function sendDriverNotification(
         }
       });
 
-      console.log(`FCM send results: ${successCount} success, ${failCount} failed`);
+      logger.info({
+        driverId,
+        driverName: driver?.profile?.name,
+        successCount,
+        failCount,
+        title: options.title,
+        body: options.body
+      }, `✅ FCM notification sent: ${successCount} success, ${failCount} failed`);
 
       if (invalidTokens.length > 0) {
         // Remove invalid tokens from the user's document
         await User.findByIdAndUpdate(driverId, { $pull: { pushTokens: { $in: invalidTokens } } });
-        console.log(`✓ Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
+        logger.info({
+          driverId,
+          invalidTokenCount: invalidTokens.length
+        }, `🧹 Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
       }
     } else {
       // Fall back: send messages individually if sendMulticast is not available
-      console.warn('FCM sendMulticast is not available on this SDK instance; falling back to individual sends');
+      logger.warn({ driverId }, '⚠️  FCM sendMulticast not available; falling back to individual sends');
       const results = await Promise.allSettled(tokens.map((t) => fcm!.send({ token: t, ...message })));
 
       const invalidTokens: string[] = [];
@@ -109,10 +130,13 @@ export async function sendDriverNotification(
           failCount++;
           const err: any = res.reason;
           const code = err?.code || '';
-          console.log(`Token ${idx} failed (individual send) with code: ${code}`, {
-            token: tokens[idx]?.substring(0, 20) + '...',
-            error: err?.message
-          });
+          logger.warn({
+            driverId,
+            tokenIndex: idx,
+            errorCode: code,
+            errorMessage: err?.message,
+            token: tokens[idx]?.substring(0, 20) + '...'
+          }, `❌ Token ${idx} failed (individual send) with code: ${code}`);
 
           if (
             code === 'messaging/registration-token-not-registered' ||
@@ -123,15 +147,31 @@ export async function sendDriverNotification(
         }
       });
 
-      console.log(`FCM fallback send results: ${successCount} success, ${failCount} failed`);
+      logger.info({
+        driverId,
+        driverName: driver?.profile?.name,
+        successCount,
+        failCount,
+        title: options.title,
+        body: options.body
+      }, `✅ FCM fallback notification sent: ${successCount} success, ${failCount} failed`);
 
       if (invalidTokens.length > 0) {
         await User.findByIdAndUpdate(driverId, { $pull: { pushTokens: { $in: invalidTokens } } });
-        console.log(`✓ Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
+        logger.info({
+          driverId,
+          invalidTokenCount: invalidTokens.length
+        }, `🧹 Cleaned up ${invalidTokens.length} invalid token(s) for driver ${driverId}`);
       }
     }
   } catch (err) {
-    console.error('Error sending FCM multicast message or fallback sends:', err);
+    logger.error({
+      driverId,
+      driverName: driver?.profile?.name,
+      error: err,
+      title: options.title,
+      body: options.body
+    }, '❌ Error sending FCM notification');
   }
 }
 
@@ -146,20 +186,22 @@ export async function sendNotificationToToken(
   }
 ) {
   if (!token) {
-    console.log('No token provided to sendNotificationToToken');
+    logger.warn('No token provided to sendNotificationToToken');
     return;
   }
 
+  logger.info({
+    token: token?.substring(0, 30) + '...',
+    title: options.title,
+    body: options.body
+  }, '📨 Sending test notification to token');
+
   if (!fcm) {
-    console.error('========================================');
-    console.error('⚠ FCM NOT CONFIGURED - Cannot send test notification');
-    console.error('========================================');
-    console.error('Attempted to send to token:', token?.substring(0, 30) + '...');
-    console.error('Title:', options.title);
-    console.error('Body:', options.body);
-    console.error('\nFCM is null. Check Firebase Admin SDK initialization.');
-    console.error('Restart the server and check logs for Firebase initialization status.');
-    console.error('========================================\n');
+    logger.error({
+      token: token?.substring(0, 30) + '...',
+      title: options.title,
+      body: options.body
+    }, '⚠️  FCM NOT CONFIGURED - Cannot send test notification. Check Firebase Admin SDK initialization');
     return { success: false, error: 'FCM_NOT_CONFIGURED', message: 'Firebase Admin SDK not initialized' };
   }
 
@@ -177,15 +219,20 @@ export async function sendNotificationToToken(
 
   try {
     const response = await fcm!.send(message);
-    console.log('✓ FCM notification sent successfully:', response);
+    logger.info({
+      messageId: response,
+      token: token?.substring(0, 20) + '...',
+      title: options.title
+    }, '✅ FCM test notification sent successfully');
     return { success: true, messageId: response };
   } catch (err: any) {
     const errorCode = err?.code || err?.errorInfo?.code || '';
-    console.error('✗ Failed to send FCM notification:', {
-      code: errorCode,
-      message: err?.message,
-      token: token?.substring(0, 20) + '...'
-    });
+    logger.error({
+      errorCode,
+      errorMessage: err?.message,
+      token: token?.substring(0, 20) + '...',
+      title: options.title
+    }, '❌ Failed to send FCM test notification');
 
     // Return error info for caller to handle
     return {

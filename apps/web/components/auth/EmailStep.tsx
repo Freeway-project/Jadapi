@@ -30,7 +30,7 @@ export default function EmailStep() {
     resolver: zodResolver(emailPhoneSchema),
   });
 
-  // Step 1: Send OTP
+  // Step 1: Send OTP (backend will check if account exists)
   const onSubmit = async (data: EmailPhoneFormData) => {
     setIsSubmitting(true);
     setLoading(true);
@@ -38,24 +38,7 @@ export default function EmailStep() {
     try {
       const { authAPI } = await import('../../lib/api/auth');
 
-      // Check if account already exists BEFORE sending OTPs
-      const existingAccount = await authAPI.checkAccountExists({
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-      });
-
-      if (existingAccount.exists) {
-        const messages = [];
-        if (existingAccount.details.email) {
-          messages.push('Email already registered');
-        }
-        if (existingAccount.details.phone) {
-          messages.push('Phone number already registered');
-        }
-        throw new Error(messages.join(' and ') + '. Please sign in instead.');
-      }
-
-      // Always send to phone
+      // Send OTP to phone (backend validates if account exists)
       await authAPI.requestPhoneOTP({
         phoneNumber: data.phoneNumber,
         type: 'signup' as const,
@@ -80,7 +63,15 @@ export default function EmailStep() {
       setOtpSent(true);
     } catch (error: any) {
       console.error('Failed to send OTP:', error);
-      toast.error(error.message || 'Failed to send verification code. Please try again.');
+
+      // Handle duplicate account errors from backend
+      const errorMessage = error?.response?.data?.message || error.message;
+
+      if (errorMessage?.includes('already registered') || errorMessage?.includes('already exists')) {
+        toast.error(errorMessage + ' Please sign in instead.');
+      } else {
+        toast.error(errorMessage || 'Failed to send verification code. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
       setLoading(false);
@@ -228,7 +219,7 @@ export default function EmailStep() {
             <div className="space-y-2 sm:space-y-3">
               <Label htmlFor="email" className="text-sm sm:text-lg font-semibold text-black block mb-3">
                 {userType === 'business' ? 'Business Email Address' : 'Email Address'}
-                {userType === 'individual' && <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>}
+
               </Label>
               <Input
                 id="email"
