@@ -6,7 +6,9 @@ import toast from 'react-hot-toast';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
+    mobile: '',
     message: '',
   });
 
@@ -38,7 +40,7 @@ export default function ContactPage() {
       }
 
       setSubmitStatus('success');
-      setFormData({ email: '', message: '' });
+      setFormData({ name: '', email: '', mobile: '', message: '' });
       toast.success('Message sent successfully!');
 
       setTimeout(() => setSubmitStatus('idle'), 5000);
@@ -77,6 +79,23 @@ export default function ContactPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Send a Message</h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                placeholder="Your Name"
+              />
+            </div>
+
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -91,6 +110,22 @@ export default function ContactPage() {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 placeholder="your.email@example.com"
+              />
+            </div>
+
+            {/* Mobile */}
+            <div>
+              <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
+                Mobile (Optional)
+              </label>
+              <input
+                type="tel"
+                id="mobile"
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                placeholder="Your Mobile Number"
               />
             </div>
 
@@ -116,8 +151,8 @@ export default function ContactPage() {
               <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold">Message sent successfully!</p>
-                  <p className="text-sm">We'll get back to you as soon as possible.</p>
+                  <p className="font-semibold">Thank you for contacting us.</p>
+                  <p className="text-sm">We’ve received your message and will get back to you shortly.</p>
                 </div>
               </div>
             )}

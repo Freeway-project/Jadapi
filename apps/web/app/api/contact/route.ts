@@ -4,7 +4,9 @@ import path from 'path';
 
 interface ContactSubmission {
   id: string;
+  name: string;
   email: string;
+  mobile?: string;
   message: string;
   createdAt: string;
   read: boolean;
@@ -42,12 +44,12 @@ async function writeContacts(contacts: ContactSubmission[]) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, message } = body;
+    const { name, email, mobile, message } = body;
 
     // Validate
-    if (!email || !message) {
+    if (!name || !email || !message) {
       return NextResponse.json(
-        { error: 'Email and message are required' },
+        { error: 'Name, email and message are required' },
         { status: 400 }
       );
     }
@@ -64,7 +66,9 @@ export async function POST(request: NextRequest) {
     // Create new submission
     const submission: ContactSubmission = {
       id: Date.now().toString(),
+      name,
       email,
+      mobile,
       message,
       createdAt: new Date().toISOString(),
       read: false,
