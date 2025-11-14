@@ -10,28 +10,28 @@ export class SmsRateLimitService {
   private static readonly LIMITS = {
     // Per phone number limits
     perPhone: {
-      otp: { count: 20, windowSeconds: 3600 }, // 20 OTPs per hour per phone
-      delivery: { count: 110, windowSeconds: 86400 }, // 10 delivery SMS per day
-      booking: { count: 51, windowSeconds: 86400 }, // 5 booking SMS per day
-      promotional: { count: 21, windowSeconds: 86400 }, // 2 promotional per day
-      transactional: { count: 210, windowSeconds: 86400 }, // 20 total per day
+      otp: { count: 50, windowSeconds: 3600 }, // 50 OTPs per hour per phone
+      delivery: { count: 50, windowSeconds: 86400 }, // 50 delivery SMS per day
+      booking: { count: 50, windowSeconds: 86400 }, // 50 booking SMS per day
+      promotional: { count: 20, windowSeconds: 86400 }, // 20 promotional per day
+      transactional: { count: 100, windowSeconds: 86400 }, // 100 total per day
     },
     // Global limits (entire system)
     global: {
-      hourly: 100, // 100 SMS per hour globally
-      daily: 500, // 500 SMS per day globally
-      monthly: 10000, // 10,000 SMS per month globally
+      hourly: 500, // 500 SMS per hour globally
+      daily: 5000, // 5,000 SMS per day globally
+      monthly: 100000, // 100,000 SMS per month globally
     },
     // Cost limits (in USD)
     costs: {
-      dailyLimit: 10, // $10 per day max
-      monthlyLimit: 200, // $200 per month max
+      dailyLimit: 50, // $50 per day max
+      monthlyLimit: 1000, // $1,000 per month max
       perSmsCost: 0.0075, // $0.0075 per SMS (AWS SNS Canada rate)
     },
     // Cooldown periods
     cooldown: {
-      sameMessage: 300, // 5 minutes before sending same message to same number
-      afterFailure: 60, // 1 minute cooldown after failed attempt
+      sameMessage: 120, // 2 minutes before sending same message to same number
+      afterFailure: 30, // 30 seconds cooldown after failed attempt
     },
   };
 
