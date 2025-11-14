@@ -54,20 +54,18 @@ jobs:
             echo "💾 Stashing local changes (if any)..."
             git stash --include-untracked || true
 
-            # Fetch latest from remote
-            echo "📡 Fetching latest from origin..."
-            git fetch origin main || exit 1
-
             # Get commit info before pull
             BEFORE_COMMIT=$(git rev-parse --short HEAD)
             echo "Commit before pull: $BEFORE_COMMIT"
 
-            # Pull latest changes with rebase (safer than merge)
+            # Fetch and pull latest changes
             echo ""
             echo "📥 Pulling latest changes from main branch..."
             echo "=================================================="
-            git pull origin main --rebase || {
+            git fetch origin || exit 1
+            git pull origin main || {
               echo "❌ Git pull failed! Attempting force reset..."
+              git fetch origin
               git reset --hard origin/main
             }
 
