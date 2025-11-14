@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cron from "node-cron";
 import { connectDB } from "./config/db";
 import { ENV } from "./config/env";
 import { logger } from "./utils/logger";
@@ -8,6 +9,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { authenticate } from "./middlewares/auth";
 import webhookRoutes from "./routes/webhook.routes";
 import fcmRoutes from "./routes/fcmRoutes";
+import { runCancelExpiredOrders } from "./cron/cancelExpiredOrders";
 
 const app = express();
 
@@ -43,7 +45,23 @@ app.use(errorHandler);
 (async () => {
   try {
     await connectDB();
-    app.listen(ENV.PORT, () => logger.info(`Server running on http://localhost:${ENV.PORT}`));
+
+    // Start Express server
+    app.listen(ENV.PORT, () => {
+      logger.info(`Server running on http://localhost:${ENV.PORT}`);
+    });
+
+    // Set up cron job to cancel expired orders every 5 minutes
+    cron.schedule("*/5 * * * *", async () => {
+      logger.info("Running scheduled job: Cancel expired orders");
+      try {
+        await runCancelExpiredOrders();
+      } catch (error) {
+        logger.error({ error }, "Cron job failed: Cancel expired orders");
+      }
+    });
+
+    logger.info("Cron job scheduled: Cancel expired orders (runs every 5 minutes)");
   } catch (err) {
     logger.error(err);
     process.exit(1);
