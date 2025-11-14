@@ -465,7 +465,7 @@ export default function TrackOrderPage() {
 
           {/* Right Column - Map */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '800px' }}>
+            <div className="relative bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '800px' }}>
               {isLoaded ? (
                 <>
                   <GoogleMap

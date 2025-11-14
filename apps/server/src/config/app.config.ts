@@ -27,7 +27,7 @@ export default {
     ],
     "tax": { "enabled": true, "rate": 0.05 },
     "ui": { "show_band_label": true, "round_display_to_cents": true },
-    "meta": { "notes": "Initial VAN/SUR/LAN", "updated_by": "harsh" }
+    "meta": { "notes": "Service areas: Surrey and Langley only", "updated_by": "harsh" }
   },
   "created_at": "2025-09-30T00:00:00-07:00",
   "created_by": "system"

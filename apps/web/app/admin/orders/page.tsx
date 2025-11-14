@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminAPI, Order } from '../../../lib/api/admin';
 import { Input } from '@workspace/ui/components/input';
-import { Package, Search, CheckCircle, Clock, XCircle, MapPin, User, DollarSign, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Package, Search, CheckCircle, Clock, XCircle, MapPin, User, DollarSign, ArrowUpDown, ArrowUp, ArrowDown, FileText } from 'lucide-react';
 
 type SortField = 'createdAt' | 'orderId' | 'total' | 'status';
 type SortOrder = 'asc' | 'desc';
@@ -236,6 +236,9 @@ export default function OrdersPage() {
                       {getSortIcon('createdAt')}
                     </div>
                   </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden 2xl:table-cell">
+                    Notes
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -286,6 +289,29 @@ export default function OrdersPage() {
                       {new Date(order.createdAt).toLocaleDateString()}
                       <div className="text-xs text-gray-400">
                         {new Date(order.createdAt).toLocaleTimeString()}
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 hidden 2xl:table-cell">
+                      <div className="space-y-1 max-w-xs">
+                        {order.driverNote && (
+                          <div className="flex items-start gap-1">
+                            <FileText className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <span className="text-xs text-gray-600 truncate" title={order.driverNote}>
+                              Driver: {order.driverNote}
+                            </span>
+                          </div>
+                        )}
+                        {order.adminNote && (
+                          <div className="flex items-start gap-1">
+                            <FileText className="w-3 h-3 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <span className="text-xs text-gray-600 truncate" title={order.adminNote}>
+                              Admin: {order.adminNote}
+                            </span>
+                          </div>
+                        )}
+                        {!order.driverNote && !order.adminNote && (
+                          <span className="text-xs text-gray-400">No notes</span>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -84,6 +84,15 @@ export interface Order {
     code: string;
     discount: number;
   };
+  timeline?: {
+    createdAt?: string;
+    assignedAt?: string;
+    pickedUpAt?: string;
+    deliveredAt?: string;
+    cancelledAt?: string;
+  };
+  driverNote?: string;
+  adminNote?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -367,6 +376,23 @@ export const adminAPI = {
 
   async getSmsUsage(): Promise<SmsUsageStats> {
     const res = await apiClient.get('/admin/sms/usage');
+    return res.data.data;
+  },
+
+  async getCancelledOrders(filters: {
+    limit?: number;
+    skip?: number;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Promise<{ orders: Order[]; total: number; hasMore: boolean }> {
+    const res = await apiClient.get('/admin/orders/cancelled', {
+      params: filters
+    });
+    return res.data.data;
+  },
+
+  async updateAdminNote(orderId: string, adminNote: string): Promise<{ order: Order }> {
+    const res = await apiClient.patch(`/admin/orders/${orderId}/admin-note`, { adminNote });
     return res.data.data;
   },
 };

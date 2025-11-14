@@ -360,4 +360,49 @@ export class AdminController {
       next(error);
     }
   }
+
+  /**
+   * Get all cancelled orders
+   */
+  static async getCancelledOrders(req: Request, res: Response, next: NextFunction) {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const skip = parseInt(req.query.skip as string) || 0;
+      const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+      const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+
+      const result = await AdminService.getCancelledOrders({ limit, skip, startDate, endDate });
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update admin note for an order
+   */
+  static async updateAdminNote(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { orderId } = req.params;
+      const { adminNote } = req.body;
+
+      if (typeof adminNote !== 'string') {
+        throw new ApiError(400, 'Admin note must be a string');
+      }
+
+      const order = await AdminService.updateAdminNote(orderId, adminNote);
+
+      res.json({
+        success: true,
+        data: { order },
+        message: 'Admin note updated successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

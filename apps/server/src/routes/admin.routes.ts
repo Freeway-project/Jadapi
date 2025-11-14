@@ -111,4 +111,18 @@ router.put(
   AdminController.updateEarlyAccessRequestStatus
 );
 
+// Cancelled orders route
+router.get(
+  "/orders/cancelled",
+  activityLogger,
+  AdminController.getCancelledOrders
+);
+
+// Update admin note for orders
+router.patch(
+  "/orders/:orderId/admin-note",
+  activityLogger,
+  AdminController.updateAdminNote
+);
+
 export default router;

@@ -18,7 +18,8 @@ import {
   Tag,
   Power,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  XCircle
 } from 'lucide-react';
 import { adminAPI } from '../../lib/api/admin';
 import toast from 'react-hot-toast';
@@ -39,6 +40,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/dashboard', name: 'Overview', icon: LayoutDashboard },
     { href: '/admin/drivers', name: 'Drivers', icon: Car },
     { href: '/admin/orders', name: 'Orders', icon: Package },
+    { href: '/admin/cancelled-orders', name: 'Cancelled Orders', icon: XCircle },
     { href: '/admin/users', name: 'Users', icon: Users },
     { href: '/admin/coupons', name: 'Coupons', icon: Tag },
     { href: '/admin/early-access', name: 'Early Access', icon: Users },

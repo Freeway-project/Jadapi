@@ -264,4 +264,65 @@ export class DriverService {
       totalEarnings: earnings[0]?.total || 0,
     };
   }
+
+  /**
+   * Get driver's past/completed orders
+   */
+  static async getPastOrders(
+    driverId: Types.ObjectId,
+    filters?: {
+      limit?: number;
+      skip?: number;
+    }
+  ) {
+    const { limit = 20, skip = 0 } = filters || {};
+
+    const query = {
+      driverId,
+      status: { $in: ["delivered", "cancelled"] }
+    };
+
+    const orders = await DeliveryOrder.find(query)
+      .populate("userId", "uuid profile.name auth.phone")
+      .sort({ "timeline.deliveredAt": -1, "timeline.cancelledAt": -1, createdAt: -1 })
+      .limit(limit)
+      .skip(skip);
+
+    const total = await DeliveryOrder.countDocuments(query);
+
+    return {
+      orders,
+      total,
+      hasMore: total > skip + limit,
+    };
+  }
+
+  /**
+   * Update driver note for an order
+   */
+  static async updateDriverNote(
+    orderIdOrMongoId: string,
+    driverId: Types.ObjectId,
+    note: string
+  ) {
+    // Try to find by orderId first, then by _id
+    let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
+
+    if (!order && Types.ObjectId.isValid(orderIdOrMongoId)) {
+      order = await DeliveryOrder.findById(orderIdOrMongoId);
+    }
+
+    if (!order) {
+      throw new ApiError(404, "Order not found");
+    }
+
+    if (!order.driverId || order.driverId.toString() !== driverId.toString()) {
+      throw new ApiError(403, "Order not assigned to this driver");
+    }
+
+    order.driverNote = note;
+    await order.save();
+
+    return order;
+  }
 }

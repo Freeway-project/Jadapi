@@ -192,4 +192,52 @@ export class DriverController {
       next(error);
     }
   }
+
+  /**
+   * Get driver's past orders (delivered or cancelled)
+   */
+  static async getPastOrders(req: Request, res: Response, next: NextFunction) {
+    try {
+      const driverId = req.user?._id;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const skip = parseInt(req.query.skip as string) || 0;
+
+      const result = await DriverService.getPastOrders(driverId, { limit, skip });
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Update driver note for an order
+   */
+  static async updateDriverNote(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { orderId } = req.params;
+      const { note } = req.body;
+      const driverId = req.user?._id;
+
+      if (typeof note !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: "Note must be a string",
+        });
+      }
+
+      const order = await DriverService.updateDriverNote(orderId, driverId, note);
+
+      res.json({
+        success: true,
+        data: { order },
+        message: "Driver note updated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

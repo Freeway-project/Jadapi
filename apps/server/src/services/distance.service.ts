@@ -85,7 +85,7 @@ export class DistanceService {
   /**
    * Validate service area using radius-based coverage
    * Both pickup and dropoff must be within radius of any service center
-   * Cross-area deliveries are allowed (e.g., Burnaby to Surrey)
+   * Cross-area deliveries are allowed (e.g., Surrey to Langley)
    */
   static async validateServiceArea(
     pickup: Coordinates,
@@ -107,7 +107,7 @@ export class DistanceService {
       if (!pickupCheck.isWithin) {
         return {
           isValid: false,
-          error: `Pickup location is outside our service area. We serve Surrey, Langley, and Burnaby within 20km radius.`
+          error: `Pickup location is outside our service area. We serve Surrey and Langley within 20km radius.`
         };
       }
 
@@ -115,7 +115,7 @@ export class DistanceService {
       if (!dropoffCheck.isWithin) {
         return {
           isValid: false,
-          error: `Dropoff location is outside our service area. We serve Surrey, Langley, and Burnaby within 20km radius.`
+          error: `Dropoff location is outside our service area. We serve Surrey and Langley within 20km radius.`
         };
       }
 

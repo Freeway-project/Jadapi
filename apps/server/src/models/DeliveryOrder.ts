@@ -81,6 +81,9 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
 
   expiresAt?: Date; // Auto-cancel if not assigned by this time (30 minutes from creation)
 
+  driverNote?: string; // Driver's notes about the delivery
+  adminNote?: string; // Admin notes for refunds/issues
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -183,7 +186,10 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       cancelledAt: Date
     },
 
-    expiresAt: { type: Date, index: true } // Auto-cancel pending orders after 30 minutes
+    expiresAt: { type: Date, index: true }, // Auto-cancel pending orders after 30 minutes
+
+    driverNote: { type: String }, // Driver's notes about the delivery
+    adminNote: { type: String } // Admin notes for refunds/issues
   },
   { timestamps: true }
 );

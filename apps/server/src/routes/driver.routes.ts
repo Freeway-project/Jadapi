@@ -95,4 +95,20 @@ router.patch('/orders/:orderId/status', requireAuth, driverAuth, DriverControlle
  */
 router.post('/assign-parcel', requireAuth, driverAuth, DriverController.assignOrderToDriver);
 
+/**
+ * Get driver's past orders (delivered or cancelled)
+ * GET /api/driver/orders/past
+ * Query: ?limit=&skip=
+ * Requires: Driver authentication
+ */
+router.get('/orders/past', requireAuth, driverAuth, DriverController.getPastOrders);
+
+/**
+ * Update driver note for an order
+ * PATCH /api/driver/orders/:orderId/note
+ * Body: { note }
+ * Requires: Driver authentication
+ */
+router.patch('/orders/:orderId/note', requireAuth, driverAuth, DriverController.updateDriverNote);
+
 export default router;

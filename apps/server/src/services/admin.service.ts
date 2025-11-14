@@ -413,4 +413,63 @@ export class AdminService {
 
     return driver;
   }
+
+  /**
+   * Get all cancelled orders with full information for refunds
+   */
+  static async getCancelledOrders(filters?: {
+    limit?: number;
+    skip?: number;
+    startDate?: Date;
+    endDate?: Date;
+  }) {
+    const { limit = 50, skip = 0, startDate, endDate } = filters || {};
+
+    const query: any = {
+      status: "cancelled"
+    };
+
+    // Filter by date range if provided
+    if (startDate || endDate) {
+      query["timeline.cancelledAt"] = {};
+      if (startDate) query["timeline.cancelledAt"].$gte = startDate;
+      if (endDate) query["timeline.cancelledAt"].$lte = endDate;
+    }
+
+    const orders = await DeliveryOrder.find(query)
+      .populate("userId", "uuid profile.name auth.email auth.phone")
+      .populate("driverId", "uuid profile.name auth.email auth.phone")
+      .sort({ "timeline.cancelledAt": -1 })
+      .limit(limit)
+      .skip(skip);
+
+    const total = await DeliveryOrder.countDocuments(query);
+
+    return {
+      orders,
+      total,
+      hasMore: total > skip + limit,
+    };
+  }
+
+  /**
+   * Update admin note for an order (for refunds/issues)
+   */
+  static async updateAdminNote(orderIdOrMongoId: string, adminNote: string) {
+    // Try to find by orderId first, then by _id
+    let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
+
+    if (!order && Types.ObjectId.isValid(orderIdOrMongoId)) {
+      order = await DeliveryOrder.findById(orderIdOrMongoId);
+    }
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    order.adminNote = adminNote;
+    await order.save();
+
+    return order;
+  }
 }
