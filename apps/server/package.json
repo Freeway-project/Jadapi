@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-
     "dev": "nodemon --watch src --exec ts-node src/server.ts",
+    "dev:clean": "pnpm clean && pnpm dev",
     "build": "tsc -p tsconfig.json && cp -r src/templates dist/templates",
+    "build:clean": "pnpm clean && pnpm build",
     "start": "node dist/server.js",
+    "clean": "rm -rf dist node_modules/.cache",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pm2:build": "rm -rf dist && pnpm install && pnpm run build",
     "pm2:restart": "pm2 restart jaddpi-server || pm2 start dist/server.js --name jaddpi-server --time",

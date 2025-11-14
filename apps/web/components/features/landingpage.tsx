@@ -144,19 +144,7 @@ export default function JaddpiLanding() {
 
             {/* Info Cards */}
             <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-3 sm:p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="flex gap-2 sm:gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-blue-900 font-semibold mb-1">Real-time Updates</p>
-                    <p className="text-[11px] sm:text-xs text-blue-700">
-                      See your driver's live location and estimated arrival time
-                    </p>
-                  </div>
-                </div>
-              </div>
+         
 
               <div className="p-3 sm:p-4 bg-green-50 rounded-xl border border-green-100">
                 <div className="flex gap-2 sm:gap-3">
