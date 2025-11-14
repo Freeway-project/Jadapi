@@ -43,10 +43,7 @@ export class DriverService {
       status: "pending",
       driverId: { $exists: false },
       paymentStatus: "paid", // Only show paid orders
-      $or: [
-        { expiresAt: { $exists: false } }, // No expiry set
-        { expiresAt: { $gt: now } } // Not yet expired
-      ]
+      expiresAt: { $gt: now } // Only show orders that haven't expired
     })
       .populate("userId", "uuid profile.name auth.phone")
       .sort({ createdAt: -1 })
@@ -57,10 +54,7 @@ export class DriverService {
       status: "pending",
       driverId: { $exists: false },
       paymentStatus: "paid",
-      $or: [
-        { expiresAt: { $exists: false } },
-        { expiresAt: { $gt: now } }
-      ]
+      expiresAt: { $gt: now }
     });
 
     return {
