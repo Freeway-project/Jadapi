@@ -520,20 +520,7 @@ export default function DriverDashboardPage() {
                   {isIOSChrome ? 'Unsupported' : isNotificationsEnabled ? 'Disable' : 'Enable'}
                 </Button>
 
-                {/* Quick copy token button for debugging */}
-                {/* {fcmToken && !isIOSChrome && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(fcmToken).then(() => {
-                        toast.success('FCM token copied');
-                      }).catch(() => toast.error('Failed to copy token'));
-                    }}
-                  >
-                    Copy token
-                  </Button>
-                )} */}
+            
               </div>
             </div>
           </div>

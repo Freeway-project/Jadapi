@@ -562,7 +562,7 @@ export default function BookingFlow({
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
-                  className="flex-1 border-gray-300 text-gray-900 hover:bg-gray-50 font-medium h-12"
+                  className="flex-1 border-gray-600 bg-gray-700 text-white hover:bg-gray-800 font-medium h-12"
                 >
                   Back
                 </Button>

@@ -7,6 +7,7 @@ import { DeliveryOrder } from '../models/DeliveryOrder';
 import { User } from '../models/user.model';
 import { logger } from '../utils/logger';
 import { ApiError } from '../utils/ApiError';
+import { sendDriverNotification } from '../services/notificationService';
 import Stripe from 'stripe';
 
 export const WebhookController = {
@@ -157,12 +158,38 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event) {
     });
 
     logger.info(`✅ Invoice email sent to ${userEmail}`);
+
+    // Notify all drivers about the new paid order
+    try {
+      const drivers = await User.find({ roles: "driver" }).select("_id profile.name");
+      logger.info({ driverCount: drivers.length, orderId: order.orderId }, "Notifying drivers about new paid order");
+
+      // Send notifications to all drivers concurrently
+      const notificationResults = await Promise.allSettled(
+        drivers.map(driver =>
+          sendDriverNotification(driver._id.toString(), {
+            title: "New Delivery Request",
+            body: `New order ${order.orderId}. From ${order.pickup?.address || 'Pickup'} to ${order.dropoff?.address || 'Dropoff'}. ₹${order.pricing?.total?.toFixed(2) || '0'}`,
+            url: "/driver",
+            data: {
+              orderId: order.orderId,
+              orderMongoId: order._id.toString(),
+              type: "new_order"
+            }
+          })
+        )
+      );
+
+      const successCount = notificationResults.filter(r => r.status === 'fulfilled').length;
+      logger.info({ successCount, totalDrivers: drivers.length, orderId: order.orderId }, `Driver notifications sent: ${successCount}/${drivers.length}`);
+    } catch (notifError) {
+      logger.error({ error: notifError, orderId: order.orderId }, "Failed to send driver notifications");
+      // Don't fail the webhook if notifications fail
+    }
   } catch (error) {
     logger.error({ error }, `Failed to process payment success`);
     // Don't throw - we don't want to fail the webhook
   }
-
-  // TODO: Notify driver/dispatch system
 }
 
 /**
