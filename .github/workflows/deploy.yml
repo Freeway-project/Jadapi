@@ -31,190 +31,50 @@ jobs:
           port: 22
           script: |
             echo "🚀 Starting deployment..."
-            echo "=================================================="
 
             # Navigate to project directory
             cd /home/ubuntu/Jadapi || exit 1
-            echo "✅ Changed to /home/ubuntu/Jadapi"
 
-            # Git status before pull
-            echo ""
-            echo "📊 Current Git Status:"
-            echo "=================================================="
-            echo "Branch: $(git branch --show-current)"
-            echo "Current commit: $(git rev-parse --short HEAD)"
-            git status --short
-            echo ""
-
-            # Ensure we're on main branch
-            echo "🔄 Ensuring we're on main branch..."
-            git checkout main || exit 1
-
-            # Stash any local changes
-            echo "💾 Stashing local changes (if any)..."
-            git stash --include-untracked || true
-
-            # Get commit info before pull
-            BEFORE_COMMIT=$(git rev-parse --short HEAD)
-            echo "Commit before pull: $BEFORE_COMMIT"
-
-            # Fetch and pull latest changes
-            echo ""
+            # Pull latest changes from main
             echo "📥 Pulling latest changes from main branch..."
-            echo "=================================================="
-            git fetch origin || exit 1
-            git pull origin main || {
-              echo "❌ Git pull failed! Attempting force reset..."
-              git fetch origin
-              git reset --hard origin/main
-            }
-
-            # Get commit info after pull
-            AFTER_COMMIT=$(git rev-parse --short HEAD)
-            AFTER_COMMIT_FULL=$(git rev-parse HEAD)
-            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-            COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
-            COMMIT_DATE=$(git log -1 --pretty=format:'%ar')
-
-            echo ""
-            echo "✅ Git pull completed successfully!"
-            echo "=================================================="
-            echo "Previous commit: $BEFORE_COMMIT"
-            echo "Current commit:  $AFTER_COMMIT"
-            echo "Full SHA: $AFTER_COMMIT_FULL"
-            echo "Author: $COMMIT_AUTHOR"
-            echo "Date: $COMMIT_DATE"
-            echo "Message: $COMMIT_MESSAGE"
-            echo "=================================================="
-            echo ""
-
-            # Verify we have the latest code
-            if [ "$BEFORE_COMMIT" = "$AFTER_COMMIT" ]; then
-              echo "ℹ️  No new changes detected (already up to date)"
-            else
-              echo "🆕 New changes detected - deploying $AFTER_COMMIT"
-            fi
-            echo ""
+            git pull origin main
 
             # Stop existing containers
             echo "🛑 Stopping existing containers..."
-            echo "=================================================="
-            docker compose down || echo "⚠️  No containers to stop"
-            echo ""
+            docker compose down
 
             # Build new images
             echo "🔨 Building Docker images..."
-            echo "=================================================="
-            echo "Building with commit: $AFTER_COMMIT"
-            echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
-            echo ""
-
-            BUILD_START=$(date +%s)
-            docker compose build --no-cache 2>&1 | tee /tmp/docker-build.log || {
-              echo "❌ Docker build failed!"
-              echo "Last 50 lines of build log:"
-              tail -50 /tmp/docker-build.log
-              exit 1
-            }
-            BUILD_END=$(date +%s)
-            BUILD_DURATION=$((BUILD_END - BUILD_START))
-
-            echo ""
-            echo "✅ Docker build completed in ${BUILD_DURATION}s"
-            echo "=================================================="
-            echo ""
+            docker compose build --no-cache
 
             # Start containers
             echo "▶️  Starting containers..."
-            echo "=================================================="
-            docker compose up -d || {
-              echo "❌ Failed to start containers!"
-              echo "Container logs:"
-              docker compose logs --tail=50
-              exit 1
-            }
-            echo "✅ Containers started successfully"
-            echo ""
+            docker compose up -d
 
             # Wait for services to be healthy
             echo "⏳ Waiting for services to be healthy..."
-            echo "=================================================="
             sleep 10
 
             # Check container status
-            echo ""
-            echo "📊 Container Status:"
-            echo "=================================================="
+            echo "📊 Container status:"
             docker compose ps
-            echo ""
-
-            # Show recent logs
-            echo "📝 Recent Container Logs (last 20 lines):"
-            echo "=================================================="
-            docker compose logs --tail=20
-            echo ""
 
             # Check server health
             echo "🏥 Checking server health..."
-            echo "=================================================="
-            HEALTH_CHECKS=0
             for i in {1..30}; do
               if curl -s http://localhost:5000/health > /dev/null 2>&1; then
-                HEALTH_CHECKS=$((HEALTH_CHECKS + 1))
-                if [ $HEALTH_CHECKS -ge 3 ]; then
-                  echo "✅ Server is healthy! (verified $HEALTH_CHECKS times)"
-                  break
-                fi
-                echo "Health check $HEALTH_CHECKS/3 passed..."
-              else
-                HEALTH_CHECKS=0
-                echo "Attempt $i/30: Server not ready yet..."
+                echo "✅ Server is healthy!"
+                break
               fi
+              echo "Attempt $i/30: Server not ready yet..."
               sleep 2
             done
 
-            if [ $HEALTH_CHECKS -lt 3 ]; then
-              echo "❌ Server failed health checks!"
-              echo "Container logs:"
-              docker compose logs --tail=100
-              exit 1
-            fi
-            echo ""
-
-            # Deployment summary
-            echo "📋 Deployment Summary:"
-            echo "=================================================="
-            echo "Git Commit:     $AFTER_COMMIT"
-            echo "Commit Message: $COMMIT_MESSAGE"
-            echo "Build Duration: ${BUILD_DURATION}s"
-            echo "Deployed At:    $(date '+%Y-%m-%d %H:%M:%S')"
-            echo "Server Status:  ✅ Healthy"
-            echo "=================================================="
-            echo ""
-
             # Clean up old images
             echo "🧹 Cleaning up old Docker images..."
-            echo "=================================================="
-            BEFORE_CLEANUP=$(docker images -q | wc -l)
             docker image prune -f
-            AFTER_CLEANUP=$(docker images -q | wc -l)
-            CLEANED=$((BEFORE_CLEANUP - AFTER_CLEANUP))
-            echo "Removed $CLEANED old images"
-            echo ""
 
             echo "✅ Deployment completed successfully!"
-            echo "=================================================="
-            echo "Deployed commit: $AFTER_COMMIT"
-            echo "By: $COMMIT_AUTHOR ($COMMIT_DATE)"
-            echo "=================================================="
-
-            # Save deployment history
-            DEPLOY_LOG="/home/ubuntu/Jadapi/deployment-history.log"
-            echo "$(date '+%Y-%m-%d %H:%M:%S') | $AFTER_COMMIT | $COMMIT_AUTHOR | $COMMIT_MESSAGE" >> "$DEPLOY_LOG"
-            echo ""
-            echo "📜 Last 5 deployments:"
-            tail -5 "$DEPLOY_LOG" 2>/dev/null || echo "No previous deployments logged"
-            echo ""
 
       - name: Notify Deployment Status
         if: always()
