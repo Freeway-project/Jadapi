@@ -179,7 +179,7 @@ export default function CancelledOrdersPage() {
                   <div className="flex items-center gap-2 text-right">
                     <DollarSign className="w-5 h-5 text-green-600" />
                     <span className="text-2xl font-bold text-gray-900">
-                      ${(order.pricing?.total || 0).toFixed(2)}
+                      ${((order.pricing?.total || 0) / 100).toFixed(2)}
                     </span>
                   </div>
                 </div>

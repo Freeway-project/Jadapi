@@ -211,8 +211,8 @@ function OverviewTab({ stats, activities, orders, metrics }: {
             />
             <StatCard
               title="Revenue (Month)"
-              value={`$${(stats?.revenue.month || 0).toFixed(2)}`}
-              subtitle={`$${(stats?.revenue.week || 0).toFixed(2)} this week`}
+              value={`$${((stats?.revenue.month || 0) / 100).toFixed(2)}`}
+              subtitle={`$${((stats?.revenue.week || 0) / 100).toFixed(2)} this week`}
               icon={DollarSign}
               color="purple"
             />
