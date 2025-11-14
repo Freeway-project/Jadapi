@@ -14,8 +14,14 @@ export const TrackingController = {
     try {
       const { orderId } = req.params;
 
-      // Find order by orderId (not _id)
-      const order = await DeliveryOrder.findOne({ orderId }).populate('driverId', 'name phone vehicle');
+      // Find order by orderId or _id (MongoDB ObjectId)
+      // First try orderId (ORD-xxx format), then try _id if it looks like a valid ObjectId
+      let order = await DeliveryOrder.findOne({ orderId }).populate('driverId', 'name phone vehicle');
+
+      // If not found and the ID looks like a MongoDB ObjectId, try searching by _id
+      if (!order && orderId.match(/^[0-9a-fA-F]{24}$/)) {
+        order = await DeliveryOrder.findById(orderId).populate('driverId', 'name phone vehicle');
+      }
 
       if (!order) {
         throw new ApiError(404, 'Order not found');
@@ -100,7 +106,13 @@ export const TrackingController = {
     try {
       const { orderId } = req.params;
 
-      const order = await DeliveryOrder.findOne({ orderId });
+      // Find order by orderId or _id (MongoDB ObjectId)
+      let order = await DeliveryOrder.findOne({ orderId });
+
+      // If not found and the ID looks like a MongoDB ObjectId, try searching by _id
+      if (!order && orderId.match(/^[0-9a-fA-F]{24}$/)) {
+        order = await DeliveryOrder.findById(orderId);
+      }
 
       if (!order) {
         throw new ApiError(404, 'Order not found');
