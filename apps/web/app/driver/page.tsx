@@ -11,6 +11,7 @@ import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, 
 import { Button } from '@workspace/ui/components/button';
 import { useFcmToken } from '../../hooks/useFcmToken';
 import PhotoCapture from '../../components/booking/PhotoCapture';
+import TestOrderButton from '../../components/TestOrderButton';
 import toast from 'react-hot-toast';
 
 type OrderStatus = 'available' | 'in_progress';
@@ -468,13 +469,17 @@ export default function DriverDashboardPage() {
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
               <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
             </div>
-            {/* Silent refresh indicator */}
-            {isRefreshing && (
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                <span className="hidden sm:inline">Updating...</span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {/* Test Order Button */}
+              <TestOrderButton />
+              {/* Silent refresh indicator */}
+              {isRefreshing && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span className="hidden sm:inline">Updating...</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Location Tracking Card */}
