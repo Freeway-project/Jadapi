@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { DeliveryOrder } from '../models/DeliveryOrder';
-import { User } from '../models/user.model';
 import { DriverLocationService } from '../services/driverLocation.service';
 import { ApiError } from '../utils/ApiError';
 import { logger } from '../utils/logger';
@@ -75,12 +74,14 @@ export const TrackingController = {
               coordinates: order.pickup.coordinates,
               contactName: order.pickup.contactName,
               contactPhone: order.pickup.contactPhone,
+              photoUrl: order.pickup.photoUrl,
             },
             dropoff: {
               address: order.dropoff.address,
               coordinates: order.dropoff.coordinates,
               contactName: order.dropoff.contactName,
               contactPhone: order.dropoff.contactPhone,
+              photoUrl: order.dropoff.photoUrl,
             },
             package: {
               size: order.package.size,

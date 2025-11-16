@@ -83,6 +83,9 @@ export class DriverService {
       query.status = status;
     }
 
+    console.log('🔍 getDriverOrders - Query:', JSON.stringify(query));
+    console.log('🔍 getDriverOrders - DriverId:', driverId.toString());
+
     const orders = await DeliveryOrder.find(query)
       .populate("userId", "uuid profile.name auth.phone")
       .sort({ createdAt: -1 })
@@ -90,6 +93,9 @@ export class DriverService {
       .skip(skip);
 
     const total = await DeliveryOrder.countDocuments(query);
+
+    console.log('✅ getDriverOrders - Found:', orders.length, 'orders');
+    console.log('📊 getDriverOrders - Order IDs:', orders.map(o => o.orderId));
 
     return {
       orders,
