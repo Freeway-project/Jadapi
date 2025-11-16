@@ -120,6 +120,23 @@ export const uploadBase64ToCloudinary = async (
   options: CloudinaryUploadOptions = {}
 ): Promise<CloudinaryUploadResult> => {
   try {
+    // Clean up base64 data - remove data URI prefix if already present
+    let cleanBase64 = base64Data;
+    if (cleanBase64.includes(';base64,')) {
+      cleanBase64 = cleanBase64.split(';base64,')[1];
+    } else if (cleanBase64.startsWith('data:')) {
+      cleanBase64 = cleanBase64.split(',')[1];
+    }
+
+    // Validate base64 string
+    if (!cleanBase64 || cleanBase64.trim() === '') {
+      throw new Error('Invalid or empty base64 data provided');
+    }
+
+    // Determine MIME type from options or default to PNG
+    const mimeType = options.format ? `image/${options.format}` : 'image/png';
+    const dataUri = `data:${mimeType};base64,${cleanBase64}`;
+
     const uploadOptions = {
       resource_type: options.resource_type || "auto",
       folder: options.folder || "uploads",
@@ -127,7 +144,7 @@ export const uploadBase64ToCloudinary = async (
     };
 
     const result: UploadApiResponse = await cloudinary.uploader.upload(
-      `data:image/png;base64,${base64Data}`,
+      dataUri,
       uploadOptions
     );
 
@@ -143,7 +160,8 @@ export const uploadBase64ToCloudinary = async (
     };
   } catch (error) {
     const cloudinaryError = error as UploadApiErrorResponse;
-    throw new Error(`Cloudinary base64 upload failed: ${cloudinaryError.message}`);
+    const errorMsg = cloudinaryError.message || String(error);
+    throw new Error(`Cloudinary base64 upload failed: ${errorMsg}`);
   }
 };
 

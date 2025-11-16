@@ -18,6 +18,7 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
     notes?: string;
     scheduledAt?: Date;
     actualAt?: Date;
+    photoUrl?: string; // Cloudinary URL for pickup photo
   };
 
   dropoff: {
@@ -32,6 +33,7 @@ export interface DeliveryOrderDoc extends Document<Types.ObjectId> {
     notes?: string;
     scheduledAt?: Date;
     actualAt?: Date;
+    photoUrl?: string; // Cloudinary URL for dropoff photo
   };
 
   package: {
@@ -120,7 +122,8 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       contactPhone: String,
       notes: String,
       scheduledAt: Date,
-      actualAt: Date
+      actualAt: Date,
+      photoUrl: String
     },
 
     dropoff: {
@@ -137,7 +140,8 @@ const DeliveryOrderSchema = new Schema<DeliveryOrderDoc>(
       contactPhone: String,
       notes: String,
       scheduledAt: Date,
-      actualAt: Date
+      actualAt: Date,
+      photoUrl: String
     },
 
     package: {

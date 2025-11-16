@@ -24,8 +24,8 @@ app.use(cors({
 // to receive raw body for signature verification
 app.use("/api/webhooks", webhookRoutes);
 
-// JSON body parser for all other routes
-app.use(express.json());
+// JSON body parser for all other routes (5MB limit for photo uploads)
+app.use(express.json({ limit: '5mb' }));
 
 app.use(fcmRoutes);
 

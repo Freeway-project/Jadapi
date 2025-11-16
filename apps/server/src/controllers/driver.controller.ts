@@ -66,11 +66,17 @@ export class DriverController {
       const limit = parseInt(req.query.limit as string) || 20;
       const skip = parseInt(req.query.skip as string) || 0;
 
+      console.log('🚗 Driver getMyOrders called');
+      console.log('👤 Request user:', req.user?._id?.toString(), req.user?.profile?.name);
+      console.log('📋 Query params:', { status, limit, skip });
+
       const result = await DriverService.getDriverOrders(driverId, {
         status,
         limit,
         skip,
       });
+
+      console.log('📤 Returning', result.orders.length, 'orders to driver');
 
       res.json({
         success: true,

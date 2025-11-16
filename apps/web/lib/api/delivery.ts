@@ -86,6 +86,15 @@ export interface CreateOrderResponse {
   message: string;
 }
 
+export interface PhotoUploadResponse {
+  success: boolean;
+  data: {
+    photoUrl: string;
+    order: any;
+  };
+  message: string;
+}
+
 export const deliveryAPI = {
   getFareEstimate: async (data: FareEstimateRequest): Promise<FareEstimateResponse> => {
     const response = await apiClient.post('/pricing/estimate', data);
@@ -94,6 +103,20 @@ export const deliveryAPI = {
 
   createOrder: async (data: CreateOrderRequest): Promise<CreateOrderResponse> => {
     const response = await apiClient.post('/delivery/create-order', data);
+    return response.data;
+  },
+
+  uploadPickupPhoto: async (orderId: string, photoBase64: string): Promise<PhotoUploadResponse> => {
+    const response = await apiClient.put(`/delivery/${orderId}/upload-pickup-photo`, {
+      photo: photoBase64
+    });
+    return response.data;
+  },
+
+  uploadDropoffPhoto: async (orderId: string, photoBase64: string): Promise<PhotoUploadResponse> => {
+    const response = await apiClient.put(`/delivery/${orderId}/upload-dropoff-photo`, {
+      photo: photoBase64
+    });
     return response.data;
   },
 };

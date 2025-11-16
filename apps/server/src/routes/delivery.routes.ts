@@ -8,6 +8,7 @@ import { CouponService } from "../services/coupon.service";
 import { checkAppActive } from "../middlewares/appActive";
 import { logger } from "../utils/logger";
 import { OrderExpiryService } from "../services/orderExpiry.service";
+import { DeliveryPhotoController } from "../controllers/deliveryPhoto.controller";
 
 const router = Router();
 
@@ -117,6 +118,18 @@ router.get("/service-areas", async (_req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * PUT /api/delivery/:orderId/upload-pickup-photo
+ * Upload pickup photo (Driver only)
+ */
+router.put("/:orderId/upload-pickup-photo", requireAuth, DeliveryPhotoController.uploadPickupPhoto);
+
+/**
+ * PUT /api/delivery/:orderId/upload-dropoff-photo
+ * Upload dropoff photo (Driver only)
+ */
+router.put("/:orderId/upload-dropoff-photo", requireAuth, DeliveryPhotoController.uploadDropoffPhoto);
 
 /**
  * POST /api/delivery/create-order

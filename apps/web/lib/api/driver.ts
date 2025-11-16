@@ -27,6 +27,7 @@ export interface DriverOrder {
     contactName: string;
     contactPhone: string;
     notes?: string;
+    photoUrl?: string;
   };
   dropoff: {
     address: string;
@@ -34,6 +35,7 @@ export interface DriverOrder {
     contactName: string;
     contactPhone: string;
     notes?: string;
+    photoUrl?: string;
   };
   package: {
     size: string;
@@ -48,7 +50,8 @@ export interface DriverOrder {
     currency: string;
   };
   distance: {
-    distanceKm: number;
+    km?: number;
+    distanceKm?: number;
     durationMinutes: number;
   };
   createdAt: string;

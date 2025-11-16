@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { driverAPI, type DriverOrder } from '../../lib/api/driver';
+import { deliveryAPI } from '../../lib/api/delivery';
 import { useAuthStore } from '../../lib/stores/authStore';
 import { useDriverLocation } from '../../hooks/useDriverLocation';
 import Header from '../../components/layout/Header';
-import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, ExternalLink, Radio } from 'lucide-react';
+import { Package, CheckCircle, Clock, Loader2, MapPin, Phone, User, Navigation, ExternalLink, Radio, Camera, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { useFcmToken } from '../../hooks/useFcmToken';
+import PhotoCapture from '../../components/booking/PhotoCapture';
+import TestOrderButton from '../../components/TestOrderButton';
 import toast from 'react-hot-toast';
 
 type OrderStatus = 'available' | 'in_progress';
@@ -162,9 +165,13 @@ export default function DriverDashboardPage() {
         // Note: Backend doesn't support multiple status filtering, so we'll fetch all driver orders
         // and filter client-side
         const response = await driverAPI.getMyOrders({ limit: 50 });
+        console.log('📦 My Orders API Response:', response);
+        console.log('📊 All orders:', response.data?.orders);
+        console.log('👤 Current user:', user);
         const inProgressOrders = response.data?.orders?.filter((order: DriverOrder) =>
           ['assigned', 'picked_up', 'in_transit'].includes(order.status)
         ) || [];
+        console.log('✅ Filtered in-progress orders:', inProgressOrders);
         setOrders(inProgressOrders);
       }
     } catch (error: any) {
@@ -188,6 +195,15 @@ export default function DriverDashboardPage() {
   };
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Photo capture state
+  const [photoCaptureModal, setPhotoCaptureModal] = useState<{
+    show: boolean;
+    orderId: string;
+    type: 'pickup' | 'dropoff';
+    orderIdStr: string; // The actual order ID string to send to API
+  } | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const handleAcceptOrder = async (orderId: string) => {
     try {
@@ -218,6 +234,33 @@ export default function DriverDashboardPage() {
       toast.error(error?.response?.data?.message || 'Failed to update status');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handlePhotoUpload = async (photoBase64: string) => {
+    if (!photoCaptureModal) return;
+
+    try {
+      setIsUploadingPhoto(true);
+
+      if (photoCaptureModal.type === 'pickup') {
+        await deliveryAPI.uploadPickupPhoto(photoCaptureModal.orderIdStr, photoBase64);
+        toast.success('Pickup photo uploaded successfully');
+      } else {
+        await deliveryAPI.uploadDropoffPhoto(photoCaptureModal.orderIdStr, photoBase64);
+        toast.success('Dropoff photo uploaded successfully');
+      }
+
+      // Close modal
+      setPhotoCaptureModal(null);
+
+      // Refresh orders to get updated photo URLs
+      fetchOrders(false);
+    } catch (error: any) {
+      console.error('Failed to upload photo:', error);
+      toast.error(error?.response?.data?.message || 'Failed to upload photo');
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -287,42 +330,94 @@ export default function DriverDashboardPage() {
     }
 
     if (order.status === 'picked_up') {
+      const hasPickupPhoto = order.pickup?.photoUrl;
       return (
-        <Button
-          size="sm"
-          onClick={() => handleUpdateStatus(order._id, 'in_transit')}
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Updating...</span>
-            </div>
-          ) : (
-            'Start Delivery'
+        <div className="space-y-2">
+          {!hasPickupPhoto && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPhotoCaptureModal({
+                show: true,
+                orderId: order._id,
+                type: 'pickup',
+                orderIdStr: order.orderId
+              })}
+              disabled={isLoading}
+              className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Capture Pickup Photo
+            </Button>
           )}
-        </Button>
+          {hasPickupPhoto && (
+            <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+              <ImageIcon className="w-4 h-4" />
+              <span>Pickup photo uploaded</span>
+            </div>
+          )}
+          <Button
+            size="sm"
+            onClick={() => handleUpdateStatus(order._id, 'in_transit')}
+            disabled={isLoading}
+            className="w-full"
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Updating...</span>
+              </div>
+            ) : (
+              'Start Delivery'
+            )}
+          </Button>
+        </div>
       );
     }
 
     if (order.status === 'in_transit') {
+      const hasDropoffPhoto = order.dropoff?.photoUrl;
       return (
-        <Button
-          size="sm"
-          onClick={() => handleUpdateStatus(order._id, 'delivered')}
-          disabled={isLoading}
-          className="w-full bg-green-600 hover:bg-green-700"
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Completing...</span>
-            </div>
-          ) : (
-            'Complete Delivery'
+        <div className="space-y-2">
+          {!hasDropoffPhoto && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPhotoCaptureModal({
+                show: true,
+                orderId: order._id,
+                type: 'dropoff',
+                orderIdStr: order.orderId
+              })}
+              disabled={isLoading}
+              className="w-full border-green-600 text-green-600 hover:bg-green-50"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Capture Dropoff Photo
+            </Button>
           )}
-        </Button>
+          {hasDropoffPhoto && (
+            <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+              <ImageIcon className="w-4 h-4" />
+              <span>Dropoff photo uploaded</span>
+            </div>
+          )}
+          <Button
+            size="sm"
+            onClick={() => handleUpdateStatus(order._id, 'delivered')}
+            disabled={isLoading}
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Completing...</span>
+              </div>
+            ) : (
+              'Complete Delivery'
+            )}
+          </Button>
+        </div>
       );
     }
 
@@ -374,13 +469,17 @@ export default function DriverDashboardPage() {
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Driver Dashboard</h1>
               <p className="text-sm text-gray-600 mt-1">Manage your deliveries</p>
             </div>
-            {/* Silent refresh indicator */}
-            {isRefreshing && (
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                <span className="hidden sm:inline">Updating...</span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {/* Test Order Button */}
+              <TestOrderButton />
+              {/* Silent refresh indicator */}
+              {isRefreshing && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span className="hidden sm:inline">Updating...</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Location Tracking Card */}
@@ -705,7 +804,7 @@ export default function DriverDashboardPage() {
                       )}
                     </div>
                     <div className="text-gray-600">
-                      {order.distance?.distanceKm?.toFixed(1)} km • {order.distance?.durationMinutes} min
+                      {(order.distance?.km || order.distance?.distanceKm)?.toFixed(1)} km • {order.distance?.durationMinutes} min
                     </div>
                   </div>
                   {order.package?.description && (
@@ -730,6 +829,17 @@ export default function DriverDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Photo Capture Modal */}
+      {photoCaptureModal?.show && (
+        <PhotoCapture
+          onPhotoCapture={handlePhotoUpload}
+          onCancel={() => setPhotoCaptureModal(null)}
+          title={`Capture ${photoCaptureModal.type === 'pickup' ? 'Pickup' : 'Dropoff'} Photo`}
+          uploadButtonText="Upload Photo"
+          isUploading={isUploadingPhoto}
+        />
+      )}
     </div>
   );
 }

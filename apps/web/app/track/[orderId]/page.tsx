@@ -3,18 +3,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { GoogleMap, Marker, Polyline, DirectionsRenderer, Circle } from '@react-google-maps/api';
-import { 
-  Package, 
-  MapPin, 
-  Phone, 
-  User, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Package,
+  MapPin,
+  Phone,
+  User,
+  Clock,
+  CheckCircle2,
   Truck,
   Navigation,
   Loader2,
   AlertCircle,
-  Home
+  Home,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { trackingAPI, TrackingInfo } from '../../../lib/api/tracking';
@@ -387,6 +388,26 @@ export default function TrackOrderPage() {
                     {trackingInfo.order.pickup.contactName && (
                       <p className="text-xs text-gray-500 mt-1">{trackingInfo.order.pickup.contactName}</p>
                     )}
+                    {trackingInfo.order.pickup.photoUrl && (
+                      <div className="mt-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs font-semibold text-blue-600">Pickup Photo</span>
+                        </div>
+                        <a
+                          href={trackingInfo.order.pickup.photoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={trackingInfo.order.pickup.photoUrl}
+                            alt="Pickup photo"
+                            className="w-full rounded-lg border-2 border-blue-200 hover:border-blue-400 transition cursor-pointer"
+                          />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -405,6 +426,26 @@ export default function TrackOrderPage() {
                     <p className="text-sm text-gray-900 mt-1">{trackingInfo.order.dropoff.address}</p>
                     {trackingInfo.order.dropoff.contactName && (
                       <p className="text-xs text-gray-500 mt-1">{trackingInfo.order.dropoff.contactName}</p>
+                    )}
+                    {trackingInfo.order.dropoff.photoUrl && (
+                      <div className="mt-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <ImageIcon className="w-4 h-4 text-green-600" />
+                          <span className="text-xs font-semibold text-green-600">Dropoff Photo</span>
+                        </div>
+                        <a
+                          href={trackingInfo.order.dropoff.photoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={trackingInfo.order.dropoff.photoUrl}
+                            alt="Dropoff photo"
+                            className="w-full rounded-lg border-2 border-green-200 hover:border-green-400 transition cursor-pointer"
+                          />
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
