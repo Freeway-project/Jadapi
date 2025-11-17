@@ -53,10 +53,26 @@ export const OtpService = {
     }
 
     // Invalidate any existing unverified OTPs for this identifier and type
-    await Otp.updateMany(
+    const invalidatedCount = await Otp.updateMany(
       { identifier, type, verified: false, invalidated: false },
       { $set: { invalidated: true } }
     );
+
+    if (process.env.NODE_ENV === 'development' && invalidatedCount.modifiedCount > 0) {
+      logger.info({ count: invalidatedCount.modifiedCount, identifier, type }, 'OtpService.generateOtp - invalidated old OTPs');
+    }
+
+    // Also delete any invalidated OTPs from the previous 30 minutes to avoid confusion
+    const deletedCount = await Otp.deleteMany({
+      identifier,
+      type,
+      invalidated: true,
+      createdAt: { $lt: new Date(Date.now() - 30 * 60 * 1000) }
+    });
+
+    if (process.env.NODE_ENV === 'development' && deletedCount.deletedCount > 0) {
+      logger.info({ count: deletedCount.deletedCount, identifier, type }, 'OtpService.generateOtp - deleted old invalidated OTPs');
+    }
 
     // Generate 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -153,6 +169,11 @@ export const OtpService = {
 
     if (!otp) {
       throw new ApiError(400, "No OTP found for this identifier. Please request a new one.");
+    }
+
+    // Check if invalidated
+    if (otp.invalidated) {
+      throw new ApiError(400, "This OTP is no longer valid. Please request a new one.");
     }
 
     // Check if expired

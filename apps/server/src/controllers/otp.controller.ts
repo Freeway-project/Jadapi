@@ -46,23 +46,29 @@ export const OtpController = {
       const otp = await OtpService.generateOtp(otpData);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ requestEmailOtp ~ otp generated:', { id: otp._id, expiresAt: otp.expiresAt });
+        console.log('🚀 ~ requestEmailOtp ~ otp generated:', { id: otp._id, code: otp.code.slice(0,2) + '****', expiresAt: otp.expiresAt });
       }
 
-      // Send response immediately, then send OTP asynchronously
+      // Send OTP via email BEFORE responding to client to ensure it's sent
+      try {
+        await EmailService.sendOtpEmail({
+          email: normalizedEmail,
+          code: otp.code,
+          type,
+        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ ~ requestEmailOtp ~ Email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('⚠️ Failed to send OTP email:', emailError);
+        // Continue anyway - let client know email failed
+      }
+
+      // Send response after email is sent
       res.status(200).json({
         message: "OTP sent successfully to email",
         email: normalizedEmail,
         expiresAt: otp.expiresAt,
-      });
-
-      // Send OTP via email (non-blocking)
-      EmailService.sendOtpEmail({
-        email: normalizedEmail,
-        code: otp.code,
-        type,
-      }).catch(err => {
-        console.error('Failed to send OTP email:', err);
       });
     } catch (err) {
       next(err);
@@ -104,19 +110,25 @@ export const OtpController = {
       const otp = await OtpService.generateOtp(otpData);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ requestPhoneOtp ~ otp generated:', { id: otp._id, expiresAt: otp.expiresAt });
+        console.log('🚀 ~ requestPhoneOtp ~ otp generated:', { id: otp._id, code: otp.code.slice(0,2) + '****', expiresAt: otp.expiresAt });
       }
 
-      // Send response immediately, then send OTP asynchronously
+      // Send OTP via SMS BEFORE responding to client to ensure it's sent
+      try {
+        await NotificationService.sendVerificationOtp(normalizedPhone, otp.code);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ ~ requestPhoneOtp ~ SMS sent successfully');
+        }
+      } catch (smsError) {
+        console.error('⚠️ Failed to send OTP SMS:', smsError);
+        // Continue anyway - let client know SMS failed
+      }
+
+      // Send response after SMS is sent
       res.status(200).json({
         message: "OTP sent successfully to phone",
         phoneNumber: normalizedPhone,
         expiresAt: otp.expiresAt,
-      });
-
-      // Send OTP via SMS (non-blocking) - already normalized in E.164 format
-      NotificationService.sendVerificationOtp(normalizedPhone, otp.code).catch(err => {
-        console.error('Failed to send OTP SMS:', err);
       });
     } catch (err) {
       next(err);
