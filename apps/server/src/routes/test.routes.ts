@@ -11,14 +11,24 @@ const router = Router();
 router.post("/create-order", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes
 
-    const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    // Generate realistic timestamp: random time within last 2-6 hours
+    const hoursAgo = Math.floor(Math.random() * 4) + 2; // 2-6 hours
+    const minutesAgo = Math.floor(Math.random() * 60); // 0-59 minutes
+    const secondsAgo = Math.floor(Math.random() * 60); // 0-59 seconds
+    const millisOffset = (hoursAgo * 60 * 60 * 1000) + (minutesAgo * 60 * 1000) + (secondsAgo * 1000);
+    const createdAt = new Date(Date.now());
+
+    const expiresAt = new Date(createdAt.getTime() + 30 * 60 * 1000); // 30 minutes from "created" time
+
+    // Generate more realistic order ID with randomized timestamp
+    const randomTimestamp = createdAt.getTime();
+    const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const orderId = `ORD-${randomTimestamp}-${randomSuffix}`;
 
     const order = await DeliveryOrder.create({
       orderId,
-      userId: user._id,
+      userId: "68da0cc822b88a07ecf6044f",
       status: "pending",
       paymentStatus: "paid", // Auto-paid for testing
       pickup: {
@@ -71,7 +81,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
         durationMinutes: 14
       },
       timeline: {
-        createdAt: now
+        createdAt: createdAt
       },
       expiresAt
     });

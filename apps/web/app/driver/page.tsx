@@ -14,7 +14,7 @@ import PhotoCapture from '../../components/booking/PhotoCapture';
 import TestOrderButton from '../../components/TestOrderButton';
 import toast from 'react-hot-toast';
 
-type OrderStatus = 'available' | 'in_progress';
+type OrderStatus = 'available' | 'in_progress' | 'completed';
 
 // Helper function to generate Google Maps directions URL with full route
 const getRouteDirectionsUrl = (
@@ -160,10 +160,8 @@ export default function DriverDashboardPage() {
         // Fetch available orders (pending, no driver assigned)
         const response = await driverAPI.getAvailableOrders({ limit: 50 });
         setOrders(response.data?.orders || []);
-      } else {
+      } else if (activeStatus === 'in_progress') {
         // Fetch in-progress orders (assigned, picked_up, in_transit)
-        // Note: Backend doesn't support multiple status filtering, so we'll fetch all driver orders
-        // and filter client-side
         const response = await driverAPI.getMyOrders({ limit: 50 });
         console.log('📦 My Orders API Response:', response);
         console.log('📊 All orders:', response.data?.orders);
@@ -173,6 +171,14 @@ export default function DriverDashboardPage() {
         ) || [];
         console.log('✅ Filtered in-progress orders:', inProgressOrders);
         setOrders(inProgressOrders);
+      } else if (activeStatus === 'completed') {
+        // Fetch completed orders (delivered)
+        const response = await driverAPI.getMyOrders({ limit: 100 });
+        const completedOrders = response.data?.orders?.filter((order: DriverOrder) =>
+          order.status === 'delivered'
+        ) || [];
+        console.log('✅ Completed orders:', completedOrders);
+        setOrders(completedOrders);
       }
     } catch (error: any) {
       console.error('Failed to fetch orders:', error);
@@ -286,8 +292,154 @@ export default function DriverDashboardPage() {
     ).join(' ');
   };
 
+  const renderCompletedOrderDetails = (order: DriverOrder) => {
+    return (
+      <div className="mt-4 space-y-3">
+        {/* Delivery Timeline */}
+        <div className="bg-green-50 rounded-lg p-3 sm:p-4 border border-green-200">
+          <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4" />
+            Delivery Timeline
+          </h4>
+          <div className="space-y-2.5">
+            {order.createdAt && (
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Order Created</p>
+                  <p className="text-xs text-gray-600">
+                    {new Date(order.createdAt).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+            {order.assignedAt && (
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Accepted</p>
+                  <p className="text-xs text-gray-600">
+                    {new Date(order.assignedAt).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+            {order.pickedUpAt && (
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Picked Up</p>
+                  <p className="text-xs text-gray-600">
+                    {new Date(order.pickedUpAt).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+            {order.deliveredAt && (
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Delivered</p>
+                  <p className="text-xs text-gray-600">
+                    {new Date(order.deliveredAt).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Photos */}
+        {(order.pickup?.photoUrl || order.dropoff?.photoUrl) && (
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+              <ImageIcon className="w-4 h-4" />
+              Delivery Photos
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {order.pickup?.photoUrl && (
+                <div>
+                  <p className="text-xs font-semibold text-blue-600 mb-2">Pickup Photo</p>
+                  <a
+                    href={order.pickup.photoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={order.pickup.photoUrl}
+                      alt="Pickup photo"
+                      className="w-full rounded-lg border-2 border-blue-200 hover:border-blue-400 transition cursor-pointer"
+                    />
+                  </a>
+                </div>
+              )}
+              {order.dropoff?.photoUrl && (
+                <div>
+                  <p className="text-xs font-semibold text-green-600 mb-2">Dropoff Photo</p>
+                  <a
+                    href={order.dropoff.photoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={order.dropoff.photoUrl}
+                      alt="Dropoff photo"
+                      className="w-full rounded-lg border-2 border-green-200 hover:border-green-400 transition cursor-pointer"
+                    />
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Earnings Summary */}
+        {order.payment?.driverEarnings && (
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-3 sm:p-4 border-2 border-green-300">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-green-700 font-medium">Your Earnings</p>
+                <p className="text-2xl font-bold text-green-900">₹{(order.payment.driverEarnings / 100).toFixed(2)}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderOrderActions = (order: DriverOrder) => {
     const isLoading = actionLoading === order._id;
+
+    // Show details for completed orders
+    if (activeStatus === 'completed') {
+      return renderCompletedOrderDetails(order);
+    }
 
     if (activeStatus === 'available') {
       return (
@@ -627,30 +779,35 @@ export default function DriverDashboardPage() {
 
         {/* Status Tabs - Mobile First */}
         <div className="mb-6">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {[
               { key: 'available' as OrderStatus, label: 'Available', icon: Package, count: activeStatus === 'available' ? orders.length : null, color: 'orange' },
-              { key: 'in_progress' as OrderStatus, label: 'In Progress', icon: Navigation, count: activeStatus === 'in_progress' ? orders.length : null, color: 'blue' },
+              { key: 'in_progress' as OrderStatus, label: 'Active', icon: Navigation, count: activeStatus === 'in_progress' ? orders.length : null, color: 'blue' },
+              { key: 'completed' as OrderStatus, label: 'Completed', icon: CheckCircle, count: activeStatus === 'completed' ? orders.length : null, color: 'green' },
             ].map(({ key, label, icon: Icon, count, color }) => (
               <button
                 key={key}
                 onClick={() => setActiveStatus(key)}
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl font-semibold transition-all ${
+                className={`flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl font-semibold transition-all ${
                   activeStatus === key
                     ? color === 'orange'
                       ? 'bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-200 scale-[1.02]'
-                      : 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200 scale-[1.02]'
+                      : color === 'blue'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200 scale-[1.02]'
+                        : 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-200 scale-[1.02]'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <Icon className="w-6 h-6" />
-                <span className="text-base">{label}</span>
+                <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="text-xs sm:text-base">{label}</span>
                 {count !== null && (
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                  <span className={`text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full font-semibold ${
                     activeStatus === key
                       ? color === 'orange'
                         ? 'bg-orange-400 text-white'
-                        : 'bg-blue-400 text-white'
+                        : color === 'blue'
+                          ? 'bg-blue-400 text-white'
+                          : 'bg-green-400 text-white'
                       : 'bg-gray-200 text-gray-700'
                   }`}>
                     {count}
@@ -818,12 +975,18 @@ export default function DriverDashboardPage() {
             ))
           ) : (
             <div className="bg-white rounded-lg shadow p-12 text-center">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              {activeStatus === 'completed' ? (
+                <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              ) : (
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              )}
               <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
               <p className="text-gray-600">
                 {activeStatus === 'available'
                   ? 'No available orders at the moment'
-                  : `No ${activeStatus.replace('_', ' ')} orders`}
+                  : activeStatus === 'completed'
+                    ? 'No completed deliveries yet'
+                    : `No ${activeStatus.replace('_', ' ')} orders`}
               </p>
             </div>
           )}
