@@ -395,4 +395,27 @@ export const adminAPI = {
     const res = await apiClient.patch(`/admin/orders/${orderId}/admin-note`, { adminNote });
     return res.data.data;
   },
+
+  async getUserDetails(userId: string): Promise<{
+    user: User;
+    orders: Order[];
+    activities: Activity[];
+    stats: {
+      totalOrders: number;
+      byStatus: Record<string, number>;
+      byPaymentStatus: Record<string, number>;
+      totalRevenue: number;
+    };
+  }> {
+    const res = await apiClient.get(`/admin/users/${userId}/details`);
+    return res.data.data;
+  },
+
+  async getOrderDetails(orderId: string): Promise<{
+    order: Order;
+    activities: Activity[];
+  }> {
+    const res = await apiClient.get(`/admin/orders/${orderId}/details`);
+    return res.data.data;
+  },
 };

@@ -2,6 +2,7 @@ import { DeliveryOrder } from "../models/DeliveryOrder";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { Types } from "mongoose";
+import { logger } from "../utils/logger";
 
 export class DriverService {
   /**
@@ -83,8 +84,13 @@ export class DriverService {
       query.status = status;
     }
 
-    console.log('🔍 getDriverOrders - Query:', JSON.stringify(query));
-    console.log('🔍 getDriverOrders - DriverId:', driverId.toString());
+    logger.debug({
+      query,
+      driverId: driverId.toString(),
+      status,
+      limit,
+      skip
+    }, 'DriverService.getDriverOrders - Fetching orders');
 
     const orders = await DeliveryOrder.find(query)
       .populate("userId", "uuid profile.name auth.phone")
@@ -94,8 +100,12 @@ export class DriverService {
 
     const total = await DeliveryOrder.countDocuments(query);
 
-    console.log('✅ getDriverOrders - Found:', orders.length, 'orders');
-    console.log('📊 getDriverOrders - Order IDs:', orders.map(o => o.orderId));
+    logger.info({
+      driverId: driverId.toString(),
+      count: orders.length,
+      total,
+      orderIds: orders.map(o => o.orderId)
+    }, 'DriverService.getDriverOrders - Orders retrieved');
 
     return {
       orders,
@@ -109,6 +119,11 @@ export class DriverService {
    * @param orderIdOrMongoId - Can be either orderId (ORD-XXX) or MongoDB _id
    */
   static async acceptOrder(orderIdOrMongoId: string, driverId: Types.ObjectId) {
+    logger.info({
+      orderIdOrMongoId,
+      driverId: driverId.toString()
+    }, 'DriverService.acceptOrder - Driver attempting to accept order');
+
     // Try to find by orderId first, then by _id
     let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
 
@@ -118,34 +133,64 @@ export class DriverService {
     }
 
     if (!order) {
+      logger.warn({ orderIdOrMongoId, driverId: driverId.toString() }, 'DriverService.acceptOrder - Order not found');
       throw new ApiError(404, "Order not found");
     }
 
     // Check if order is cancelled
     if (order.status === "cancelled") {
+      logger.warn({
+        orderId: order.orderId,
+        driverId: driverId.toString(),
+        status: order.status
+      }, 'DriverService.acceptOrder - Order already cancelled');
       throw new ApiError(400, "This order has been cancelled and cannot be accepted");
     }
 
     // Check if order has expired (past 30-minute window)
     if (order.expiresAt && new Date() > order.expiresAt) {
+      logger.warn({
+        orderId: order.orderId,
+        driverId: driverId.toString(),
+        expiresAt: order.expiresAt
+      }, 'DriverService.acceptOrder - Order expired');
       throw new ApiError(400, "This order has expired and is no longer available");
     }
 
     if (order.status !== "pending") {
+      logger.warn({
+        orderId: order.orderId,
+        driverId: driverId.toString(),
+        currentStatus: order.status
+      }, 'DriverService.acceptOrder - Order not in pending status');
       throw new ApiError(400, "Order is not available for assignment");
     }
 
     if (order.driverId) {
+      logger.warn({
+        orderId: order.orderId,
+        requestingDriverId: driverId.toString(),
+        assignedDriverId: order.driverId.toString()
+      }, 'DriverService.acceptOrder - Order already assigned');
       throw new ApiError(409, "Order already assigned to another driver");
     }
 
     if (order.paymentStatus !== "paid") {
+      logger.warn({
+        orderId: order.orderId,
+        driverId: driverId.toString(),
+        paymentStatus: order.paymentStatus
+      }, 'DriverService.acceptOrder - Payment not confirmed');
       throw new ApiError(400, "Order payment not confirmed");
     }
 
     // Verify driver exists and has driver role
     const driver = await User.findById(driverId);
     if (!driver || !driver.roles.includes("driver")) {
+      logger.error({
+        driverId: driverId.toString(),
+        orderId: order.orderId
+      }, 'DriverService.acceptOrder - Invalid driver');
       throw new ApiError(403, "Invalid driver");
     }
 
@@ -156,6 +201,18 @@ export class DriverService {
     order.expiresAt = undefined; // Clear expiry since order is now assigned
 
     await order.save();
+
+    logger.info({
+      orderId: order.orderId,
+      driverId: driverId.toString(),
+      driverName: driver.profile?.name,
+      previousStatus: "pending",
+      newStatus: "assigned",
+      assignedAt: order.timeline.assignedAt,
+      pickup: order.pickup?.address,
+      dropoff: order.dropoff?.address,
+      total: order.pricing?.total
+    }, 'DriverService.acceptOrder - Order successfully assigned to driver');
 
     return order;
   }
@@ -169,6 +226,12 @@ export class DriverService {
     driverId: Types.ObjectId,
     newStatus: "picked_up" | "in_transit" | "delivered" | "cancelled"
   ) {
+    logger.info({
+      orderIdOrMongoId,
+      driverId: driverId.toString(),
+      newStatus
+    }, 'DriverService.updateOrderStatus - Driver updating order status');
+
     // Try to find by orderId first, then by _id
     let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
 
@@ -178,12 +241,20 @@ export class DriverService {
     }
 
     if (!order) {
+      logger.warn({ orderIdOrMongoId, driverId: driverId.toString() }, 'DriverService.updateOrderStatus - Order not found');
       throw new ApiError(404, "Order not found");
     }
 
     if (!order.driverId || order.driverId.toString() !== driverId.toString()) {
+      logger.error({
+        orderId: order.orderId,
+        requestingDriverId: driverId.toString(),
+        assignedDriverId: order.driverId?.toString()
+      }, 'DriverService.updateOrderStatus - Unauthorized: Order not assigned to this driver');
       throw new ApiError(403, "Order not assigned to this driver");
     }
+
+    const previousStatus = order.status;
 
     // Validate status transitions (one-way flow)
     const validTransitions: Record<string, string[]> = {
@@ -196,6 +267,11 @@ export class DriverService {
 
     // Check if current status allows any transitions
     if (!validTransitions[order.status]) {
+      logger.error({
+        orderId: order.orderId,
+        currentStatus: order.status,
+        newStatus
+      }, 'DriverService.updateOrderStatus - Invalid current status');
       throw new ApiError(
         400,
         `Invalid current status: ${order.status}`
@@ -204,6 +280,12 @@ export class DriverService {
 
     // Check if transition is allowed
     if (!validTransitions[order.status].includes(newStatus)) {
+      logger.warn({
+        orderId: order.orderId,
+        currentStatus: order.status,
+        attemptedStatus: newStatus,
+        validTransitions: validTransitions[order.status]
+      }, 'DriverService.updateOrderStatus - Invalid status transition');
       throw new ApiError(
         400,
         `Cannot change status from ${order.status} to ${newStatus}. ${order.status === 'delivered' || order.status === 'cancelled' ? 'This order is already completed.' : ''}`
@@ -217,20 +299,47 @@ export class DriverService {
       case "picked_up":
         order.timeline.pickedUpAt = new Date();
         order.pickup.actualAt = new Date();
+        logger.info({
+          orderId: order.orderId,
+          pickedUpAt: order.timeline.pickedUpAt,
+          pickupAddress: order.pickup?.address
+        }, 'DriverService.updateOrderStatus - Package picked up');
         break;
       case "in_transit":
-        // No specific timeline field for in_transit
+        logger.info({
+          orderId: order.orderId
+        }, 'DriverService.updateOrderStatus - Package in transit');
         break;
       case "delivered":
         order.timeline.deliveredAt = new Date();
         order.dropoff.actualAt = new Date();
+        logger.info({
+          orderId: order.orderId,
+          deliveredAt: order.timeline.deliveredAt,
+          dropoffAddress: order.dropoff?.address,
+          totalAmount: order.pricing?.total,
+          duration: order.timeline.deliveredAt.getTime() - order.timeline.createdAt.getTime()
+        }, 'DriverService.updateOrderStatus - Package delivered successfully');
         break;
       case "cancelled":
         order.timeline.cancelledAt = new Date();
+        logger.warn({
+          orderId: order.orderId,
+          cancelledAt: order.timeline.cancelledAt,
+          previousStatus
+        }, 'DriverService.updateOrderStatus - Order cancelled by driver');
         break;
     }
 
     await order.save();
+
+    logger.info({
+      orderId: order.orderId,
+      driverId: driverId.toString(),
+      previousStatus,
+      newStatus,
+      timeline: order.timeline
+    }, `DriverService.updateOrderStatus - Status updated: ${previousStatus} → ${newStatus}`);
 
     return order;
   }

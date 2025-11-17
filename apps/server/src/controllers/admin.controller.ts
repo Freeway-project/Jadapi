@@ -405,4 +405,42 @@ export class AdminController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/admin/users/:userId/details
+   * Get comprehensive user details including orders, activity, and stats
+   */
+  static async getUserDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.params;
+
+      const details = await AdminService.getUserDetails(userId);
+
+      res.json({
+        success: true,
+        data: details,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/admin/orders/:orderId/details
+   * Get comprehensive order details including user, driver, and activity logs
+   */
+  static async getOrderDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { orderId } = req.params;
+
+      const details = await AdminService.getOrderDetails(orderId);
+
+      res.json({
+        success: true,
+        data: details,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

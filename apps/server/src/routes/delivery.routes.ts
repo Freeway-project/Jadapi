@@ -309,6 +309,47 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       expiresAt // Auto-cancel if not assigned within 30 minutes
     });
 
+    logger.info({
+      orderId: order.orderId,
+      userId: user._id.toString(),
+      userEmail: user.auth?.email,
+      userPhone: user.auth?.phone,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      pickup: {
+        address: order.pickup?.address,
+        contactName: order.pickup?.contactName,
+        contactPhone: order.pickup?.contactPhone
+      },
+      dropoff: {
+        address: order.dropoff?.address,
+        contactName: order.dropoff?.contactName,
+        contactPhone: order.dropoff?.contactPhone
+      },
+      package: {
+        size: order.package?.size,
+        weight: order.package?.weight,
+        description: order.package?.description
+      },
+      pricing: {
+        subtotal: order.pricing?.subtotal,
+        tax: order.pricing?.tax,
+        total: order.pricing?.total,
+        couponDiscount: order.pricing?.couponDiscount
+      },
+      coupon: couponData ? {
+        code: couponData.code,
+        discountType: couponData.discountType,
+        discountValue: couponData.discountValue
+      } : null,
+      distance: {
+        km: order.distance?.km,
+        durationMinutes: order.distance?.durationMinutes
+      },
+      expiresAt: order.expiresAt,
+      createdAt: order.timeline?.createdAt
+    }, 'delivery.routes - Order created successfully');
+
     res.status(201).json({
       success: true,
       data: { order },
