@@ -54,8 +54,14 @@ export interface DriverOrder {
     distanceKm?: number;
     durationMinutes: number;
   };
+  payment?: {
+    driverEarnings: number;
+    platformFee: number;
+  };
   createdAt: string;
   assignedAt?: string;
+  pickedUpAt?: string;
+  deliveredAt?: string;
 }
 
 export interface OrdersListResponse {

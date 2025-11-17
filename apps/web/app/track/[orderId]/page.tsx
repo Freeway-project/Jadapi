@@ -281,232 +281,103 @@ export default function TrackOrderPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      {/* Compact Mobile Header */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Track Your Delivery</h1>
-              <p className="text-sm text-gray-500 mt-1">Order #{trackingInfo.order.orderId}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Track Delivery</h1>
+              <p className="text-xs sm:text-sm text-gray-500 truncate">#{trackingInfo.order.orderId}</p>
             </div>
-            <Button onClick={() => router.push('/')} variant="outline" size="sm">
-              <Home className="w-4 h-4 mr-2" />
-              Home
+            <Button onClick={() => router.push('/')} variant="outline" size="sm" className="ml-2">
+              <Home className="w-4 h-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Order Details */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Status Card */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${statusInfo.color} font-semibold`}>
-                {statusInfo.icon}
-                {statusInfo.label}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
+        {/* Mobile-First: Map First, Then Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          {/* Map - Shows First on Mobile */}
+          <div className="lg:col-span-2 order-1 lg:order-2">
+            {/* Status Banner - Compact for Mobile */}
+            <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mb-3 sm:mb-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full ${statusInfo.color} font-semibold text-sm sm:text-base`}>
+                  {statusInfo.icon}
+                  {statusInfo.label}
+                </div>
+                {lastUpdated && isActive && (
+                  <p className="text-xs text-gray-500">
+                    Updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                )}
               </div>
 
-              {/* ETA if driver is en route */}
+              {/* ETA Banner - Prominent for Mobile */}
               {driverToDropoffDirections && isActive && (
-                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Navigation className="w-5 h-5 text-green-600" />
-                    <span className="font-semibold text-green-900">Estimated Arrival</span>
+                <div className="mt-3 p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Navigation className="w-5 h-5 text-green-600" />
+                      <span className="font-semibold text-green-900 text-sm sm:text-base">ETA</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl sm:text-2xl font-bold text-green-700">
+                        {driverToDropoffDirections.routes[0]?.legs[0]?.duration?.text || 'Calculating...'}
+                      </p>
+                      <p className="text-xs sm:text-sm text-green-600">
+                        {driverToDropoffDirections.routes[0]?.legs[0]?.distance?.text || 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-green-700">
-                    {driverToDropoffDirections.routes[0]?.legs[0]?.duration?.text || 'Calculating...'}
-                  </p>
-                  <p className="text-sm text-green-600 mt-1">
-                    Distance: {driverToDropoffDirections.routes[0]?.legs[0]?.distance?.text || 'N/A'}
-                  </p>
                 </div>
-              )}
-
-              {lastUpdated && isActive && (
-                <p className="text-xs text-gray-500 mt-3">
-                  Last updated: {lastUpdated.toLocaleTimeString()}
-                </p>
               )}
             </div>
 
-            {/* Driver Info */}
+            {/* Driver Quick Contact - Prominent on Mobile */}
             {trackingInfo.driver && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-600" />
-                  Your Driver
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-600">Name</p>
-                    <p className="font-medium text-gray-900">{trackingInfo.driver.name}</p>
+              <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mb-3 sm:mb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-600">Your Driver</p>
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{trackingInfo.driver.name}</p>
+                      {trackingInfo.driver.vehicle && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {trackingInfo.driver.vehicle.type} - {trackingInfo.driver.vehicle.plateNumber}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   {trackingInfo.driver.phone && (
-                    <div>
-                      <p className="text-sm text-gray-600">Contact</p>
-                      <a 
-                        href={`tel:${trackingInfo.driver.phone}`}
-                        className="font-medium text-blue-600 hover:underline flex items-center gap-2"
+                    <a
+                      href={`tel:${trackingInfo.driver.phone}`}
+                      className="flex-shrink-0"
+                    >
+                      <Button
+                        size="lg"
+                        className="bg-green-600 hover:bg-green-700 text-white h-10 sm:h-12 px-4 sm:px-6"
                       >
-                        <Phone className="w-4 h-4" />
-                        {trackingInfo.driver.phone}
-                      </a>
-                    </div>
-                  )}
-                  {trackingInfo.driver.vehicle && (
-                    <div>
-                      <p className="text-sm text-gray-600">Vehicle</p>
-                      <p className="font-medium text-gray-900">
-                        {trackingInfo.driver.vehicle.type} - {trackingInfo.driver.vehicle.plateNumber}
-                      </p>
-                    </div>
+                        <Phone className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        <span className="font-semibold">Call</span>
+                      </Button>
+                    </a>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Delivery Details */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-blue-600" />
-                Delivery Details
-              </h3>
-              
-              <div className="space-y-4">
-                {/* Pickup */}
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-gray-600 uppercase">Pickup</p>
-                    <p className="text-sm text-gray-900 mt-1">{trackingInfo.order.pickup.address}</p>
-                    {trackingInfo.order.pickup.contactName && (
-                      <p className="text-xs text-gray-500 mt-1">{trackingInfo.order.pickup.contactName}</p>
-                    )}
-                    {trackingInfo.order.pickup.photoUrl && (
-                      <div className="mt-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ImageIcon className="w-4 h-4 text-blue-600" />
-                          <span className="text-xs font-semibold text-blue-600">Pickup Photo</span>
-                        </div>
-                        <a
-                          href={trackingInfo.order.pickup.photoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
-                        >
-                          <img
-                            src={trackingInfo.order.pickup.photoUrl}
-                            alt="Pickup photo"
-                            className="w-full rounded-lg border-2 border-blue-200 hover:border-blue-400 transition cursor-pointer"
-                          />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="pl-4 border-l-2 border-dashed border-gray-300 h-6"></div>
-
-                {/* Dropoff */}
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-red-600" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-gray-600 uppercase">Dropoff</p>
-                    <p className="text-sm text-gray-900 mt-1">{trackingInfo.order.dropoff.address}</p>
-                    {trackingInfo.order.dropoff.contactName && (
-                      <p className="text-xs text-gray-500 mt-1">{trackingInfo.order.dropoff.contactName}</p>
-                    )}
-                    {trackingInfo.order.dropoff.photoUrl && (
-                      <div className="mt-3">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ImageIcon className="w-4 h-4 text-green-600" />
-                          <span className="text-xs font-semibold text-green-600">Dropoff Photo</span>
-                        </div>
-                        <a
-                          href={trackingInfo.order.dropoff.photoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
-                        >
-                          <img
-                            src={trackingInfo.order.dropoff.photoUrl}
-                            alt="Dropoff photo"
-                            className="w-full rounded-lg border-2 border-green-200 hover:border-green-400 transition cursor-pointer"
-                          />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Package Info */}
-              <div className="mt-4 pt-4 border-t">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Package Size</span>
-                  <span className="font-medium text-gray-900">{trackingInfo.order.package.size}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm mt-2">
-                  <span className="text-gray-600">Distance</span>
-                  <span className="font-medium text-gray-900">{trackingInfo.order.distance.km} km</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-600" />
-                Timeline
-              </h3>
-              
-              <div className="space-y-3">
-                {trackingInfo.order.timeline.createdAt && (
-                  <TimelineItem 
-                    label="Order Placed"
-                    time={trackingInfo.order.timeline.createdAt}
-                    completed
-                  />
-                )}
-                {trackingInfo.order.timeline.assignedAt && (
-                  <TimelineItem 
-                    label="Driver Assigned"
-                    time={trackingInfo.order.timeline.assignedAt}
-                    completed
-                  />
-                )}
-                {trackingInfo.order.timeline.pickedUpAt && (
-                  <TimelineItem 
-                    label="Package Picked Up"
-                    time={trackingInfo.order.timeline.pickedUpAt}
-                    completed
-                  />
-                )}
-                {trackingInfo.order.timeline.deliveredAt && (
-                  <TimelineItem 
-                    label="Delivered"
-                    time={trackingInfo.order.timeline.deliveredAt}
-                    completed
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Map */}
-          <div className="lg:col-span-2">
-            <div className="relative bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '800px' }}>
+            {/* Map Container - Mobile Optimized */}
+            <div
+              className="relative bg-white rounded-lg shadow-md overflow-hidden h-[45vh] min-h-[350px] lg:h-[calc(100vh-180px)]"
+            >
               {isLoaded ? (
                 <>
                   <GoogleMap
@@ -624,28 +495,23 @@ export default function TrackOrderPage() {
                   ) : null}
                   </GoogleMap>
 
-                  {/* Map Legend */}
-                  <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">Map Legend</h4>
-                    <div className="space-y-2">
+                  {/* Compact Map Legend */}
+                  <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-2 sm:p-3 border border-gray-200">
+                    <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-blue-600"></div>
-                        <span className="text-xs text-gray-700">Pickup Location</span>
+                        <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                        <span className="text-xs text-gray-700">Pickup</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-red-600"></div>
-                        <span className="text-xs text-gray-700">Dropoff Location</span>
+                        <div className="w-3 h-3 rounded-full bg-red-600"></div>
+                        <span className="text-xs text-gray-700">Dropoff</span>
                       </div>
                       {driverLocation && isActive && (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-green-600"></div>
-                          <span className="text-xs text-gray-700">Driver (Live)</span>
+                          <div className="w-3 h-3 rounded-full bg-green-600"></div>
+                          <span className="text-xs text-gray-700">Driver</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-0.5 bg-blue-600"></div>
-                        <span className="text-xs text-gray-700">Driving Route</span>
-                      </div>
                     </div>
                   </div>
                 </>
@@ -656,6 +522,105 @@ export default function TrackOrderPage() {
               )}
             </div>
           </div>
+
+          {/* Details Column - Shows Second on Mobile */}
+          <div className="lg:col-span-1 order-2 lg:order-1 space-y-3 sm:space-y-4">
+            {/* Delivery Details - Compact */}
+            <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                Locations
+              </h3>
+
+              <div className="space-y-3">
+                {/* Pickup */}
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-600 uppercase">Pickup</p>
+                    <p className="text-xs sm:text-sm text-gray-900 mt-0.5">{trackingInfo.order.pickup.address}</p>
+                    {trackingInfo.order.pickup.contactName && (
+                      <p className="text-xs text-gray-500 mt-0.5">{trackingInfo.order.pickup.contactName}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="pl-3 border-l-2 border-dashed border-gray-300 h-4"></div>
+
+                {/* Dropoff */}
+                <div className="flex gap-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-red-100 flex items-center justify-center">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-red-600" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-600 uppercase">Dropoff</p>
+                    <p className="text-xs sm:text-sm text-gray-900 mt-0.5">{trackingInfo.order.dropoff.address}</p>
+                    {trackingInfo.order.dropoff.contactName && (
+                      <p className="text-xs text-gray-500 mt-0.5">{trackingInfo.order.dropoff.contactName}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Package Info - Compact */}
+              <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-xs text-gray-600">Package</span>
+                  <p className="font-medium text-gray-900 text-sm">{trackingInfo.order.package.size}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-gray-600">Distance</span>
+                  <p className="font-medium text-gray-900 text-sm">{trackingInfo.order.distance.km} km</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline - Compact */}
+            <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                Timeline
+              </h3>
+
+              <div className="space-y-2.5">
+                {trackingInfo.order.timeline.createdAt && (
+                  <TimelineItem
+                    label="Order Placed"
+                    time={trackingInfo.order.timeline.createdAt}
+                    completed
+                  />
+                )}
+                {trackingInfo.order.timeline.assignedAt && (
+                  <TimelineItem
+                    label="Driver Assigned"
+                    time={trackingInfo.order.timeline.assignedAt}
+                    completed
+                  />
+                )}
+                {trackingInfo.order.timeline.pickedUpAt && (
+                  <TimelineItem
+                    label="Picked Up"
+                    time={trackingInfo.order.timeline.pickedUpAt}
+                    completed
+                  />
+                )}
+                {trackingInfo.order.timeline.deliveredAt && (
+                  <TimelineItem
+                    label="Delivered"
+                    time={trackingInfo.order.timeline.deliveredAt}
+                    completed
+                  />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -664,16 +629,16 @@ export default function TrackOrderPage() {
 
 function TimelineItem({ label, time, completed }: { label: string; time: string; completed: boolean }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex-shrink-0 mt-1">
+    <div className="flex items-start gap-2">
+      <div className="flex-shrink-0 mt-0.5">
         {completed ? (
-          <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
         ) : (
-          <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+          <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-gray-300"></div>
         )}
       </div>
-      <div className="flex-1">
-        <p className="text-sm font-medium text-gray-900">{label}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-medium text-gray-900">{label}</p>
         <p className="text-xs text-gray-500">
           {new Date(time).toLocaleString('en-US', {
             month: 'short',
