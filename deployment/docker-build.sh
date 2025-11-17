@@ -2,7 +2,7 @@
 set -e
 
 echo "======================================"
-echo "  Building JadDPI Docker Images"
+echo "  Building Jaddpi Docker Images"
 echo "======================================"
 echo ""
 

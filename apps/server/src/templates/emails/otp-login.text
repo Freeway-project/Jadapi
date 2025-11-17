@@ -1,13 +1,13 @@
-JadDPI Login Verification
+Jaddpi Login Verification
 
-Your login verification code is: {{code}}
+Your login verification code is: {{otpCode}}
 
 This code will expire in 10 minutes. Please enter this code to complete your login.
 
 If you didn't request this login, please secure your account immediately.
 
 Best regards,
-The JadDPI Team
+The Jaddpi Team
 
 ---
-This email was sent to {{email}}. For security questions, contact our support team.
+For security questions, contact our support team at support@jaddpi.com

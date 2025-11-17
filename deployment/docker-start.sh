@@ -2,7 +2,7 @@
 set -e
 
 echo "======================================"
-echo "  Starting JadDPI Services"
+echo "  Starting Jaddpi Services"
 echo "======================================"
 echo ""
 
