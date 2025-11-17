@@ -87,6 +87,10 @@ export const OtpController = {
       // Normalize phone number - this will validate format
       const normalizedPhone = normalizePhone(phoneNumber);
 
+      if (!normalizedPhone) {
+        throw new ApiError(400, "Invalid phone number format");
+      }
+
       // For signup, check if phone already exists
       if (type === "signup") {
         const existingUser = await UserRepository.findByPhoneNumber(normalizedPhone);
@@ -242,8 +246,10 @@ export const OtpController = {
       // Check phone if provided
       if (phoneNumber) {
         const normalizedPhone = normalizePhone(phoneNumber);
-        const existingPhone = await UserRepository.findByPhoneNumber(normalizedPhone);
-        checks.phone = !!existingPhone;
+        if (normalizedPhone) {
+          const existingPhone = await UserRepository.findByPhoneNumber(normalizedPhone);
+          checks.phone = !!existingPhone;
+        }
       }
 
       res.status(200).json({
