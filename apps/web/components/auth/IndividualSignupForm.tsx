@@ -25,8 +25,6 @@ export default function IndividualSignupForm() {
   } = useForm<IndividualSignupFormData>({
     resolver: zodResolver(individualSignupSchema),
     defaultValues: {
-      email: storeEmail || '',
-      phoneNumber: storePhone || '',
       name: '',
       address: '',
       acceptTerms: false,
@@ -37,6 +35,9 @@ export default function IndividualSignupForm() {
   const watchedName = watch('name');
   // Complete Signup
   const onSubmit = async (data: IndividualSignupFormData) => {
+    console.log('🔵 [IndividualSignup] Form submitted with data:', data);
+    console.log('🔵 [IndividualSignup] Store values - email:', storeEmail, 'phone:', storePhone);
+    
     setIsSubmitting(true);
     setLoading(true);
 
@@ -204,6 +205,7 @@ export default function IndividualSignupForm() {
 
         <Button
           type="submit"
+          onClick={() => console.log('🔴 Button clicked!')}
           disabled={isSubmitting || isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
           size="lg"
