@@ -237,7 +237,6 @@ export default function IndividualSignupForm() {
 
         <Button
           type="submit"
-          onClick={() => console.log('🔴 Button clicked!')}
           disabled={isSubmitting || isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
           size="lg"

@@ -36,24 +36,16 @@ export const otpSchema = z.object({
 });
 
 export const individualSignupSchema = z.object({
-  email: z.string().optional().or(z.literal('')),
-  phoneNumber: z.string().optional().or(z.literal('')),
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  address: z.string().min(10, 'Address is required'),
+  name: z.string().min(1, 'Name is required'),
+  address: z.string().min(1, 'Address is required'),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'You must accept the terms and conditions',
   }),
 });
 
 export const businessSignupSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  phoneNumber: z.string().regex(phoneRegex, 'Please enter a valid phone number'),
-  businessName: z.string().min(2, 'Business name must be at least 2 characters').refine(val => val.trim().length >= 2, {
-    message: 'Business name is required and must be at least 2 characters',
-  }),
-  address: vancouverAddressSchema.refine(val => val && val.trim().length >= 10, {
-    message: 'Address is required',
-  }),
+  businessName: z.string().min(1, 'Business name is required'),
+  address: z.string().min(1, 'Address is required'),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'You must accept the terms and conditions',
   }),

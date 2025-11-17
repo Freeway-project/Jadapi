@@ -25,8 +25,6 @@ export default function BusinessSignupForm() {
   } = useForm<BusinessSignupFormData>({
     resolver: zodResolver(businessSignupSchema),
     defaultValues: {
-      email: storeEmail || '',
-      phoneNumber: storePhone || '',
       businessName: '',
       address: '',
       acceptTerms: false,
