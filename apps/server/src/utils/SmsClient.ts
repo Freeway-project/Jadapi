@@ -153,6 +153,30 @@ export const SmsTemplates = {
   otp: (code: string, minutes: number = 5) =>
     `Your Jaddpi verification code is ${code}. It expires in ${minutes} minutes. Don't share this code with anyone.`,
 
+  // Order Accepted - To Sender (Pickup Contact)
+  orderAcceptedSender: (orderId: string, driverName: string) =>
+    `✅ Order #${orderId} accepted by driver ${driverName}. Your package will be picked up soon. Track: ${getTrackingUrl(orderId)}`,
+
+  // Order Accepted - To Receiver (Dropoff Contact)
+  orderAcceptedReceiver: (orderId: string, driverName: string) =>
+    `📦 Order #${orderId} accepted by driver ${driverName}. Package is on its way to you. Track: ${getTrackingUrl(orderId)}`,
+
+  // Package Picked Up - To Sender
+  packagePickedUpSender: (orderId: string, driverName: string) =>
+    `✅ Package #${orderId} picked up by ${driverName}. Now in transit to destination. Track: ${getTrackingUrl(orderId)}`,
+
+  // Package Picked Up - To Receiver
+  packagePickedUpReceiver: (orderId: string, driverName: string) =>
+    `📦 Your package #${orderId} has been picked up by ${driverName} and is on its way. Track: ${getTrackingUrl(orderId)}`,
+
+  // Package Delivered - To Sender
+  packageDeliveredSender: (orderId: string) =>
+    `✅ Package #${orderId} successfully delivered! Thank you for using Jaddpi.`,
+
+  // Package Delivered - To Receiver
+  packageDeliveredReceiver: (orderId: string) =>
+    `✅ Your package #${orderId} has been delivered! Thank you for using Jaddpi.`,
+
   deliveryStarted: (orderId: string, driverName: string) =>
     `📦 Your package #${orderId} is out for delivery with ${driverName}. Track your delivery at ${getTrackingUrl(orderId)}`,
 
@@ -161,11 +185,11 @@ export const SmsTemplates = {
 
   bookingConfirmed: (orderId: string, pickupTime: string) =>
     `📋 Booking confirmed! Order #${orderId} will be picked up at ${pickupTime}. Track at ${getTrackingUrl(orderId)}`,
-  
-  deliveryAttempted: (orderId: string, nextAttempt: string) => 
+
+  deliveryAttempted: (orderId: string, nextAttempt: string) =>
     `❗ Delivery attempt failed for #${orderId}. Next attempt: ${nextAttempt}. Contact us if needed.`,
-  
-  deliveryException: (orderId: string, reason: string) => 
+
+  deliveryException: (orderId: string, reason: string) =>
     `⚠️ Delivery issue for #${orderId}: ${reason}. Please contact support for assistance.`
 };
 
