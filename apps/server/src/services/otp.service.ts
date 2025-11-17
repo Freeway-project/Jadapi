@@ -1,6 +1,7 @@
 import { Otp, OtpDoc } from "../models/Otp";
 import { ApiError } from "../utils/ApiError";
 import { logger } from "../utils/logger";
+import { normalizePhone } from "../utils/phoneNormalization";
 
 export interface GenerateOtpData {
   email?: string;
@@ -27,12 +28,24 @@ export const OtpService = {
       throw new ApiError(400, "Either email or phone number is required");
     }
 
+    // Normalize phone number to E.164 format
+    const normalizedPhone = normalizePhone(phoneNumber);
+    const normalizedEmail = email?.toLowerCase().trim();
+
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug({
+        originalPhone: phoneNumber,
+        normalizedPhone,
+        normalizedEmail
+      }, 'OtpService.generateOtp - normalized data');
+    }
+
     // Create a combined identifier for easier querying
     let identifier = "";
-    if (email && phoneNumber) {
-      identifier = `${email}|${phoneNumber}`;
+    if (normalizedEmail && normalizedPhone) {
+      identifier = `${normalizedEmail}|${normalizedPhone}`;
     } else {
-      identifier = email || phoneNumber || "";
+      identifier = normalizedEmail || normalizedPhone || "";
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -41,8 +54,8 @@ export const OtpService = {
 
     // Invalidate any existing unverified OTPs for this identifier and type
     await Otp.updateMany(
-      { identifier, type, verified: false },
-      { verified: true } // Mark as verified to effectively invalidate
+      { identifier, type, verified: false, invalidated: false },
+      { $set: { invalidated: true } }
     );
 
     // Generate 6-digit code
@@ -54,14 +67,15 @@ export const OtpService = {
 
     // Create new OTP
     const otpData = {
-      email,
-      phoneNumber,
+      email: normalizedEmail,
+      phoneNumber: normalizedPhone,
       identifier,
       code,
       type,
       deliveryMethod,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
       verified: false,
+      invalidated: false,
       attempts: 0,
     };
 
@@ -90,17 +104,16 @@ export const OtpService = {
       logger.debug({ identifier, code: code?.length ? `${code.slice(0,2)}****` : 'empty', type }, 'OtpService.verifyOtp - input data');
     }
 
-    // Normalize identifier - lowercase if it looks like an email
+    // Normalize identifier - lowercase if it looks like an email, normalize phone otherwise
     const normalizedIdentifier = identifier.includes('@')
       ? identifier.toLowerCase().trim()
-      : identifier.trim();
+      : normalizePhone(identifier) || identifier.trim();
 
     if (process.env.NODE_ENV === 'development') {
       logger.debug({ original: identifier, normalized: normalizedIdentifier }, 'OtpService.verifyOtp - normalized identifier');
     }
 
-    // Find the latest unverified OTP for this identifier and type
-    // Also check if the identifier matches email or phoneNumber fields for backwards compatibility
+    // Find the latest unverified, non-invalidated OTP for this identifier and type
     const query = {
       $and: [
         {
@@ -112,7 +125,7 @@ export const OtpService = {
         },
         { type },
         { verified: false },
-        { expiresAt: { $gt: new Date() } }
+        { invalidated: false }
       ]
     }
 
@@ -131,6 +144,7 @@ export const OtpService = {
         code: otp.code?.slice(0,2) + '****',
         type: otp.type,
         verified: otp.verified,
+        invalidated: otp.invalidated,
         attempts: otp.attempts,
         expiresAt: otp.expiresAt,
         createdAt: otp.createdAt
@@ -138,12 +152,17 @@ export const OtpService = {
     }
 
     if (!otp) {
-      throw new ApiError(400, "Invalid or expired OTP code");
+      throw new ApiError(400, "No OTP found for this identifier. Please request a new one.");
+    }
+
+    // Check if expired
+    if (otp.expiresAt < new Date()) {
+      throw new ApiError(400, "OTP has expired. Please request a new one.");
     }
 
     // Check attempts limit
     if (otp.attempts >= 5) {
-      throw new ApiError(429, "Too many failed attempts. Please request a new OTP");
+      throw new ApiError(429, "Too many failed attempts. Please request a new OTP.");
     }
 
     // Increment attempts
@@ -159,7 +178,7 @@ export const OtpService = {
       if (process.env.NODE_ENV === 'development') {
         logger.warn('❌ OtpService.verifyOtp - code mismatch - throwing error');
       }
-      throw new ApiError(400, "Invalid OTP code");
+      throw new ApiError(400, "Incorrect OTP code. Please try again.");
     }
 
     // Mark as verified
@@ -177,10 +196,10 @@ export const OtpService = {
       logger.debug({ identifier, type }, 'OtpService.isIdentifierVerified - checking');
     }
 
-    // Normalize identifier - lowercase if it looks like an email
+    // Normalize identifier - lowercase if it looks like an email, normalize phone otherwise
     const normalizedIdentifier = identifier.includes('@')
       ? identifier.toLowerCase().trim()
-      : identifier.trim();
+      : normalizePhone(identifier) || identifier.trim();
 
     const query = {
       $and: [
@@ -193,7 +212,8 @@ export const OtpService = {
         },
         { type },
         { verified: true },
-        { createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) } } // Valid for 30 minutes after verification
+        { invalidated: false },
+        { createdAt: { $gt: new Date(Date.now() - 10 * 60 * 1000) } } // Valid for 10 minutes after verification
       ]
     };
 
@@ -210,6 +230,7 @@ export const OtpService = {
         email: verifiedOtp.email,
         phoneNumber: verifiedOtp.phoneNumber,
         verified: verifiedOtp.verified,
+        invalidated: verifiedOtp.invalidated,
         createdAt: verifiedOtp.createdAt
       } : null }, 'OtpService.isIdentifierVerified - result');
     }
@@ -227,8 +248,17 @@ export const OtpService = {
   },
 
   async cleanupExpiredOtps(): Promise<void> {
-    await Otp.deleteMany({
-      expiresAt: { $lt: new Date() },
+    const result = await Otp.deleteMany({
+      $or: [
+        { invalidated: true },
+        { expiresAt: { $lt: new Date() } }
+      ]
     });
+
+    if (process.env.NODE_ENV === 'development') {
+      logger.info({ deletedCount: result.deletedCount }, 'OtpService.cleanupExpiredOtps - cleanup complete');
+    }
+
+    return;
   },
 };

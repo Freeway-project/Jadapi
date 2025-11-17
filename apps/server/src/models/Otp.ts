@@ -9,6 +9,7 @@ export interface OtpDoc extends Document<Types.ObjectId> {
   deliveryMethod: "email" | "sms" | "both";
   expiresAt: Date;
   verified: boolean;
+  invalidated: boolean; // True when OTP is superseded by a newer OTP
   attempts: number;
   createdAt: Date;
   updatedAt: Date;
@@ -60,6 +61,10 @@ const OtpSchema = new Schema<OtpDoc>(
       type: Boolean,
       default: false,
     },
+    invalidated: {
+      type: Boolean,
+      default: false,
+    },
     attempts: {
       type: Number,
       default: 0,
@@ -70,7 +75,7 @@ const OtpSchema = new Schema<OtpDoc>(
 );
 
 // Compound index for efficient queries
-OtpSchema.index({ identifier: 1, type: 1, verified: 1 });
+OtpSchema.index({ identifier: 1, type: 1, verified: 1, invalidated: 1 });
 
 // Pre-save middleware to handle code generation
 OtpSchema.pre("save", function (next) {
