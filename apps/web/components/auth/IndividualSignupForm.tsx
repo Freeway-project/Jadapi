@@ -29,8 +29,6 @@ export default function IndividualSignupForm() {
       phoneNumber: storePhone || '',
       name: '',
       address: '',
-      emailOtp: '',
-      phoneOtp: '',
       acceptTerms: false,
     },
   });

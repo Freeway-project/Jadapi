@@ -29,8 +29,6 @@ export default function BusinessSignupForm() {
       phoneNumber: storePhone || '',
       businessName: '',
       address: '',
-      emailOtp: '',
-      phoneOtp: '',
       acceptTerms: false,
     },
   });
