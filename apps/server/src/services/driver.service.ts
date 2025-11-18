@@ -2,6 +2,7 @@ import { DeliveryOrder } from "../models/DeliveryOrder";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { Types } from "mongoose";
+import { sendSms, SmsTemplates } from "../utils/SmsClient";
 import { logger } from "../utils/logger";
 
 export class DriverService {
@@ -119,11 +120,6 @@ export class DriverService {
    * @param orderIdOrMongoId - Can be either orderId (ORD-XXX) or MongoDB _id
    */
   static async acceptOrder(orderIdOrMongoId: string, driverId: Types.ObjectId) {
-    logger.info({
-      orderIdOrMongoId,
-      driverId: driverId.toString()
-    }, 'DriverService.acceptOrder - Driver attempting to accept order');
-
     // Try to find by orderId first, then by _id
     let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
 
@@ -133,64 +129,34 @@ export class DriverService {
     }
 
     if (!order) {
-      logger.warn({ orderIdOrMongoId, driverId: driverId.toString() }, 'DriverService.acceptOrder - Order not found');
       throw new ApiError(404, "Order not found");
     }
 
     // Check if order is cancelled
     if (order.status === "cancelled") {
-      logger.warn({
-        orderId: order.orderId,
-        driverId: driverId.toString(),
-        status: order.status
-      }, 'DriverService.acceptOrder - Order already cancelled');
       throw new ApiError(400, "This order has been cancelled and cannot be accepted");
     }
 
     // Check if order has expired (past 30-minute window)
     if (order.expiresAt && new Date() > order.expiresAt) {
-      logger.warn({
-        orderId: order.orderId,
-        driverId: driverId.toString(),
-        expiresAt: order.expiresAt
-      }, 'DriverService.acceptOrder - Order expired');
       throw new ApiError(400, "This order has expired and is no longer available");
     }
 
     if (order.status !== "pending") {
-      logger.warn({
-        orderId: order.orderId,
-        driverId: driverId.toString(),
-        currentStatus: order.status
-      }, 'DriverService.acceptOrder - Order not in pending status');
       throw new ApiError(400, "Order is not available for assignment");
     }
 
     if (order.driverId) {
-      logger.warn({
-        orderId: order.orderId,
-        requestingDriverId: driverId.toString(),
-        assignedDriverId: order.driverId.toString()
-      }, 'DriverService.acceptOrder - Order already assigned');
       throw new ApiError(409, "Order already assigned to another driver");
     }
 
     if (order.paymentStatus !== "paid") {
-      logger.warn({
-        orderId: order.orderId,
-        driverId: driverId.toString(),
-        paymentStatus: order.paymentStatus
-      }, 'DriverService.acceptOrder - Payment not confirmed');
       throw new ApiError(400, "Order payment not confirmed");
     }
 
     // Verify driver exists and has driver role
     const driver = await User.findById(driverId);
     if (!driver || !driver.roles.includes("driver")) {
-      logger.error({
-        driverId: driverId.toString(),
-        orderId: order.orderId
-      }, 'DriverService.acceptOrder - Invalid driver');
       throw new ApiError(403, "Invalid driver");
     }
 
@@ -213,6 +179,53 @@ export class DriverService {
       dropoff: order.dropoff?.address,
       total: order.pricing?.total
     }, 'DriverService.acceptOrder - Order successfully assigned to driver');
+
+    // Send SMS notifications to sender and receiver
+    const driverName = driver.profile?.name || "your driver";
+
+    // Send SMS to sender (pickup contact)
+    if (order.pickup?.contactPhone) {
+      try {
+        const senderMessage = SmsTemplates.orderAcceptedSender(order.orderId, driverName);
+        await sendSms({
+          phoneE164: order.pickup.contactPhone,
+          message: senderMessage,
+          type: "delivery",
+          source: "system",
+          metadata: {
+            orderId: order.orderId,
+            event: "order_accepted",
+            recipient: "sender"
+          }
+        });
+        logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender (pickup) for order acceptance');
+      } catch (error) {
+        logger.error({ error, orderId: order.orderId }, 'Failed to send SMS to sender for order acceptance');
+        // Don't throw error - SMS failure shouldn't block the order acceptance
+      }
+    }
+
+    // Send SMS to receiver (dropoff contact)
+    if (order.dropoff?.contactPhone) {
+      try {
+        const receiverMessage = SmsTemplates.orderAcceptedReceiver(order.orderId, driverName);
+        await sendSms({
+          phoneE164: order.dropoff.contactPhone,
+          message: receiverMessage,
+          type: "delivery",
+          source: "system",
+          metadata: {
+            orderId: order.orderId,
+            event: "order_accepted",
+            recipient: "receiver"
+          }
+        });
+        logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver (dropoff) for order acceptance');
+      } catch (error) {
+        logger.error({ error, orderId: order.orderId }, 'Failed to send SMS to receiver for order acceptance');
+        // Don't throw error - SMS failure shouldn't block the order acceptance
+      }
+    }
 
     return order;
   }
@@ -241,16 +254,10 @@ export class DriverService {
     }
 
     if (!order) {
-      logger.warn({ orderIdOrMongoId, driverId: driverId.toString() }, 'DriverService.updateOrderStatus - Order not found');
       throw new ApiError(404, "Order not found");
     }
 
     if (!order.driverId || order.driverId.toString() !== driverId.toString()) {
-      logger.error({
-        orderId: order.orderId,
-        requestingDriverId: driverId.toString(),
-        assignedDriverId: order.driverId?.toString()
-      }, 'DriverService.updateOrderStatus - Unauthorized: Order not assigned to this driver');
       throw new ApiError(403, "Order not assigned to this driver");
     }
 
@@ -267,11 +274,6 @@ export class DriverService {
 
     // Check if current status allows any transitions
     if (!validTransitions[order.status]) {
-      logger.error({
-        orderId: order.orderId,
-        currentStatus: order.status,
-        newStatus
-      }, 'DriverService.updateOrderStatus - Invalid current status');
       throw new ApiError(
         400,
         `Invalid current status: ${order.status}`
@@ -280,12 +282,6 @@ export class DriverService {
 
     // Check if transition is allowed
     if (!validTransitions[order.status].includes(newStatus)) {
-      logger.warn({
-        orderId: order.orderId,
-        currentStatus: order.status,
-        attemptedStatus: newStatus,
-        validTransitions: validTransitions[order.status]
-      }, 'DriverService.updateOrderStatus - Invalid status transition');
       throw new ApiError(
         400,
         `Cannot change status from ${order.status} to ${newStatus}. ${order.status === 'delivered' || order.status === 'cancelled' ? 'This order is already completed.' : ''}`
@@ -294,6 +290,10 @@ export class DriverService {
 
     // Update status and timeline
     order.status = newStatus;
+
+    // Get driver info for SMS notifications
+    const driver = await User.findById(driverId);
+    const driverName = driver?.profile?.name || "your driver";
 
     switch (newStatus) {
       case "picked_up":
@@ -304,12 +304,57 @@ export class DriverService {
           pickedUpAt: order.timeline.pickedUpAt,
           pickupAddress: order.pickup?.address
         }, 'DriverService.updateOrderStatus - Package picked up');
+
+        // Send SMS notifications for pickup
+        // SMS to sender (pickup contact)
+        if (order.pickup?.contactPhone) {
+          try {
+            const senderMessage = SmsTemplates.packagePickedUpSender(order.orderId, driverName);
+            await sendSms({
+              phoneE164: order.pickup.contactPhone,
+              message: senderMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_picked_up",
+                recipient: "sender"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender for package pickup');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send pickup SMS to sender');
+          }
+        }
+
+        // SMS to receiver (dropoff contact)
+        if (order.dropoff?.contactPhone) {
+          try {
+            const receiverMessage = SmsTemplates.packagePickedUpReceiver(order.orderId, driverName);
+            await sendSms({
+              phoneE164: order.dropoff.contactPhone,
+              message: receiverMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_picked_up",
+                recipient: "receiver"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver for package pickup');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send pickup SMS to receiver');
+          }
+        }
         break;
+
       case "in_transit":
         logger.info({
           orderId: order.orderId
         }, 'DriverService.updateOrderStatus - Package in transit');
         break;
+
       case "delivered":
         order.timeline.deliveredAt = new Date();
         order.dropoff.actualAt = new Date();
@@ -320,7 +365,51 @@ export class DriverService {
           totalAmount: order.pricing?.total,
           duration: order.timeline.deliveredAt.getTime() - order.timeline.createdAt.getTime()
         }, 'DriverService.updateOrderStatus - Package delivered successfully');
+
+        // Send SMS notifications for delivery
+        // SMS to sender (pickup contact)
+        if (order.pickup?.contactPhone) {
+          try {
+            const senderMessage = SmsTemplates.packageDeliveredSender(order.orderId);
+            await sendSms({
+              phoneE164: order.pickup.contactPhone,
+              message: senderMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_delivered",
+                recipient: "sender"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender for delivery completion');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send delivery SMS to sender');
+          }
+        }
+
+        // SMS to receiver (dropoff contact)
+        if (order.dropoff?.contactPhone) {
+          try {
+            const receiverMessage = SmsTemplates.packageDeliveredReceiver(order.orderId);
+            await sendSms({
+              phoneE164: order.dropoff.contactPhone,
+              message: receiverMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_delivered",
+                recipient: "receiver"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver for delivery completion');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send delivery SMS to receiver');
+          }
+        }
         break;
+
       case "cancelled":
         order.timeline.cancelledAt = new Date();
         logger.warn({
