@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../lib/stores/authStore';
-import { individualSignupSchema, IndividualSignupFormData } from '../../lib/utils/validation';
+import { IndividualSignupFormData } from '../../lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -23,7 +22,6 @@ export default function IndividualSignupForm() {
     setValue,
     watch,
   } = useForm<IndividualSignupFormData>({
-    resolver: zodResolver(individualSignupSchema),
     defaultValues: {
       name: '',
       address: '',
