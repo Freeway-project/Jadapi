@@ -486,21 +486,24 @@ export default function DriverDashboardPage() {
       return (
         <div className="space-y-2">
           {!hasPickupPhoto && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPhotoCaptureModal({
-                show: true,
-                orderId: order._id,
-                type: 'pickup',
-                orderIdStr: order.orderId
-              })}
-              disabled={isLoading}
-              className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Capture Pickup Photo
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPhotoCaptureModal({
+                  show: true,
+                  orderId: order._id,
+                  type: 'pickup',
+                  orderIdStr: order.orderId
+                })}
+                disabled={isLoading}
+                className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Capture Pickup Photo (Required)
+              </Button>
+              <p className="text-xs text-amber-600 text-center">Photo required before starting delivery</p>
+            </>
           )}
           {hasPickupPhoto && (
             <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
@@ -511,7 +514,7 @@ export default function DriverDashboardPage() {
           <Button
             size="sm"
             onClick={() => handleUpdateStatus(order._id, 'in_transit')}
-            disabled={isLoading}
+            disabled={isLoading || !hasPickupPhoto}
             className="w-full"
           >
             {isLoading ? (
@@ -532,21 +535,24 @@ export default function DriverDashboardPage() {
       return (
         <div className="space-y-2">
           {!hasDropoffPhoto && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPhotoCaptureModal({
-                show: true,
-                orderId: order._id,
-                type: 'dropoff',
-                orderIdStr: order.orderId
-              })}
-              disabled={isLoading}
-              className="w-full border-green-600 text-green-600 hover:bg-green-50"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Capture Dropoff Photo
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPhotoCaptureModal({
+                  show: true,
+                  orderId: order._id,
+                  type: 'dropoff',
+                  orderIdStr: order.orderId
+                })}
+                disabled={isLoading}
+                className="w-full border-green-600 text-green-600 hover:bg-green-50"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Capture Dropoff Photo (Required)
+              </Button>
+              <p className="text-xs text-amber-600 text-center">Photo required before completing delivery</p>
+            </>
           )}
           {hasDropoffPhoto && (
             <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
@@ -557,7 +563,7 @@ export default function DriverDashboardPage() {
           <Button
             size="sm"
             onClick={() => handleUpdateStatus(order._id, 'delivered')}
-            disabled={isLoading}
+            disabled={isLoading || !hasDropoffPhoto}
             className="w-full bg-green-600 hover:bg-green-700"
           >
             {isLoading ? (

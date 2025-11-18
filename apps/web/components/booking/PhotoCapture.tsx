@@ -73,7 +73,7 @@ export default function PhotoCapture({
 
     // Convert to base64 (JPEG format, 65% quality for smaller size)
     const base64 = canvas.toDataURL('image/jpeg', 0.65).split(',')[1];
-    setCapturedPhoto(base64);
+    setCapturedPhoto(base64 || null);
     stopCamera();
   }, [stopCamera]);
 
@@ -99,7 +99,7 @@ export default function PhotoCapture({
       const base64 = event.target?.result as string;
       // Remove data:image/...;base64, prefix
       const base64Data = base64.split(',')[1];
-      setCapturedPhoto(base64Data);
+      setCapturedPhoto(base64Data || null);
     };
     reader.readAsDataURL(file);
   }, []);
@@ -182,11 +182,11 @@ export default function PhotoCapture({
         )}
 
         {capturedPhoto && (
-          <div className="w-full max-w-2xl">
+          <div className="w-full max-w-md max-h-[50vh] overflow-hidden flex items-center justify-center">
             <img
               src={`data:image/jpeg;base64,${capturedPhoto}`}
               alt="Captured"
-              className="w-full rounded-lg"
+              className="max-w-full max-h-[50vh] rounded-lg object-contain"
             />
           </div>
         )}
