@@ -183,12 +183,15 @@ export class DriverService {
     // Send SMS notifications to sender and receiver
     const driverName = driver.profile?.name || "your driver";
 
+    // Helper to ensure E.164 format
+    const toE164 = (phone: string) => phone.startsWith("+") ? phone : `+1${phone}`;
+
     // Send SMS to sender (pickup contact)
     if (order.pickup?.contactPhone) {
       try {
         const senderMessage = SmsTemplates.orderAcceptedSender(order.orderId, driverName);
         await sendSms({
-          phoneE164: order.pickup.contactPhone,
+          phoneE164: toE164(order.pickup.contactPhone),
           message: senderMessage,
           type: "delivery",
           source: "system",
@@ -210,7 +213,7 @@ export class DriverService {
       try {
         const receiverMessage = SmsTemplates.orderAcceptedReceiver(order.orderId, driverName);
         await sendSms({
-          phoneE164: order.dropoff.contactPhone,
+          phoneE164: toE164(order.dropoff.contactPhone),
           message: receiverMessage,
           type: "delivery",
           source: "system",

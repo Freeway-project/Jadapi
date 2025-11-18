@@ -9,6 +9,7 @@ import { checkAppActive } from "../middlewares/appActive";
 import { logger } from "../utils/logger";
 import { OrderExpiryService } from "../services/orderExpiry.service";
 import { DeliveryPhotoController } from "../controllers/deliveryPhoto.controller";
+import { normalizePhone } from "../utils/phoneNormalization";
 
 const router = Router();
 
@@ -158,6 +159,17 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       throw new ApiError(400, "Dropoff address, coordinates, contact name and phone are required");
     }
 
+    // Normalize phone numbers to E.164 format (+1XXXXXXXXXX)
+    const normalizedPickupPhone = normalizePhone(pickup.contactPhone);
+    const normalizedDropoffPhone = normalizePhone(dropoff.contactPhone);
+
+    if (!normalizedPickupPhone) {
+      throw new ApiError(400, "Invalid pickup contact phone number");
+    }
+    if (!normalizedDropoffPhone) {
+      throw new ApiError(400, "Invalid dropoff contact phone number");
+    }
+
     if (!packageDetails?.size) {
       throw new ApiError(400, "Package size is required");
     }
@@ -273,7 +285,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
           coordinates: [Number(pickup.coordinates.lng), Number(pickup.coordinates.lat)] // GeoJSON: [lng, lat]
         },
         contactName: pickup.contactName,
-        contactPhone: pickup.contactPhone,
+        contactPhone: normalizedPickupPhone,
         notes: pickup.notes,
         scheduledAt: pickup.scheduledAt ? new Date(pickup.scheduledAt) : undefined
       },
@@ -288,7 +300,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
           coordinates: [Number(dropoff.coordinates.lng), Number(dropoff.coordinates.lat)] // GeoJSON: [lng, lat]
         },
         contactName: dropoff.contactName,
-        contactPhone: dropoff.contactPhone,
+        contactPhone: normalizedDropoffPhone,
         notes: dropoff.notes,
         scheduledAt: dropoff.scheduledAt ? new Date(dropoff.scheduledAt) : undefined
       },
