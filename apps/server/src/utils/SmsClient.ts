@@ -153,6 +153,27 @@ export const SmsTemplates = {
   otp: (code: string, minutes: number = 5) =>
     `Your Jaddpi verification code is ${code}. It expires in ${minutes} minutes. Don't share this code with anyone.`,
 
+  // Order accepted by driver
+  orderAcceptedSender: (orderId: string, driverName: string) =>
+    `🚗 Driver ${driverName} has accepted your order #${orderId}. Track at ${getTrackingUrl(orderId)}`,
+
+  orderAcceptedReceiver: (orderId: string, driverName: string) =>
+    `📦 A package is on its way to you! Order #${orderId} accepted by ${driverName}. Track at ${getTrackingUrl(orderId)}`,
+
+  // Package picked up
+  packagePickedUpSender: (orderId: string, driverName: string) =>
+    `📦 Your package #${orderId} has been picked up by ${driverName}. Track at ${getTrackingUrl(orderId)}`,
+
+  packagePickedUpReceiver: (orderId: string, driverName: string) =>
+    `📦 Your package #${orderId} is now in transit with ${driverName}. Track at ${getTrackingUrl(orderId)}`,
+
+  // Package delivered
+  packageDeliveredSender: (orderId: string) =>
+    `✅ Your package #${orderId} has been delivered! Thank you for using Jaddpi.`,
+
+  packageDeliveredReceiver: (orderId: string) =>
+    `✅ Your package #${orderId} has arrived! Thank you for using Jaddpi.`,
+
   deliveryStarted: (orderId: string, driverName: string) =>
     `📦 Your package #${orderId} is out for delivery with ${driverName}. Track your delivery at ${getTrackingUrl(orderId)}`,
 
@@ -161,11 +182,11 @@ export const SmsTemplates = {
 
   bookingConfirmed: (orderId: string, pickupTime: string) =>
     `📋 Booking confirmed! Order #${orderId} will be picked up at ${pickupTime}. Track at ${getTrackingUrl(orderId)}`,
-  
-  deliveryAttempted: (orderId: string, nextAttempt: string) => 
+
+  deliveryAttempted: (orderId: string, nextAttempt: string) =>
     `❗ Delivery attempt failed for #${orderId}. Next attempt: ${nextAttempt}. Contact us if needed.`,
-  
-  deliveryException: (orderId: string, reason: string) => 
+
+  deliveryException: (orderId: string, reason: string) =>
     `⚠️ Delivery issue for #${orderId}: ${reason}. Please contact support for assistance.`
 };
 
