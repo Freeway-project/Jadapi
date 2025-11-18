@@ -11,12 +11,14 @@ export interface TrackingInfo {
       coordinates: { lat: number; lng: number };
       contactName?: string;
       contactPhone?: string;
+      photoUrl?: string;
     };
     dropoff: {
       address: string;
       coordinates: { lat: number; lng: number };
       contactName?: string;
       contactPhone?: string;
+      photoUrl?: string;
     };
     package: {
       size: 'XS' | 'S' | 'M' | 'L';
