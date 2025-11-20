@@ -5,6 +5,7 @@ import { Types } from "mongoose";
 import { sendSms, SmsTemplates } from "../utils/SmsClient";
 import { logger } from "../utils/logger";
 
+
 export class DriverService {
   /**
    * Get driver profile by ID
@@ -85,8 +86,13 @@ export class DriverService {
       query.status = status;
     }
 
-    console.log('🔍 getDriverOrders - Query:', JSON.stringify(query));
-    console.log('🔍 getDriverOrders - DriverId:', driverId.toString());
+    logger.debug({
+      query,
+      driverId: driverId.toString(),
+      status,
+      limit,
+      skip
+    }, 'DriverService.getDriverOrders - Fetching orders');
 
     const orders = await DeliveryOrder.find(query)
       .populate("userId", "uuid profile.name auth.phone")
@@ -96,8 +102,12 @@ export class DriverService {
 
     const total = await DeliveryOrder.countDocuments(query);
 
-    console.log('✅ getDriverOrders - Found:', orders.length, 'orders');
-    console.log('📊 getDriverOrders - Order IDs:', orders.map(o => o.orderId));
+    logger.info({
+      driverId: driverId.toString(),
+      count: orders.length,
+      total,
+      orderIds: orders.map(o => o.orderId)
+    }, 'DriverService.getDriverOrders - Orders retrieved');
 
     return {
       orders,
@@ -206,6 +216,68 @@ export class DriverService {
       }
     }
 
+    logger.info({
+      orderId: order.orderId,
+      driverId: driverId.toString(),
+      driverName: driver.profile?.name,
+      previousStatus: "pending",
+      newStatus: "assigned",
+      assignedAt: order.timeline.assignedAt,
+      pickup: order.pickup?.address,
+      dropoff: order.dropoff?.address,
+      total: order.pricing?.total
+    }, 'DriverService.acceptOrder - Order successfully assigned to driver');
+
+    // Send SMS notifications to sender and receiver
+    const driverName = driver.profile?.name || "your driver";
+
+    // Helper to ensure E.164 format
+    const toE164 = (phone: string) => phone.startsWith("+") ? phone : `+1${phone}`;
+
+    // Send SMS to sender (pickup contact)
+    if (order.pickup?.contactPhone) {
+      try {
+        const senderMessage = SmsTemplates.orderAcceptedSender(order.orderId, driverName);
+        await sendSms({
+          phoneE164: toE164(order.pickup.contactPhone),
+          message: senderMessage,
+          type: "delivery",
+          source: "system",
+          metadata: {
+            orderId: order.orderId,
+            event: "order_accepted",
+            recipient: "sender"
+          }
+        });
+        logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender (pickup) for order acceptance');
+      } catch (error) {
+        logger.error({ error, orderId: order.orderId }, 'Failed to send SMS to sender for order acceptance');
+        // Don't throw error - SMS failure shouldn't block the order acceptance
+      }
+    }
+
+    // Send SMS to receiver (dropoff contact)
+    if (order.dropoff?.contactPhone) {
+      try {
+        const receiverMessage = SmsTemplates.orderAcceptedReceiver(order.orderId, driverName);
+        await sendSms({
+          phoneE164: toE164(order.dropoff.contactPhone),
+          message: receiverMessage,
+          type: "delivery",
+          source: "system",
+          metadata: {
+            orderId: order.orderId,
+            event: "order_accepted",
+            recipient: "receiver"
+          }
+        });
+        logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver (dropoff) for order acceptance');
+      } catch (error) {
+        logger.error({ error, orderId: order.orderId }, 'Failed to send SMS to receiver for order acceptance');
+        // Don't throw error - SMS failure shouldn't block the order acceptance
+      }
+    }
+
     return order;
   }
 
@@ -218,6 +290,12 @@ export class DriverService {
     driverId: Types.ObjectId,
     newStatus: "picked_up" | "in_transit" | "delivered" | "cancelled"
   ) {
+    logger.info({
+      orderIdOrMongoId,
+      driverId: driverId.toString(),
+      newStatus
+    }, 'DriverService.updateOrderStatus - Driver updating order status');
+
     // Try to find by orderId first, then by _id
     let order = await DeliveryOrder.findOne({ orderId: orderIdOrMongoId });
 
@@ -233,6 +311,8 @@ export class DriverService {
     if (!order.driverId || order.driverId.toString() !== driverId.toString()) {
       throw new ApiError(403, "Order not assigned to this driver");
     }
+
+    const previousStatus = order.status;
 
     // Validate status transitions (one-way flow)
     const validTransitions: Record<string, string[]> = {
@@ -261,6 +341,10 @@ export class DriverService {
 
     // Update status and timeline
     order.status = newStatus;
+
+    // Get driver info for SMS notifications
+    const driver = await User.findById(driverId);
+    const driverName = driver?.profile?.name || "your driver";
 
     // Get driver info for SMS notifications
     const driver = await User.findById(driverId);
@@ -313,11 +397,63 @@ export class DriverService {
             logger.error(`Failed to send pickup SMS to receiver for order ${order.orderId}:`, error);
           }
         }
+        logger.info({
+          orderId: order.orderId,
+          pickedUpAt: order.timeline.pickedUpAt,
+          pickupAddress: order.pickup?.address
+        }, 'DriverService.updateOrderStatus - Package picked up');
+
+        // Send SMS notifications for pickup
+        // SMS to sender (pickup contact)
+        if (order.pickup?.contactPhone) {
+          try {
+            const senderMessage = SmsTemplates.packagePickedUpSender(order.orderId, driverName);
+            await sendSms({
+              phoneE164: order.pickup.contactPhone,
+              message: senderMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_picked_up",
+                recipient: "sender"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender for package pickup');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send pickup SMS to sender');
+          }
+        }
+
+        // SMS to receiver (dropoff contact)
+        if (order.dropoff?.contactPhone) {
+          try {
+            const receiverMessage = SmsTemplates.packagePickedUpReceiver(order.orderId, driverName);
+            await sendSms({
+              phoneE164: order.dropoff.contactPhone,
+              message: receiverMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_picked_up",
+                recipient: "receiver"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver for package pickup');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send pickup SMS to receiver');
+          }
+        }
         break;
 
+
       case "in_transit":
-        // No specific timeline field for in_transit
+        logger.info({
+          orderId: order.orderId
+        }, 'DriverService.updateOrderStatus - Package in transit');
         break;
+
 
       case "delivered":
         order.timeline.deliveredAt = new Date();
@@ -365,14 +501,78 @@ export class DriverService {
             logger.error(`Failed to send delivery SMS to receiver for order ${order.orderId}:`, error);
           }
         }
+        logger.info({
+          orderId: order.orderId,
+          deliveredAt: order.timeline.deliveredAt,
+          dropoffAddress: order.dropoff?.address,
+          totalAmount: order.pricing?.total,
+          duration: order.timeline.deliveredAt.getTime() - order.timeline.createdAt.getTime()
+        }, 'DriverService.updateOrderStatus - Package delivered successfully');
+
+        // Send SMS notifications for delivery
+        // SMS to sender (pickup contact)
+        if (order.pickup?.contactPhone) {
+          try {
+            const senderMessage = SmsTemplates.packageDeliveredSender(order.orderId);
+            await sendSms({
+              phoneE164: order.pickup.contactPhone,
+              message: senderMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_delivered",
+                recipient: "sender"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender for delivery completion');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send delivery SMS to sender');
+          }
+        }
+
+        // SMS to receiver (dropoff contact)
+        if (order.dropoff?.contactPhone) {
+          try {
+            const receiverMessage = SmsTemplates.packageDeliveredReceiver(order.orderId);
+            await sendSms({
+              phoneE164: order.dropoff.contactPhone,
+              message: receiverMessage,
+              type: "delivery",
+              source: "system",
+              metadata: {
+                orderId: order.orderId,
+                event: "package_delivered",
+                recipient: "receiver"
+              }
+            });
+            logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver for delivery completion');
+          } catch (error) {
+            logger.error({ error, orderId: order.orderId }, 'Failed to send delivery SMS to receiver');
+          }
+        }
         break;
+
 
       case "cancelled":
         order.timeline.cancelledAt = new Date();
+        logger.warn({
+          orderId: order.orderId,
+          cancelledAt: order.timeline.cancelledAt,
+          previousStatus
+        }, 'DriverService.updateOrderStatus - Order cancelled by driver');
         break;
     }
 
     await order.save();
+
+    logger.info({
+      orderId: order.orderId,
+      driverId: driverId.toString(),
+      previousStatus,
+      newStatus,
+      timeline: order.timeline
+    }, `DriverService.updateOrderStatus - Status updated: ${previousStatus} → ${newStatus}`);
 
     return order;
   }

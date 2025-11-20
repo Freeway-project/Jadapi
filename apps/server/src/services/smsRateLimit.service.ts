@@ -11,7 +11,7 @@ export class SmsRateLimitService {
     // Per phone number limits
     perPhone: {
       otp: { count: 50, windowSeconds: 3600 }, // 50 OTPs per hour per phone
-      delivery: { count: 50, windowSeconds: 86400 }, // 50 delivery SMS per day
+      delivery: { count: 100, windowSeconds: 86400 }, // 100 delivery SMS per day (increased)
       booking: { count: 50, windowSeconds: 86400 }, // 50 booking SMS per day
       promotional: { count: 20, windowSeconds: 86400 }, // 20 promotional per day
       transactional: { count: 100, windowSeconds: 86400 }, // 100 total per day
@@ -30,7 +30,7 @@ export class SmsRateLimitService {
     },
     // Cooldown periods
     cooldown: {
-      sameMessage: 120, // 2 minutes before sending same message to same number
+      sameMessage: 0, // 0 seconds - disabled duplicate message blocking (each order is different)
       afterFailure: 30, // 30 seconds cooldown after failed attempt
     },
   };
@@ -50,8 +50,8 @@ export class SmsRateLimitService {
         return phoneCheck;
       }
 
-      // 2. Check duplicate message cooldown
-      if (message) {
+      // 2. Check duplicate message cooldown (skip if cooldown is 0)
+      if (message && this.LIMITS.cooldown.sameMessage > 0) {
         const duplicateCheck = await this.checkDuplicateMessage(phoneE164, message);
         if (!duplicateCheck.allowed) {
           return duplicateCheck;

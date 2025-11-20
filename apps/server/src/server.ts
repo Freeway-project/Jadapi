@@ -10,6 +10,7 @@ import { authenticate } from "./middlewares/auth";
 import webhookRoutes from "./routes/webhook.routes";
 import fcmRoutes from "./routes/fcmRoutes";
 import { runCancelExpiredOrders } from "./cron/cancelExpiredOrders";
+import { runOtpCleanup } from "./cron/cleanupExpiredOtps";
 
 const app = express();
 
@@ -61,7 +62,18 @@ app.use(errorHandler);
       }
     });
 
+    // Set up cron job to cleanup expired OTPs every hour
+    cron.schedule("0 * * * *", async () => {
+      logger.info("Running scheduled job: Cleanup expired OTPs");
+      try {
+        await runOtpCleanup();
+      } catch (error) {
+        logger.error({ error }, "Cron job failed: Cleanup expired OTPs");
+      }
+    });
+
     logger.info("Cron job scheduled: Cancel expired orders (runs every 5 minutes)");
+    logger.info("Cron job scheduled: Cleanup expired OTPs (runs every hour)");
   } catch (err) {
     logger.error(err);
     process.exit(1);

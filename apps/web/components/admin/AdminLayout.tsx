@@ -90,7 +90,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Truck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">JadDPI</h1>
+                <h1 className="text-lg font-bold text-white">Jaddpi</h1>
                 <p className="text-xs text-gray-400">{user?.displayName || 'Admin'}</p>
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="p-2 bg-blue-600 rounded-lg">
               <Truck className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900">JadDPI Admin</h1>
+            <h1 className="text-lg font-bold text-gray-900">Jaddpi Admin</h1>
           </Link>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -203,7 +203,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     <Truck className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-lg font-bold text-white">JadDPI</h1>
+                    <h1 className="text-lg font-bold text-white">Jaddpi</h1>
                     <p className="text-xs text-gray-400">{user?.displayName || 'Admin'}</p>
                   </div>
                 </div>

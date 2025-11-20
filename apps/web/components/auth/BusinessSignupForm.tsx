@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../lib/stores/authStore';
-import { businessSignupSchema, BusinessSignupFormData } from '../../lib/utils/validation';
+import { BusinessSignupFormData } from '../../lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -23,14 +22,9 @@ export default function BusinessSignupForm() {
     setValue,
     watch,
   } = useForm<BusinessSignupFormData>({
-    resolver: zodResolver(businessSignupSchema),
     defaultValues: {
-      email: storeEmail || '',
-      phoneNumber: storePhone || '',
       businessName: '',
       address: '',
-      emailOtp: '',
-      phoneOtp: '',
       acceptTerms: false,
     },
   });
@@ -40,26 +34,52 @@ export default function BusinessSignupForm() {
 
   // Complete Business Signup
   const onSubmit = async (data: BusinessSignupFormData) => {
+    console.log('🔵 [BusinessSignup] Form submitted with data:', data);
+    console.log('🔵 [BusinessSignup] Store values - email:', storeEmail, 'phone:', storePhone);
+    
     setIsSubmitting(true);
     setLoading(true);
 
     try {
       // Validation
       if (!storeEmail || !storePhone) {
-        throw new Error('Both email and phone number are required for business accounts');
+        const msg = 'Both email and phone number are required for business accounts';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
 
       if (!data.businessName || data.businessName.trim().length < 2) {
-        throw new Error('Business name is required (minimum 2 characters)');
+        const msg = 'Business name is required (minimum 2 characters)';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
 
       if (!data.address || data.address.trim().length < 10) {
-        throw new Error('Address is required (minimum 10 characters)');
+        const msg = 'Address is required (minimum 10 characters)';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
 
       if (!data.acceptTerms) {
-        throw new Error('You must accept the Terms and Conditions');
+        const msg = 'You must accept the Terms and Conditions';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
+
+      console.log('✅ All validations passed');
+      toast.loading('Creating business account...');
 
       const { authAPI, tokenManager } = await import('../../lib/api/auth');
 
@@ -84,12 +104,21 @@ export default function BusinessSignupForm() {
       }
 
       const user = response?.user || response;
+      console.log('✅ User object:', user);
+      
       setUser(user);
       setStep('success');
-      toast.success('Business account created successfully!');
+      toast.success('Business account created successfully! 🎉');
     } catch (error: any) {
-      console.error('❌ Business signup failed:', error);
-      toast.error(error.message || 'Failed to create business account. Please try again.');
+      console.error('❌ Business signup failed with error:', error);
+      const errorMsg = error?.response?.data?.error || error?.message || 'Failed to create business account. Please try again.';
+      console.error('Error details:', {
+        message: errorMsg,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        fullError: error
+      });
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
       setLoading(false);

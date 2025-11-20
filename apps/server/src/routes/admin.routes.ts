@@ -55,9 +55,21 @@ router.get(
 );
 
 router.get(
+  "/orders/:orderId/details",
+  activityLogger,
+  AdminController.getOrderDetails
+);
+
+router.get(
   "/users",
   activityLogger,
   AdminController.getUsers
+);
+
+router.get(
+  "/users/:userId/details",
+  activityLogger,
+  AdminController.getUserDetails
 );
 
 // Driver management routes

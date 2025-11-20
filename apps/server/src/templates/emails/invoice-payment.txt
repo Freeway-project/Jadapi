@@ -40,4 +40,4 @@ Status: {{paymentStatus}}
 
 Thank you for your business!
 
-JadDPI Delivery Service
+Jaddpi Delivery Service

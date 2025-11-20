@@ -55,7 +55,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
           coordinates: [-122.6124954, 49.0954172]
         },
         contactName: "Test Dropoff",
-        contactPhone: "1212212113"
+        contactPhone: "7785832260"
       },
       package: {
         size: "M",

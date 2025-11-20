@@ -60,7 +60,18 @@ export class DeliveryPhotoController {
 
       await order.save();
 
-      logger.info({ orderId, photoUrl: uploadResult.secure_url }, "Pickup photo uploaded successfully");
+      logger.info({
+        orderId,
+        driverId: user._id.toString(),
+        driverName: user.profile?.name,
+        photoUrl: uploadResult.secure_url,
+        cloudinaryPublicId: uploadResult.public_id,
+        photoFormat: uploadResult.format,
+        photoSize: uploadResult.bytes,
+        orderStatus: order.status,
+        pickupAddress: order.pickup?.address,
+        actualPickupTime: order.pickup?.actualAt
+      }, "DeliveryPhotoController.uploadPickupPhoto - Pickup photo uploaded successfully");
 
       res.json({
         success: true,
@@ -75,12 +86,14 @@ export class DeliveryPhotoController {
         message: "Pickup photo uploaded successfully"
       });
     } catch (error: any) {
-      logger.error({ 
+      logger.error({
         error: error.message,
         errorStack: error.stack,
         orderId: req.params.orderId,
-        photoDataLength: req.body.photo?.length || 0
-      }, "Upload pickup photo error");
+        userId: (req as any).user?._id?.toString(),
+        photoDataLength: req.body.photo?.length || 0,
+        photoDataType: typeof req.body.photo
+      }, "DeliveryPhotoController.uploadPickupPhoto - Upload pickup photo failed");
       res.status(error.statusCode || 500).json({
         success: false,
         message: error.message || "Failed to upload pickup photo"
@@ -143,7 +156,18 @@ export class DeliveryPhotoController {
 
       await order.save();
 
-      logger.info({ orderId, photoUrl: uploadResult.secure_url }, "Dropoff photo uploaded successfully");
+      logger.info({
+        orderId,
+        driverId: user._id.toString(),
+        driverName: user.profile?.name,
+        photoUrl: uploadResult.secure_url,
+        cloudinaryPublicId: uploadResult.public_id,
+        photoFormat: uploadResult.format,
+        photoSize: uploadResult.bytes,
+        orderStatus: order.status,
+        dropoffAddress: order.dropoff?.address,
+        actualDropoffTime: order.dropoff?.actualAt
+      }, "DeliveryPhotoController.uploadDropoffPhoto - Dropoff photo uploaded successfully");
 
       res.json({
         success: true,
@@ -158,12 +182,14 @@ export class DeliveryPhotoController {
         message: "Dropoff photo uploaded successfully"
       });
     } catch (error: any) {
-      logger.error({ 
+      logger.error({
         error: error.message,
         errorStack: error.stack,
         orderId: req.params.orderId,
-        photoDataLength: req.body.photo?.length || 0
-      }, "Upload dropoff photo error");
+        userId: (req as any).user?._id?.toString(),
+        photoDataLength: req.body.photo?.length || 0,
+        photoDataType: typeof req.body.photo
+      }, "DeliveryPhotoController.uploadDropoffPhoto - Upload dropoff photo failed");
       res.status(error.statusCode || 500).json({
         success: false,
         message: error.message || "Failed to upload dropoff photo"

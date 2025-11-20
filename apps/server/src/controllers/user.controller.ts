@@ -6,6 +6,7 @@ import { DeliveryOrder } from "../models/DeliveryOrder";
 import { Payment } from "../models/Payment";
 import { InvoiceService } from "../services/invoice.service";
 import { User } from "../models/user.model";
+import { normalizePhone } from "../utils/phoneNormalization";
 
 export const UserController = {
   async signup(req: Request, res: Response, next: NextFunction) {
@@ -14,6 +15,14 @@ export const UserController = {
 
       if (process.env.NODE_ENV === 'development') {
         console.log('🚀 ~ signup ~ input data:', { accountType, email, phone, name, address, businessName, gstNumber });
+      }
+
+      // Normalize email and phone
+      const normalizedEmail = email?.toLowerCase().trim();
+      const normalizedPhone = phone ? normalizePhone(phone) : undefined;
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🚀 ~ signup ~ normalized data:', { normalizedEmail, normalizedPhone });
       }
 
       // Validate required fields
@@ -33,17 +42,17 @@ export const UserController = {
       // Verification requirements based on account type
       if (accountType === "business") {
         // Business accounts require BOTH email and phone verification
-        if (!email || !phone) {
+        if (!normalizedEmail || !normalizedPhone) {
           throw new ApiError(400, "Business accounts require both email and phone number.");
         }
 
-        const isEmailVerified = await OtpService.isEmailVerified(email, "signup");
-        const isPhoneVerified = await OtpService.isIdentifierVerified(phone, "signup");
+        const isEmailVerified = await OtpService.isEmailVerified(normalizedEmail, "signup");
+        const isPhoneVerified = await OtpService.isIdentifierVerified(normalizedPhone, "signup");
 
         if (process.env.NODE_ENV === 'development') {
           console.log('🚀 ~ signup ~ business verification status:', {
-            email, emailVerified: isEmailVerified,
-            phone, phoneVerified: isPhoneVerified
+            email: normalizedEmail, emailVerified: isEmailVerified,
+            phone: normalizedPhone, phoneVerified: isPhoneVerified
           });
         }
 
@@ -58,10 +67,10 @@ export const UserController = {
         // Individual accounts - at least one identifier must be verified
         let verificationChecked = false;
 
-        if (email) {
-          const isEmailVerified = await OtpService.isEmailVerified(email, "signup");
+        if (normalizedEmail) {
+          const isEmailVerified = await OtpService.isEmailVerified(normalizedEmail, "signup");
           if (process.env.NODE_ENV === 'development') {
-            console.log('🚀 ~ signup ~ individual email verification status:', { email, verified: isEmailVerified });
+            console.log('🚀 ~ signup ~ individual email verification status:', { email: normalizedEmail, verified: isEmailVerified });
           }
 
           if (!isEmailVerified) {
@@ -70,10 +79,10 @@ export const UserController = {
           verificationChecked = true;
         }
 
-        if (phone) {
-          const isPhoneVerified = await OtpService.isIdentifierVerified(phone, "signup");
+        if (normalizedPhone) {
+          const isPhoneVerified = await OtpService.isIdentifierVerified(normalizedPhone, "signup");
           if (process.env.NODE_ENV === 'development') {
-            console.log('🚀 ~ signup ~ individual phone verification status:', { phone, verified: isPhoneVerified });
+            console.log('🚀 ~ signup ~ individual phone verification status:', { phone: normalizedPhone, verified: isPhoneVerified });
           }
 
           if (!isPhoneVerified) {
@@ -89,8 +98,8 @@ export const UserController = {
 
       const signupData: SignupData = {
         accountType,
-        email,
-        phone,
+        email: normalizedEmail,
+        phone: normalizedPhone,
         name,
         address,
         businessName,
@@ -114,14 +123,14 @@ export const UserController = {
       }
 
       // Mark verified identifiers in the user record
-      if (email && await OtpService.isEmailVerified(email, "signup")) {
+      if (normalizedEmail && await OtpService.isEmailVerified(normalizedEmail, "signup")) {
         if (process.env.NODE_ENV === 'development') {
           console.log('🚀 ~ signup ~ marking email as verified for user');
         }
         await UserService.verifyEmail(user._id.toString());
       }
 
-      if (phone && await OtpService.isIdentifierVerified(phone, "signup")) {
+      if (normalizedPhone && await OtpService.isIdentifierVerified(normalizedPhone, "signup")) {
         if (process.env.NODE_ENV === 'development') {
           console.log('🚀 ~ signup ~ marking phone as verified for user');
         }

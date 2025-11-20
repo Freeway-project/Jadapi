@@ -9,6 +9,7 @@ import { checkAppActive } from "../middlewares/appActive";
 import { logger } from "../utils/logger";
 import { OrderExpiryService } from "../services/orderExpiry.service";
 import { DeliveryPhotoController } from "../controllers/deliveryPhoto.controller";
+import { normalizePhone } from "../utils/phoneNormalization";
 
 const router = Router();
 
@@ -158,6 +159,17 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       throw new ApiError(400, "Dropoff address, coordinates, contact name and phone are required");
     }
 
+    // Normalize phone numbers to E.164 format (+1XXXXXXXXXX)
+    const normalizedPickupPhone = normalizePhone(pickup.contactPhone);
+    const normalizedDropoffPhone = normalizePhone(dropoff.contactPhone);
+
+    if (!normalizedPickupPhone) {
+      throw new ApiError(400, "Invalid pickup contact phone number");
+    }
+    if (!normalizedDropoffPhone) {
+      throw new ApiError(400, "Invalid dropoff contact phone number");
+    }
+
     if (!packageDetails?.size) {
       throw new ApiError(400, "Package size is required");
     }
@@ -273,7 +285,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
           coordinates: [Number(pickup.coordinates.lng), Number(pickup.coordinates.lat)] // GeoJSON: [lng, lat]
         },
         contactName: pickup.contactName,
-        contactPhone: pickup.contactPhone,
+        contactPhone: normalizedPickupPhone,
         notes: pickup.notes,
         scheduledAt: pickup.scheduledAt ? new Date(pickup.scheduledAt) : undefined
       },
@@ -288,7 +300,7 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
           coordinates: [Number(dropoff.coordinates.lng), Number(dropoff.coordinates.lat)] // GeoJSON: [lng, lat]
         },
         contactName: dropoff.contactName,
-        contactPhone: dropoff.contactPhone,
+        contactPhone: normalizedDropoffPhone,
         notes: dropoff.notes,
         scheduledAt: dropoff.scheduledAt ? new Date(dropoff.scheduledAt) : undefined
       },
@@ -308,6 +320,47 @@ router.post("/create-order", requireAuth, async (req: Request, res: Response) =>
       },
       expiresAt // Auto-cancel if not assigned within 30 minutes
     });
+
+    logger.info({
+      orderId: order.orderId,
+      userId: user._id.toString(),
+      userEmail: user.auth?.email,
+      userPhone: user.auth?.phone,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      pickup: {
+        address: order.pickup?.address,
+        contactName: order.pickup?.contactName,
+        contactPhone: order.pickup?.contactPhone
+      },
+      dropoff: {
+        address: order.dropoff?.address,
+        contactName: order.dropoff?.contactName,
+        contactPhone: order.dropoff?.contactPhone
+      },
+      package: {
+        size: order.package?.size,
+        weight: order.package?.weight,
+        description: order.package?.description
+      },
+      pricing: {
+        subtotal: order.pricing?.subtotal,
+        tax: order.pricing?.tax,
+        total: order.pricing?.total,
+        couponDiscount: order.pricing?.couponDiscount
+      },
+      coupon: couponData ? {
+        code: couponData.code,
+        discountType: couponData.discountType,
+        discountValue: couponData.discountValue
+      } : null,
+      distance: {
+        km: order.distance?.km,
+        durationMinutes: order.distance?.durationMinutes
+      },
+      expiresAt: order.expiresAt,
+      createdAt: order.timeline?.createdAt
+    }, 'delivery.routes - Order created successfully');
 
     res.status(201).json({
       success: true,

@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../lib/stores/authStore';
-import { individualSignupSchema, IndividualSignupFormData } from '../../lib/utils/validation';
+import { IndividualSignupFormData } from '../../lib/utils/validation';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
@@ -23,14 +22,9 @@ export default function IndividualSignupForm() {
     setValue,
     watch,
   } = useForm<IndividualSignupFormData>({
-    resolver: zodResolver(individualSignupSchema),
     defaultValues: {
-      email: storeEmail || '',
-      phoneNumber: storePhone || '',
       name: '',
       address: '',
-      emailOtp: '',
-      phoneOtp: '',
       acceptTerms: false,
     },
   });
@@ -39,26 +33,52 @@ export default function IndividualSignupForm() {
   const watchedName = watch('name');
   // Complete Signup
   const onSubmit = async (data: IndividualSignupFormData) => {
+    console.log('🔵 [IndividualSignup] Form submitted with data:', data);
+    console.log('🔵 [IndividualSignup] Store values - email:', storeEmail, 'phone:', storePhone);
+    
     setIsSubmitting(true);
     setLoading(true);
 
     try {
       // Validation
       if (!storeEmail && !storePhone) {
-        throw new Error('Email or phone number is required');
+        const msg = 'Email or phone number is required';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
 
       if (!data.name || data.name.trim().length < 2) {
-        throw new Error('Full name is required (minimum 2 characters)');
+        const msg = 'Full name is required (minimum 2 characters)';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
 
       if (!data.address || data.address.trim().length < 10) {
-        throw new Error('Address is required (minimum 10 characters)');
+        const msg = 'Address is required (minimum 10 characters)';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
 
       if (!data.acceptTerms) {
-        throw new Error('You must accept the Terms and Conditions');
+        const msg = 'You must accept the Terms and Conditions';
+        console.error('❌', msg);
+        toast.error(msg);
+        setIsSubmitting(false);
+        setLoading(false);
+        return;
       }
+
+      console.log('✅ All validations passed');
+      toast.loading('Creating account...');
 
       const { authAPI, tokenManager } = await import('../../lib/api/auth');
 
@@ -82,12 +102,21 @@ export default function IndividualSignupForm() {
       }
 
       const user = response?.user || response;
+      console.log('✅ User object:', user);
+      
       setUser(user);
       setStep('success');
-      toast.success('Account created successfully!');
+      toast.success('Account created successfully! 🎉');
     } catch (error: any) {
-      console.error('❌ Signup failed:', error);
-      toast.error(error.message || 'Failed to create account. Please try again.');
+      console.error('❌ Signup failed with error:', error);
+      const errorMsg = error?.response?.data?.error || error?.message || 'Failed to create account. Please try again.';
+      console.error('Error details:', {
+        message: errorMsg,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        fullError: error
+      });
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
       setLoading(false);

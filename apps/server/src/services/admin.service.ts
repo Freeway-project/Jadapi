@@ -472,4 +472,125 @@ export class AdminService {
 
     return order;
   }
+
+  /**
+   * Get comprehensive user details for admin
+   */
+  static async getUserDetails(userId: string) {
+    const user = await User.findById(userId)
+      .select("-delegation.apiKeys.hash")
+      .lean();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get user's orders
+    const orders = await DeliveryOrder.find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate("driverId", "profile.name auth.phone")
+      .lean();
+
+    // Get user's activity logs
+    const activities = await ActivityLog.find({ userId: new Types.ObjectId(userId) })
+      .sort({ timestamp: -1 })
+      .limit(50)
+      .lean();
+
+    // Calculate order statistics
+    const orderStats = await DeliveryOrder.aggregate([
+      { $match: { userId: new Types.ObjectId(userId) } },
+      {
+        $facet: {
+          byStatus: [
+            {
+              $group: {
+                _id: "$status",
+                count: { $sum: 1 }
+              }
+            }
+          ],
+          byPaymentStatus: [
+            {
+              $group: {
+                _id: "$paymentStatus",
+                count: { $sum: 1 }
+              }
+            }
+          ],
+          totalRevenue: [
+            {
+              $match: { status: { $in: ["delivered", "in_transit", "picked_up"] } }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: "$pricing.total" }
+              }
+            }
+          ]
+        }
+      }
+    ]);
+
+    const stats = {
+      totalOrders: orders.length,
+      byStatus: orderStats[0]?.byStatus?.reduce((acc: any, s: any) => {
+        acc[s._id] = s.count;
+        return acc;
+      }, {}),
+      byPaymentStatus: orderStats[0]?.byPaymentStatus?.reduce((acc: any, s: any) => {
+        acc[s._id] = s.count;
+        return acc;
+      }, {}),
+      totalRevenue: orderStats[0]?.totalRevenue?.[0]?.total || 0
+    };
+
+    return {
+      user,
+      orders,
+      activities,
+      stats
+    };
+  }
+
+  /**
+   * Get comprehensive order details for admin
+   */
+  static async getOrderDetails(orderId: string) {
+    // Try to find by orderId first, then by MongoDB _id
+    let order = await DeliveryOrder.findOne({ orderId })
+      .populate("userId", "uuid profile.name auth.email auth.phone accountType businessProfile createdAt status")
+      .populate("driverId", "uuid profile.name auth.email auth.phone createdAt status")
+      .lean();
+
+    if (!order && Types.ObjectId.isValid(orderId)) {
+      order = await DeliveryOrder.findById(orderId)
+        .populate("userId", "uuid profile.name auth.email auth.phone accountType businessProfile createdAt status")
+        .populate("driverId", "uuid profile.name auth.email auth.phone createdAt status")
+        .lean();
+    }
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    // Get related activity logs for this order
+    const activities = await ActivityLog.find({
+      $or: [
+        { "metadata.orderId": order.orderId },
+        { "metadata.orderMongoId": order._id.toString() },
+        { resourceId: order._id.toString() }
+      ]
+    })
+      .sort({ timestamp: -1 })
+      .populate("userId", "profile.name auth.email")
+      .lean();
+
+    return {
+      order,
+      activities
+    };
+  }
 }

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { UserType } from '../../lib/types/auth';
 import { useAuthStore } from '../../lib/stores/authStore';
 import { Button } from '@workspace/ui/components/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card';
 import { User, Building2 } from 'lucide-react';
 import { BaseAnimation } from '../animations';
 
@@ -63,17 +62,16 @@ export default function UserTypeSelector() {
 
       <div className="space-y-3 sm:space-y-4">
         {userTypes.map(({ type, title, description, icon: Icon }) => (
-          <Card
+          <div
             key={type}
-            className={`cursor-pointer transition-all duration-300 border-2 rounded-xl ${
+            onClick={() => setSelectedType(type)}
+            className={`cursor-pointer transition-all duration-300 border-2 rounded-xl p-4 sm:p-6 ${
               selectedType === type
                 ? 'border-blue-600 bg-blue-50 shadow-lg transform scale-[1.02]'
                 : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md hover:transform hover:scale-[1.01]'
             }`}
-            onClick={() => setSelectedType(type)}
           >
-            <CardHeader className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className={`p-2 sm:p-3 rounded-xl transition-all duration-300 ${
                   selectedType === type
                     ? 'bg-blue-600 text-white shadow-lg'
@@ -82,8 +80,8 @@ export default function UserTypeSelector() {
                   <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-lg sm:text-xl font-semibold text-black mb-0.5 sm:mb-1">{title}</CardTitle>
-                  <CardDescription className="text-gray-600 text-sm sm:text-base leading-relaxed">{description}</CardDescription>
+                  <div className="text-lg sm:text-xl font-semibold text-black mb-0.5 sm:mb-1">{title}</div>
+                  <div className="text-gray-600 text-sm sm:text-base leading-relaxed">{description}</div>
                 </div>
                 <div className={`transition-all duration-300 ${
                   selectedType === type ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
@@ -93,8 +91,7 @@ export default function UserTypeSelector() {
                   </div>
                 </div>
               </div>
-            </CardHeader>
-          </Card>
+            </div>
         ))}
       </div>
 

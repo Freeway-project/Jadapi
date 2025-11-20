@@ -15,7 +15,8 @@ import {
   Loader2,
   AlertCircle,
   Home,
-  Image as ImageIcon
+  Image as ImageIcon,
+  X
 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { trackingAPI, TrackingInfo } from '../../../lib/api/tracking';
@@ -50,6 +51,7 @@ export default function TrackOrderPage() {
   const [driverToDropoffDirections, setDriverToDropoffDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
@@ -525,6 +527,56 @@ export default function TrackOrderPage() {
 
           {/* Details Column - Shows Second on Mobile */}
           <div className="lg:col-span-1 order-2 lg:order-1 space-y-3 sm:space-y-4">
+            {/* Pickup & Dropoff Photos */}
+            {(trackingInfo.order.pickup.photoUrl || trackingInfo.order.dropoff.photoUrl) && (
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="flex gap-2 p-2 sm:p-3">
+                  {trackingInfo.order.pickup.photoUrl && (
+                    <button
+                      onClick={() => setSelectedImage({
+                        url: trackingInfo.order.pickup.photoUrl!,
+                        title: 'Pickup Location'
+                      })}
+                      className="flex-1 relative group overflow-hidden rounded-lg"
+                    >
+                      <img
+                        src={trackingInfo.order.pickup.photoUrl}
+                        alt="Pickup"
+                        className="w-full h-24 sm:h-32 object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <ImageIcon className="w-5 h-5 text-white opacity-0 group-hover:opacity-100" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                        <p className="text-white text-xs font-semibold">Pickup</p>
+                      </div>
+                    </button>
+                  )}
+                  {trackingInfo.order.dropoff.photoUrl && (
+                    <button
+                      onClick={() => setSelectedImage({
+                        url: trackingInfo.order.dropoff.photoUrl!,
+                        title: 'Dropoff Location'
+                      })}
+                      className="flex-1 relative group overflow-hidden rounded-lg"
+                    >
+                      <img
+                        src={trackingInfo.order.dropoff.photoUrl}
+                        alt="Dropoff"
+                        className="w-full h-24 sm:h-32 object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <ImageIcon className="w-5 h-5 text-white opacity-0 group-hover:opacity-100" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                        <p className="text-white text-xs font-semibold">Dropoff</p>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Delivery Details - Compact */}
             <div className="bg-white rounded-lg shadow-md p-3 sm:p-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
@@ -623,6 +675,26 @@ export default function TrackOrderPage() {
           </div>
         </div>
       </div>
+
+      {/* Full Screen Image Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="relative max-w-2xl w-full">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 bg-white/90 hover:bg-white p-2 rounded-full transition-colors z-10"
+            >
+              <X className="w-5 h-5 text-gray-900" />
+            </button>
+            <img
+              src={selectedImage.url}
+              alt={selectedImage.title}
+              className="w-full rounded-lg"
+            />
+            <p className="text-white text-center mt-4 text-sm font-medium">{selectedImage.title}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
