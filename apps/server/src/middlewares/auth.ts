@@ -41,9 +41,7 @@ export const requireAuth = async (
       throw new ApiError(401, "User not found");
     }
 
-    if (user.status !== "active") {
-      throw new ApiError(401, "Account is not active");
-    }
+
 
     req.user = user;
     next();
@@ -79,7 +77,7 @@ export const authenticate = async (
     // Get user from database
     const user = await User.findById(payload.userId);
 
-    if (user && user.status === "active") {
+    if (user) {
       req.user = user;
     }
 

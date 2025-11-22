@@ -34,8 +34,8 @@ cat ~/.ssh/your-key.pem
 
 Ensure your VPS has:
 - Docker and Docker Compose installed
-- Project cloned at `/home/ubuntu/Jadapi`
-- `.env` file configured in `/home/ubuntu/Jadapi/apps/server/.env`
+- Project cloned at `/home/ubuntu/Jaddpi`
+- `.env` file configured in `/home/ubuntu/Jaddpi/apps/server/.env`
 
 ### Deployment Process
 
@@ -63,7 +63,7 @@ Go to **Actions** tab → **Deploy to VPS** → **Run workflow**
 
 ```bash
 # SSH into VPS
-cd /home/ubuntu/Jadapi
+cd /home/ubuntu/Jaddpi
 
 # Check container status
 docker compose ps

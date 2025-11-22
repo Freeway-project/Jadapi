@@ -34,7 +34,7 @@ export const productionConfig = {
     sendgrid: {
       apiKey: process.env.SENDGRID_API_KEY || '',
       fromEmail: process.env.SENDGRID_FROM_EMAIL || '',
-      fromName: process.env.SENDGRID_FROM_NAME || 'JadAPI',
+      fromName: process.env.SENDGRID_FROM_NAME || 'Jaddpi',
     },
     smtp: {
       host: process.env.SMTP_HOST || '',
@@ -47,12 +47,7 @@ export const productionConfig = {
 
   // SMS Configuration
   sms: {
-    aws: {
-      region: process.env.AWS_REGION || 'us-west-2',
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-      fromNumber: process.env.AWS_SNS_FROM_NUMBER || '',
-    },
+    // AWS configuration removed
   },
 
   // External APIs

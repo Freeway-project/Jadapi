@@ -2,8 +2,9 @@ import { DeliveryOrder } from "../models/DeliveryOrder";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { Types } from "mongoose";
-import { sendSms, SmsTemplates } from "../utils/SmsClient";
+import { smsService } from "../sms/SmsService";
 import { logger } from "../utils/logger";
+
 
 export class DriverService {
   /**
@@ -168,6 +169,39 @@ export class DriverService {
 
     await order.save();
 
+    // Send SMS notifications to sender and receiver
+    const driverName = driver.profile?.name || "your driver";
+
+    // Send SMS to sender (pickup contact)
+    if (order.pickup?.contactPhone) {
+      try {
+        await smsService.sendOrderAcceptedSender(
+          order.pickup.contactPhone,
+          order.orderId,
+          driverName
+        );
+        logger.info(`SMS sent to sender (pickup) for order ${order.orderId}`);
+      } catch (error) {
+        logger.error({ error }, `Failed to send SMS to sender for order ${order.orderId}`);
+        // Don't throw error - SMS failure shouldn't block the order acceptance
+      }
+    }
+
+    // Send SMS to receiver (dropoff contact)
+    if (order.dropoff?.contactPhone) {
+      try {
+        await smsService.sendOrderAcceptedReceiver(
+          order.dropoff.contactPhone,
+          order.orderId,
+          driverName
+        );
+        logger.info(`SMS sent to receiver (dropoff) for order ${order.orderId}`);
+      } catch (error) {
+        logger.error({ error }, `Failed to send SMS to receiver for order ${order.orderId}`);
+        // Don't throw error - SMS failure shouldn't block the order acceptance
+      }
+    }
+
     logger.info({
       orderId: order.orderId,
       driverId: driverId.toString(),
@@ -180,55 +214,7 @@ export class DriverService {
       total: order.pricing?.total
     }, 'DriverService.acceptOrder - Order successfully assigned to driver');
 
-    // Send SMS notifications to sender and receiver
-    const driverName = driver.profile?.name || "your driver";
 
-    // Helper to ensure E.164 format
-    const toE164 = (phone: string) => phone.startsWith("+") ? phone : `+1${phone}`;
-
-    // Send SMS to sender (pickup contact)
-    if (order.pickup?.contactPhone) {
-      try {
-        const senderMessage = SmsTemplates.orderAcceptedSender(order.orderId, driverName);
-        await sendSms({
-          phoneE164: toE164(order.pickup.contactPhone),
-          message: senderMessage,
-          type: "delivery",
-          source: "system",
-          metadata: {
-            orderId: order.orderId,
-            event: "order_accepted",
-            recipient: "sender"
-          }
-        });
-        logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender (pickup) for order acceptance');
-      } catch (error) {
-        logger.error({ error, orderId: order.orderId }, 'Failed to send SMS to sender for order acceptance');
-        // Don't throw error - SMS failure shouldn't block the order acceptance
-      }
-    }
-
-    // Send SMS to receiver (dropoff contact)
-    if (order.dropoff?.contactPhone) {
-      try {
-        const receiverMessage = SmsTemplates.orderAcceptedReceiver(order.orderId, driverName);
-        await sendSms({
-          phoneE164: toE164(order.dropoff.contactPhone),
-          message: receiverMessage,
-          type: "delivery",
-          source: "system",
-          metadata: {
-            orderId: order.orderId,
-            event: "order_accepted",
-            recipient: "receiver"
-          }
-        });
-        logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver (dropoff) for order acceptance');
-      } catch (error) {
-        logger.error({ error, orderId: order.orderId }, 'Failed to send SMS to receiver for order acceptance');
-        // Don't throw error - SMS failure shouldn't block the order acceptance
-      }
-    }
 
     return order;
   }
@@ -298,59 +284,50 @@ export class DriverService {
     const driver = await User.findById(driverId);
     const driverName = driver?.profile?.name || "your driver";
 
+
+
     switch (newStatus) {
       case "picked_up":
         order.timeline.pickedUpAt = new Date();
         order.pickup.actualAt = new Date();
-        logger.info({
-          orderId: order.orderId,
-          pickedUpAt: order.timeline.pickedUpAt,
-          pickupAddress: order.pickup?.address
-        }, 'DriverService.updateOrderStatus - Package picked up');
 
         // Send SMS notifications for pickup
         // SMS to sender (pickup contact)
         if (order.pickup?.contactPhone) {
           try {
-            const senderMessage = SmsTemplates.packagePickedUpSender(order.orderId, driverName);
-            await sendSms({
-              phoneE164: order.pickup.contactPhone,
-              message: senderMessage,
-              type: "delivery",
-              source: "system",
-              metadata: {
-                orderId: order.orderId,
-                event: "package_picked_up",
-                recipient: "sender"
-              }
-            });
-            logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender for package pickup');
+            await smsService.sendPackagePickedUpSender(
+              order.pickup.contactPhone,
+              order.orderId,
+              driverName
+            );
+            logger.info(`SMS sent to sender (pickup) for package pickup ${order.orderId}`);
           } catch (error) {
-            logger.error({ error, orderId: order.orderId }, 'Failed to send pickup SMS to sender');
+            logger.error({ error }, `Failed to send pickup SMS to sender for order ${order.orderId}`);
           }
         }
 
         // SMS to receiver (dropoff contact)
         if (order.dropoff?.contactPhone) {
           try {
-            const receiverMessage = SmsTemplates.packagePickedUpReceiver(order.orderId, driverName);
-            await sendSms({
-              phoneE164: order.dropoff.contactPhone,
-              message: receiverMessage,
-              type: "delivery",
-              source: "system",
-              metadata: {
-                orderId: order.orderId,
-                event: "package_picked_up",
-                recipient: "receiver"
-              }
-            });
-            logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver for package pickup');
+            await smsService.sendPackagePickedUpReceiver(
+              order.dropoff.contactPhone,
+              order.orderId,
+              driverName
+            );
+            logger.info(`SMS sent to receiver (dropoff) for package pickup ${order.orderId}`);
           } catch (error) {
-            logger.error({ error, orderId: order.orderId }, 'Failed to send pickup SMS to receiver');
+            logger.error({ error }, `Failed to send pickup SMS to receiver for order ${order.orderId}`);
           }
         }
+        logger.info({
+          orderId: order.orderId,
+          pickedUpAt: order.timeline.pickedUpAt,
+          pickupAddress: order.pickup?.address
+        }, 'DriverService.updateOrderStatus - Package picked up');
+
+
         break;
+
 
       case "in_transit":
         logger.info({
@@ -358,9 +335,37 @@ export class DriverService {
         }, 'DriverService.updateOrderStatus - Package in transit');
         break;
 
+
       case "delivered":
         order.timeline.deliveredAt = new Date();
         order.dropoff.actualAt = new Date();
+
+        // Send SMS notifications for delivery
+        // SMS to sender (pickup contact)
+        if (order.pickup?.contactPhone) {
+          try {
+            await smsService.sendPackageDeliveredSender(
+              order.pickup.contactPhone,
+              order.orderId
+            );
+            logger.info(`SMS sent to sender (pickup) for delivery completion ${order.orderId}`);
+          } catch (error) {
+            logger.error({ error }, `Failed to send delivery SMS to sender for order ${order.orderId}`);
+          }
+        }
+
+        // SMS to receiver (dropoff contact)
+        if (order.dropoff?.contactPhone) {
+          try {
+            await smsService.sendPackageDeliveredReceiver(
+              order.dropoff.contactPhone,
+              order.orderId
+            );
+            logger.info(`SMS sent to receiver (dropoff) for delivery completion ${order.orderId}`);
+          } catch (error) {
+            logger.error({ error }, `Failed to send delivery SMS to receiver for order ${order.orderId}`);
+          }
+        }
         logger.info({
           orderId: order.orderId,
           deliveredAt: order.timeline.deliveredAt,
@@ -369,49 +374,9 @@ export class DriverService {
           duration: order.timeline.deliveredAt.getTime() - order.timeline.createdAt.getTime()
         }, 'DriverService.updateOrderStatus - Package delivered successfully');
 
-        // Send SMS notifications for delivery
-        // SMS to sender (pickup contact)
-        if (order.pickup?.contactPhone) {
-          try {
-            const senderMessage = SmsTemplates.packageDeliveredSender(order.orderId);
-            await sendSms({
-              phoneE164: order.pickup.contactPhone,
-              message: senderMessage,
-              type: "delivery",
-              source: "system",
-              metadata: {
-                orderId: order.orderId,
-                event: "package_delivered",
-                recipient: "sender"
-              }
-            });
-            logger.info({ orderId: order.orderId, phone: order.pickup.contactPhone }, 'SMS sent to sender for delivery completion');
-          } catch (error) {
-            logger.error({ error, orderId: order.orderId }, 'Failed to send delivery SMS to sender');
-          }
-        }
 
-        // SMS to receiver (dropoff contact)
-        if (order.dropoff?.contactPhone) {
-          try {
-            const receiverMessage = SmsTemplates.packageDeliveredReceiver(order.orderId);
-            await sendSms({
-              phoneE164: order.dropoff.contactPhone,
-              message: receiverMessage,
-              type: "delivery",
-              source: "system",
-              metadata: {
-                orderId: order.orderId,
-                event: "package_delivered",
-                recipient: "receiver"
-              }
-            });
-            logger.info({ orderId: order.orderId, phone: order.dropoff.contactPhone }, 'SMS sent to receiver for delivery completion');
-          } catch (error) {
-            logger.error({ error, orderId: order.orderId }, 'Failed to send delivery SMS to receiver');
-          }
-        }
         break;
+
 
       case "cancelled":
         order.timeline.cancelledAt = new Date();

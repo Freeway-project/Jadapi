@@ -167,6 +167,9 @@ export const validateOtpVerification = (req: Request, _res: Response, next: Next
     return next(new ApiError(400, "OTP code is required"));
   }
 
+  // Trim whitespace from code
+  req.body.code = code.trim();
+
   // Validate identifier format (email or phone)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmail = emailRegex.test(identifier);
@@ -181,7 +184,7 @@ export const validateOtpVerification = (req: Request, _res: Response, next: Next
 
   // OTP code should be 6 digits
   const codeRegex = /^\d{6}$/;
-  if (!codeRegex.test(code)) {
+  if (!codeRegex.test(req.body.code)) {
     return next(new ApiError(400, "OTP code must be 6 digits"));
   }
 

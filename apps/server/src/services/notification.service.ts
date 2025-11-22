@@ -1,69 +1,152 @@
 /**
- * Example usage of the reusable SMS client for different scenarios
- * This shows how to send OTP and delivery notifications
+ * Notification Service
+ * High-level notification coordinator
+ * Uses the centralized SMS module for all SMS operations
  */
 
 import { logger } from "../utils/logger";
-import { 
-  sendSms, 
-  sendOtpSms, 
-  sendDeliverySms, 
-  sendBookingSms,
-  SmsHelpers,
-  SmsTemplates 
-} from "../utils/SmsClient";
+import { smsService } from "../sms";
 
 export class NotificationService {
-  
   /**
    * Send OTP for user verification
    */
   static async sendVerificationOtp(phoneNumber: string, otpCode: string): Promise<void> {
-
-    
     try {
-      logger.info({ phoneNumber }, 'NotificationService.sendVerificationOtp - initiating');
-      // Option 1: Using the helper function (recommended)
-      logger.info(`Sending OTP ${otpCode} to ${phoneNumber}`);
+      logger.info({ phoneNumber }, "NotificationService: Sending verification OTP");
+
+      // Ensure phone is in E.164 format
       const phoneE164 = phoneNumber.startsWith("+") ? phoneNumber : `+1${phoneNumber}`;
-      await SmsHelpers.sendOtpCode(phoneE164, otpCode, 5);
 
-      // Option 2: Using the direct function
-      // await sendOtpSms(phoneNumber, SmsTemplates.otp(otpCode, 5));
+      await smsService.sendOtp(phoneE164, otpCode, 5);
 
-      logger.info({ phoneNumber }, `OTP sent successfully to ${phoneNumber}`);
+      logger.info({ phoneNumber }, "NotificationService: OTP sent successfully");
     } catch (error) {
-      logger.error({ error, phoneNumber }, `Failed to send OTP to ${phoneNumber}`);
-      throw new Error("Failed to send verification code");
+      logger.error({ error, phoneNumber }, "NotificationService: Failed to send OTP");
+      throw error;
     }
   }
 
   /**
-   * Notify customer when delivery starts
+   * Notify when order is accepted - to sender
    */
-  static async notifyDeliveryStarted(
-    customerPhone: string, 
-    orderId: string, 
+  static async notifyOrderAcceptedSender(
+    phoneNumber: string,
+    orderId: string,
     driverName: string
   ): Promise<void> {
     try {
-      await SmsHelpers.notifyDeliveryStarted(customerPhone, orderId, driverName);
-      logger.info({ orderId, customerPhone }, `Delivery started notification sent for order ${orderId}`);
+      await smsService.sendOrderAcceptedSender(phoneNumber, orderId, driverName);
+      logger.info({ orderId, phoneNumber }, `Order accepted notification sent to sender`);
     } catch (error) {
-      logger.error({ error, orderId }, `Failed to send delivery notification for order ${orderId}`);
+      logger.error({ error, orderId }, `Failed to send order accepted notification to sender`);
     }
   }
 
   /**
-   * Notify customer when package is delivered
+   * Notify when order is accepted - to receiver
    */
-  static async notifyDeliveryCompleted(
-    customerPhone: string, 
+  static async notifyOrderAcceptedReceiver(
+    phoneNumber: string,
+    orderId: string,
+    driverName: string
+  ): Promise<void> {
+    try {
+      await smsService.sendOrderAcceptedReceiver(phoneNumber, orderId, driverName);
+      logger.info({ orderId, phoneNumber }, `Order accepted notification sent to receiver`);
+    } catch (error) {
+      logger.error({ error, orderId }, `Failed to send order accepted notification to receiver`);
+    }
+  }
+
+  /**
+   * Notify when package is picked up - to sender
+   */
+  static async notifyPackagePickedUpSender(
+    phoneNumber: string,
+    orderId: string,
+    driverName: string
+  ): Promise<void> {
+    try {
+      await smsService.sendPackagePickedUpSender(phoneNumber, orderId, driverName);
+      logger.info({ orderId, phoneNumber }, `Package pickup notification sent to sender`);
+    } catch (error) {
+      logger.error({ error, orderId }, `Failed to send pickup notification to sender`);
+    }
+  }
+
+  /**
+   * Notify when package is picked up - to receiver
+   */
+  static async notifyPackagePickedUpReceiver(
+    phoneNumber: string,
+    orderId: string,
+    driverName: string
+  ): Promise<void> {
+    try {
+      await smsService.sendPackagePickedUpReceiver(phoneNumber, orderId, driverName);
+      logger.info({ orderId, phoneNumber }, `Package pickup notification sent to receiver`);
+    } catch (error) {
+      logger.error({ error, orderId }, `Failed to send pickup notification to receiver`);
+    }
+  }
+
+  /**
+   * Notify when package is delivered - to sender
+   */
+  static async notifyPackageDeliveredSender(
+    phoneNumber: string,
     orderId: string
   ): Promise<void> {
     try {
-      await SmsHelpers.notifyDeliveryCompleted(customerPhone, orderId);
-      logger.info({ orderId, customerPhone }, `Delivery completion notification sent for order ${orderId}`);
+      await smsService.sendPackageDeliveredSender(phoneNumber, orderId);
+      logger.info({ orderId, phoneNumber }, `Delivery notification sent to sender`);
+    } catch (error) {
+      logger.error({ error, orderId }, `Failed to send delivery notification to sender`);
+    }
+  }
+
+  /**
+   * Notify when package is delivered - to receiver
+   */
+  static async notifyPackageDeliveredReceiver(
+    phoneNumber: string,
+    orderId: string
+  ): Promise<void> {
+    try {
+      await smsService.sendPackageDeliveredReceiver(phoneNumber, orderId);
+      logger.info({ orderId, phoneNumber }, `Delivery notification sent to receiver`);
+    } catch (error) {
+      logger.error({ error, orderId }, `Failed to send delivery notification to receiver`);
+    }
+  }
+
+  /**
+   * Notify customer when delivery starts (legacy support)
+   */
+  static async notifyDeliveryStarted(
+    customerPhone: string,
+    orderId: string,
+    driverName: string
+  ): Promise<void> {
+    try {
+      await smsService.sendDeliveryStarted(customerPhone, orderId, driverName);
+      logger.info({ orderId, customerPhone }, `Delivery started notification sent`);
+    } catch (error) {
+      logger.error({ error, orderId }, `Failed to send delivery started notification`);
+    }
+  }
+
+  /**
+   * Notify customer when package is delivered (legacy support)
+   */
+  static async notifyDeliveryCompleted(
+    customerPhone: string,
+    orderId: string
+  ): Promise<void> {
+    try {
+      await smsService.sendPackageDeliveredReceiver(customerPhone, orderId);
+      logger.info({ orderId, customerPhone }, `Delivery completion notification sent`);
     } catch (error) {
       logger.error({ error, orderId }, `Failed to send delivery completion notification`);
     }
@@ -78,15 +161,15 @@ export class NotificationService {
     pickupTime: string
   ): Promise<void> {
     try {
-      await SmsHelpers.confirmBooking(customerPhone, orderId, pickupTime);
-      logger.info({ orderId, customerPhone }, `Booking confirmation sent for order ${orderId}`);
+      await smsService.sendBookingConfirmation(customerPhone, orderId, pickupTime);
+      logger.info({ orderId, customerPhone }, `Booking confirmation sent`);
     } catch (error) {
       logger.error({ error, orderId }, `Failed to send booking confirmation`);
     }
   }
 
   /**
-   * Send custom message using the generic SMS function
+   * Send custom message
    */
   static async sendCustomMessage(
     phoneNumber: string,
@@ -94,20 +177,15 @@ export class NotificationService {
     type: "otp" | "delivery" | "booking" | "promotional" | "transactional" = "transactional"
   ): Promise<void> {
     try {
-      await sendSms({
-        phoneE164: phoneNumber,
-        message,
-        type,
-        senderId: "Jaddpi"
-      });
-      logger.info({ phoneNumber, type }, `Custom message sent to ${phoneNumber}`);
+      await smsService.sendCustomMessage(phoneNumber, message, type);
+      logger.info({ phoneNumber, type }, `Custom message sent`);
     } catch (error) {
       logger.error({ error, phoneNumber }, `Failed to send custom message`);
     }
   }
 
   /**
-   * Handle delivery exceptions (failed delivery attempts)
+   * Handle delivery exceptions
    */
   static async notifyDeliveryException(
     customerPhone: string,
@@ -115,15 +193,15 @@ export class NotificationService {
     reason: string
   ): Promise<void> {
     try {
-      await SmsHelpers.notifyDeliveryException(customerPhone, orderId, reason);
-      logger.info({ orderId, customerPhone, reason }, `Delivery exception notification sent for order ${orderId}`);
+      await smsService.sendDeliveryException(customerPhone, orderId, reason);
+      logger.info({ orderId, customerPhone, reason }, `Delivery exception notification sent`);
     } catch (error) {
       logger.error({ error, orderId }, `Failed to send delivery exception notification`);
     }
   }
 
   /**
-   * Send bulk notifications (e.g., service updates)
+   * Send bulk notifications
    */
   static async sendBulkNotification(
     phoneNumbers: string[],
@@ -134,48 +212,17 @@ export class NotificationService {
 
     const promises = phoneNumbers.map(async (phone) => {
       try {
-        await sendSms({
-          phoneE164: phone,
-          message,
-          type: "promotional"
-        });
+        await smsService.sendCustomMessage(phone, message, "promotional");
         success++;
       } catch (error) {
-        logger.error({ error, phone }, `Failed to send to ${phone}`);
+        logger.error({ error, phone }, `Failed to send bulk notification`);
         failed++;
       }
     });
 
     await Promise.allSettled(promises);
 
-    logger.info({ success, failed }, `Bulk SMS completed: ${success} successful, ${failed} failed`);
+    logger.info({ success, failed }, `Bulk notification completed`);
     return { success, failed };
   }
 }
-
-// Example usage:
-/*
-// Send OTP
-await NotificationService.sendVerificationOtp("+16045551234", "123456");
-
-// Notify delivery started
-await NotificationService.notifyDeliveryStarted(
-  "+16045551234", 
-  "ORD-12345", 
-  "John Driver"
-);
-
-// Confirm booking
-await NotificationService.sendBookingConfirmation(
-  "+16045551234",
-  "ORD-12345", 
-  "Today at 2:00 PM"
-);
-
-// Custom message
-await NotificationService.sendCustomMessage(
-  "+16045551234",
-  "Your package will arrive between 2-4 PM today",
-  "delivery"
-);
-*/

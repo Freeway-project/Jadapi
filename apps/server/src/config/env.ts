@@ -35,4 +35,9 @@ export const ENV = {
 
   // Frontend URL for tracking links, emails, etc.
   FRONTEND_URL: process.env.FRONTEND_URL  ?? "http://localhost:3000",
+
+  // Twilio SMS configuration
+  TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID ?? "",
+  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN ?? "",
+  TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER ?? "",
 };

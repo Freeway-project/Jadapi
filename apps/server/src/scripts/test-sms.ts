@@ -10,11 +10,8 @@
  */
 
 import dotenv from "dotenv";
-import { 
-  sendSms, 
-  SmsHelpers, 
-  SmsTemplates 
-} from "../utils/SmsClient";
+import { smsService } from "../sms/SmsService";
+import { SmsTemplates } from "../sms/templates";
 
 // Load environment variables
 dotenv.config();
@@ -23,10 +20,10 @@ dotenv.config();
 const TEST_PHONE = process.env.TEST_PHONE_NUMBER || process.env.YOUR_PHONE_NUMBER;
 const DRY_RUN = process.env.DRY_RUN !== "false"; // Default to dry run for safety
 
-async function testAwsSns() {
-  console.log("🚀 AWS SNS SMS Test Script");
-  console.log("=" .repeat(50));
-  
+async function testTwilioSms() {
+  console.log("🚀 Twilio SMS Test Script");
+  console.log("=".repeat(50));
+
   // Validate configuration
   if (!TEST_PHONE) {
     console.error("❌ No test phone number provided!");
@@ -37,15 +34,15 @@ async function testAwsSns() {
 
   console.log(`📱 Test Phone: ${TEST_PHONE}`);
   console.log(`🔧 Dry Run: ${DRY_RUN ? "YES (Safe Mode)" : "NO (Will send real SMS)"}`);
-  console.log(`🌍 AWS Region: ${process.env.AWS_REGION || "us-east-1"}`);
-  
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    console.warn("⚠️  AWS credentials not found in environment");
-    console.log("Make sure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set");
+  console.log(`Twilio Account SID: ${process.env.TWILIO_ACCOUNT_SID ? "Set" : "Not Set"}`);
+
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
+    console.warn("⚠️  Twilio credentials not found in environment");
+    console.log("Make sure TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are set");
   }
 
   console.log("\n" + "=".repeat(50));
-  
+
   if (DRY_RUN) {
     console.log("🟡 DRY RUN MODE - No real SMS will be sent");
     console.log("Set DRY_RUN=false in .env to send real SMS");
@@ -53,7 +50,7 @@ async function testAwsSns() {
     console.log("🔴 LIVE MODE - Real SMS will be sent!");
     console.log("Make sure the phone number is correct!");
   }
-  
+
   console.log("\n⏳ Starting tests in 3 seconds...");
   await sleep(3000);
 
@@ -64,9 +61,9 @@ async function testAwsSns() {
         const code = generateOtp();
         const message = SmsTemplates.otp(code, 5);
         console.log(`   Message: "${message}"`);
-        
+
         if (!DRY_RUN) {
-          await SmsHelpers.sendOtpCode(TEST_PHONE, code, 5);
+          await smsService.sendOtp(TEST_PHONE, code, 5);
         }
         return `OTP ${code}`;
       }
@@ -78,9 +75,9 @@ async function testAwsSns() {
         const driver = "Alex Driver";
         const message = SmsTemplates.deliveryStarted(orderId, driver);
         console.log(`   Message: "${message}"`);
-        
+
         if (!DRY_RUN) {
-          await SmsHelpers.notifyDeliveryStarted(TEST_PHONE, orderId, driver);
+          await smsService.sendDeliveryStarted(TEST_PHONE, orderId, driver);
         }
         return `Order ${orderId}`;
       }
@@ -89,25 +86,25 @@ async function testAwsSns() {
       name: "✅ Delivery Completed",
       test: async () => {
         const orderId = "TEST-" + (Date.now() + 1);
-        const message = SmsTemplates.deliveryCompleted(orderId);
+        const message = SmsTemplates.packageDeliveredReceiver(orderId);
         console.log(`   Message: "${message}"`);
-        
+
         if (!DRY_RUN) {
-          await SmsHelpers.notifyDeliveryCompleted(TEST_PHONE, orderId);
+          await smsService.sendPackageDeliveredReceiver(TEST_PHONE, orderId);
         }
         return `Order ${orderId}`;
       }
     },
     {
-      name: "📋 Booking Confirmation", 
+      name: "📋 Booking Confirmation",
       test: async () => {
         const orderId = "BOOK-" + Date.now();
         const time = "Tomorrow at 2:00 PM";
         const message = SmsTemplates.bookingConfirmed(orderId, time);
         console.log(`   Message: "${message}"`);
-        
+
         if (!DRY_RUN) {
-          await SmsHelpers.confirmBooking(TEST_PHONE, orderId, time);
+          await smsService.sendBookingConfirmation(TEST_PHONE, orderId, time);
         }
         return `Booking ${orderId}`;
       }
@@ -117,13 +114,9 @@ async function testAwsSns() {
       test: async () => {
         const message = "Hello from jaddpi! This is a test of our SMS system. 📱✨";
         console.log(`   Message: "${message}"`);
-        
+
         if (!DRY_RUN) {
-          await sendSms({
-            phoneE164: TEST_PHONE,
-            message,
-            type: "transactional"
-          });
+          await smsService.sendCustomMessage(TEST_PHONE, message);
         }
         return "Custom message";
       }
@@ -135,37 +128,37 @@ async function testAwsSns() {
 
   for (let i = 0; i < tests.length; i++) {
     const test = tests[i];
-    
+
     try {
       console.log(`\n[${i + 1}/${tests.length}] ${test.name}`);
-      
+
       const result = await test.test();
-      
+
       if (DRY_RUN) {
         console.log(`   ✅ DRY RUN SUCCESS - ${result}`);
       } else {
         console.log(`   ✅ SMS SENT - ${result}`);
       }
-      
+
       passed++;
-      
+
       // Wait between tests to avoid rate limiting
       if (i < tests.length - 1) {
         console.log("   ⏱️  Waiting 2 seconds...");
         await sleep(2000);
       }
-      
+
     } catch (error: any) {
       console.error(`   ❌ FAILED: ${error.message}`);
-      
+
       if (error.code) {
         console.error(`      Error Code: ${error.code}`);
       }
-      
+
       if (error.$metadata?.httpStatusCode) {
         console.error(`      HTTP Status: ${error.$metadata.httpStatusCode}`);
       }
-      
+
       failed++;
     }
   }
@@ -177,20 +170,20 @@ async function testAwsSns() {
   console.log(`✅ Passed: ${passed}`);
   console.log(`❌ Failed: ${failed}`);
   console.log(`📱 Target Phone: ${TEST_PHONE}`);
-  
+
   if (DRY_RUN) {
     console.log("\n🟡 This was a DRY RUN - no real SMS were sent");
     console.log("To test with real SMS, set DRY_RUN=false in your .env file");
   } else if (passed > 0) {
     console.log("\n🎉 Success! Check your phone for SMS messages");
   }
-  
+
   if (failed > 0) {
     console.log("\n🔧 TROUBLESHOOTING:");
-    console.log("1. Check AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)");
-    console.log("2. Verify AWS SNS permissions");
+    console.log("1. Check Twilio credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)");
+    console.log("2. Verify Twilio phone number is active");
     console.log("3. Confirm phone number format (+1XXXXXXXXXX)");
-    console.log("4. Check AWS account SMS spending limits");
+    console.log("4. Check Twilio account balance");
     console.log("5. Verify phone number is not in SMS opt-out list");
   }
 }
@@ -211,7 +204,7 @@ process.on('unhandledRejection', (error) => {
 
 // Run the test
 if (require.main === module) {
-  testAwsSns().then(() => {
+  testTwilioSms().then(() => {
     console.log("\n👋 Test completed");
     process.exit(0);
   }).catch((error) => {

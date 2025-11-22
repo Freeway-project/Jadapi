@@ -54,7 +54,7 @@ const OtpSchema = new Schema<OtpDoc>(
     expiresAt: {
       type: Date,
       required: true,
-      default: () => new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      default: () => new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
       index: { expireAfterSeconds: 0 }, // MongoDB TTL index
     },
     verified: {

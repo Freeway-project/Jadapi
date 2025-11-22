@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Configuration
-CONTAINER_NAME="jadapi-server"
-IMAGE_NAME="jadapi-server"
-ENV_FILE="/etc/jadapi/.env.production"
-UPLOADS_VOLUME="jadapi-uploads"
+CONTAINER_NAME="Jaddpi-server"
+IMAGE_NAME="Jaddpi-server"
+ENV_FILE="/etc/Jaddpi/.env.production"
+UPLOADS_VOLUME="Jaddpi-uploads"
 PORT=3001
 
 # Ensure we have the latest image
