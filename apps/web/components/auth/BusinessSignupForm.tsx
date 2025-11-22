@@ -105,10 +105,10 @@ export default function BusinessSignupForm() {
 
       const user = response?.user || response;
       console.log('✅ User object:', user);
-      
+
       setUser(user);
-      setStep('success');
-      toast.success('Business account created successfully! 🎉');
+      setStep('signin');
+      toast.success('Business account created successfully! Please sign in. 🎉');
     } catch (error: any) {
       console.error('❌ Business signup failed with error:', error);
       const errorMsg = error?.response?.data?.error || error?.message || 'Failed to create business account. Please try again.';
