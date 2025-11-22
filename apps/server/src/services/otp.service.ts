@@ -89,7 +89,7 @@ export const OtpService = {
       code,
       type,
       deliveryMethod,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
       verified: false,
       invalidated: false,
       attempts: 0,
@@ -234,7 +234,7 @@ export const OtpService = {
         { type },
         { verified: true },
         { invalidated: false },
-        { createdAt: { $gt: new Date(Date.now() - 10 * 60 * 1000) } } // Valid for 10 minutes after verification
+        { createdAt: { $gt: new Date(Date.now() - 5 * 60 * 1000) } } // Valid for 5 minutes after verification
       ]
     };
 

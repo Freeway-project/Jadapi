@@ -33,7 +33,7 @@ jobs:
             echo "🚀 Starting deployment..."
 
             # Navigate to project directory
-            cd /home/ubuntu/Jadapi || exit 1
+            cd /home/ubuntu/Jaddpi || exit 1
 
             # Pull latest changes from main
             echo "📥 Pulling latest changes from main branch..."

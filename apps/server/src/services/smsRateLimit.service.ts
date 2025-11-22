@@ -3,7 +3,7 @@ import { logger } from "../utils/logger";
 
 /**
  * SMS Rate Limiting & Cost Control Service
- * Prevents excessive SMS sending to reduce AWS costs
+ * Prevents excessive SMS sending to reduce costs
  */
 export class SmsRateLimitService {
   // Rate limit configurations
@@ -26,7 +26,7 @@ export class SmsRateLimitService {
     costs: {
       dailyLimit: 50, // $50 per day max
       monthlyLimit: 1000, // $1,000 per month max
-      perSmsCost: 0.0075, // $0.0075 per SMS (AWS SNS Canada rate)
+      perSmsCost: 0.0085, // $0.0075 per SMS
     },
     // Cooldown periods
     cooldown: {

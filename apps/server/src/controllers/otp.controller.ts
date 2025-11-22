@@ -46,7 +46,7 @@ export const OtpController = {
       const otp = await OtpService.generateOtp(otpData);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ requestEmailOtp ~ otp generated:', { id: otp._id, code: otp.code.slice(0,2) + '****', expiresAt: otp.expiresAt });
+        console.log('🚀 ~ requestEmailOtp ~ otp generated:', { id: otp._id, code: otp.code.slice(0, 2) + '****', expiresAt: otp.expiresAt });
       }
 
       // Send OTP via email BEFORE responding to client to ensure it's sent
@@ -110,7 +110,7 @@ export const OtpController = {
       const otp = await OtpService.generateOtp(otpData);
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('🚀 ~ requestPhoneOtp ~ otp generated:', { id: otp._id, code: otp.code.slice(0,2) + '****', expiresAt: otp.expiresAt });
+        console.log('🚀 ~ requestPhoneOtp ~ otp generated:', { id: otp._id, code: otp.code.slice(0, 2) + '****', expiresAt: otp.expiresAt });
       }
 
       // Send OTP via SMS BEFORE responding to client to ensure it's sent
@@ -163,6 +163,11 @@ export const OtpController = {
             ? identifier.toLowerCase().trim()
             : normalizePhone(identifier) || identifier.trim();
 
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 OTP Login - Original identifier:', identifier);
+            console.log('🔍 OTP Login - Normalized identifier:', normalizedIdentifier);
+          }
+
           // Find user by identifier (email or phone)
           const query = {
             $or: [
@@ -187,13 +192,23 @@ export const OtpController = {
             } : null);
           }
 
-          if (user && user.status === "active") {
-            token = jwtUtils.generateToken({
-              userId: user._id.toString(),
-              email: user.auth?.email,
-              roles: user.roles || []
-            });
+          if (!user) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('❌ No user found for identifier:', normalizedIdentifier);
+            }
+            throw new ApiError(404, "No account found with this identifier. Please sign up first.");
           }
+
+          if (user.status !== "active") {
+            throw new ApiError(403, "Account is not active. Please contact support.");
+          }
+
+          token = jwtUtils.generateToken({
+            userId: user._id.toString(),
+            email: user.auth?.email,
+            phone: user.auth?.phone,
+            roles: user.roles || []
+          });
         }
 
         res.status(200).json({

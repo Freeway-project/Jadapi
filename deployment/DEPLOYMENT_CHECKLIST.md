@@ -54,7 +54,7 @@ The `docker-compose.yml` is configured to:
 cat .env | grep -v '^#' | head -5
 
 # 2. Build images (with --no-cache)
-cd /home/ubuntu/Jadapi
+cd /home/ubuntu/Jaddpi
 ./deployment/docker-build.sh
 
 # 3. Start services
@@ -68,7 +68,7 @@ docker compose logs -f
 ### Option 2: Manual Docker Commands
 
 ```bash
-cd /home/ubuntu/Jadapi
+cd /home/ubuntu/Jaddpi
 
 # Build without cache (IMPORTANT!)
 docker compose build --no-cache
@@ -129,8 +129,8 @@ docker compose logs -f web
 
 | Deployment Method | Environment File Location | Notes |
 |------------------|---------------------------|-------|
-| **Docker Compose** | `/home/ubuntu/Jadapi/.env` | ✅ Uses root .env |
-| **PM2 (Non-Docker)** | `/home/ubuntu/Jadapi/apps/server/.env` | Uses app-specific .env |
+| **Docker Compose** | `/home/ubuntu/Jaddpi/.env` | ✅ Uses root .env |
+| **PM2 (Non-Docker)** | `/home/ubuntu/Jaddpi/apps/server/.env` | Uses app-specific .env |
 | **Development** | App-specific `.env` files | Each app has its own |
 
 ## Common Issues & Solutions
@@ -140,10 +140,10 @@ docker compose logs -f web
 **Solution:**
 ```bash
 # 1. Verify .env exists at project root
-ls -la /home/ubuntu/Jadapi/.env
+ls -la /home/ubuntu/Jaddpi/.env
 
 # 2. Rebuild with --no-cache
-cd /home/ubuntu/Jadapi
+cd /home/ubuntu/Jaddpi
 docker compose build --no-cache
 
 # 3. Restart services
@@ -223,7 +223,7 @@ Before production deployment:
 
 ```bash
 # 1. Pull latest code
-cd /home/ubuntu/Jadapi
+cd /home/ubuntu/Jaddpi
 git pull origin main
 
 # 2. Rebuild images (no cache!)
