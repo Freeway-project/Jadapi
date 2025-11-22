@@ -103,10 +103,10 @@ export default function IndividualSignupForm() {
 
       const user = response?.user || response;
       console.log('✅ User object:', user);
-      
+
       setUser(user);
-      setStep('success');
-      toast.success('Account created successfully! 🎉');
+      setStep('signin');
+      toast.success('Account created successfully! Please sign in. 🎉');
     } catch (error: any) {
       console.error('❌ Signup failed with error:', error);
       const errorMsg = error?.response?.data?.error || error?.message || 'Failed to create account. Please try again.';
